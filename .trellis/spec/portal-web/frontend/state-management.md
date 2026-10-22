@@ -327,5 +327,77 @@ usePreferencesStore.subscribe(pushIfChanged);
 1. **Putting transient UI state in persist stores**: Only persist things users expect to survive refreshes (preferences, tabs, timezone). Layout collapse state belongs in `layout-store` (not persisted).
 2. **Using `setTimeout` for async init in stores**: Store actions should be synchronous or return Promises. Async bootstrap logic goes in `main.tsx` or API layer.
 3. **Storing derived data**: Compute permissions from menus in `setMenus` action. Don't store as separate state that can desync.
+
+---
+
+## Pattern: Supabase Auth + Zustand Bridge
+
+**Context**: `auth-store.ts` bridges Supabase Auth sessions into Zustand state.
+
+### State Shape
+
+```typescript
+interface AuthState {
+  session: Session | null;      // Supabase session (access_token, refresh_token, expires_at)
+  user: User | null;            // Supabase user (id, email, user_metadata)
+  token: string;               // Derived from session.access_token for backward compat
+  refreshToken: string | undefined;
+  isInitialized: boolean;       // true AFTER getSession() completes
+}
+```
+
+### Initialization (called once from `App.tsx` on mount)
+
+```typescript
+init: async () => {
+  // 1. Register onAuthStateChange FIRST — catches sign-in from other tabs, token refreshes
+  supabase.auth.onAuthStateChange((_event, session) => {
+    set({
+      session,
+      user: session?.user ?? null,
+      token: session?.access_token ?? '',
+      refreshToken: session?.refresh_token,
+    });
+  });
+
+  // 2. Then restore existing session (reads from Supabase localStorage cache, ~1ms)
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      set({ session, user: session.user, token: session.access_token,
+            refreshToken: session.refresh_token, isInitialized: true });
+    } else {
+      set({ isInitialized: true });
+    }
+  } catch (err) {
+    console.error('[auth-store] init failed:', err);
+    set({ isInitialized: true });  // ALWAYS set — RouteGuard blocks on !isInitialized
+  }
+}
+```
+
+### Key Rules
+
+1. **`isInitialized` must always reach `true`** — even on error. Otherwise RouteGuard shows loading spinner forever.
+2. **`onAuthStateChange` must be registered BEFORE `getSession()`** — prevents race condition where a concurrent sign-in fires before the listener exists.
+3. **Do NOT manually manage Supabase token storage** — Supabase JS SDK handles localStorage, token refresh, and expiry. The store only mirrors what Supabase provides.
+4. **`token` field kept for backward compat** — sub-apps and legacy code references `useAuthStore.getState().token`. It's derived from `session.access_token`, not set independently.
+
+### Sub-app Integration
+
+```typescript
+// In qiankun props — backward compat, both work:
+get accessToken() { return useAuthStore.getState().token; },
+get token() {       return useAuthStore.getState().token; },
+```
+
+### Sign Out
+
+```typescript
+logout: async () => {
+  await supabase.auth.signOut();  // Supabase clears its localStorage + invalidates server-side
+  set({ session: null, user: null, token: '', refreshToken: undefined });
+}
+```
 4. **Mutating store state directly**: Always use `set()` -- never mutate `get().someList.push(item)`.
 5. **Oversized persist payload**: Use `partialize` to exclude non-serializable data (functions, Sets, Maps) and strip ephemeral fields.

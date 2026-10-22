@@ -1,0 +1,19 @@
+# Dependencies / build artifacts
+node_modules/
+dist/
+coverage/
+.turbo/
+.vitest/
+
+# Local / machine-specific settings (convention: *.local.* stays out of the repo)
+.claude/settings.local.json
+.cursor/settings.local.json
+.opencode/settings.local.json
+
+# macOS
+.DS_Store
+
+# Environment variables (contains secrets)
+.env
+.env.local
+*.env

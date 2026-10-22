@@ -1,0 +1,9 @@
+{"file": ".trellis/spec/portal-web/frontend/index.md", "reason": "portal-web frontend conventions"}
+{"file": ".trellis/spec/iam-web/frontend/index.md", "reason": "iam-web frontend conventions"}
+{"file": ".trellis/spec/types/backend/index.md", "reason": "type and schema conventions"}
+{"file": ".trellis/spec/ui/frontend/index.md", "reason": "UI component conventions"}
+{"file": ".trellis/spec/node-utils/backend/index.md", "reason": "node-utils tooling patterns"}
+{"file": ".trellis/tasks/10-22-supabase-platform-architecture/research/supabase-gateway.md", "reason": "Supabase Kong gateway research"}
+{"file": ".trellis/tasks/10-22-supabase-platform-architecture/research/supabase-auth-frontend.md", "reason": "Supabase Auth frontend integration"}
+{"file": ".trellis/tasks/10-22-supabase-platform-architecture/research/current-auth-architecture.md", "reason": "Current auth architecture audit"}
+{"file": ".trellis/tasks/10-22-supabase-platform-architecture/research/qiankun-subapp-registration.md", "reason": "Qiankun sub-app registration patterns"}

@@ -1,0 +1,493 @@
+{
+  "common": {
+    "back": "返回",
+    "cancel": "取消",
+    "close": "关闭",
+    "confirm": "确定",
+    "noData": "暂无数据",
+    "refresh": "刷新",
+    "http": {
+      "biz10001": "用户名或密码错误",
+      "biz10002": "账号已禁用",
+      "sessionExpired": "登录状态已失效，请重新登录",
+      "sessionTimeout": "会话已超时，请重新登录",
+      "refreshFailed": "刷新失败",
+      "requestFailed": "请求失败",
+      "networkError": "网络连接异常，请检查网络",
+      "forbidden": "无权限访问",
+      "serverError": "服务器错误，请稍后重试"
+    }
+  },
+  "session": {
+    "platformAdmin": "平台管理",
+    "tenantAdmin": "租户管理",
+    "platformAdminEnd": "平台管理端",
+    "tenantInfo": "租户信息",
+    "projectSpaces": "项目空间",
+    "switch": "切换",
+    "switchTenant": "切换租户",
+    "all": "全部",
+    "default": "默认",
+    "manage": "管理",
+    "manageTip": "进入管理端",
+    "emptyOrg": "当前未加入任何项目空间",
+    "copyTenantName": "复制租户名称",
+    "copyTenantCode": "复制租户编码",
+    "copySuccess": "复制成功",
+    "searchTenantPlaceholder": "搜索名称",
+    "noMatchedTenant": "暂无匹配的租户",
+    "orgListTitle": "项目空间列表",
+    "orgListTip": "展示当前租户下具备权限的项目空间列表，点击可进入项目空间进行查看和使用",
+    "orgSearchPlaceholder": "项目空间名称/描述",
+    "orgEmpty": "当前未加入任何项目空间，请联系管理员开通",
+    "tagPlatform": "平",
+    "tagTenant": "租",
+    "tagOrg": "项"
+  },
+  "auth": {
+    "validation": {
+      "usernameRequired": "请输入用户名",
+      "passwordRequired": "请输入密码",
+      "passwordMismatch": "两次输入的密码不一致",
+      "agreeRequired": "请同意隐私政策和条款",
+      "codeRequired": "请输入{{length}}位验证码",
+      "phoneRequired": "请输入手机号",
+      "phoneInvalid": "手机号码格式错误",
+      "emailRequired": "请输入邮箱",
+      "emailInvalid": "你输入的邮箱格式不正确"
+    },
+    "login": {
+      "title": "欢迎回来",
+      "subTitle": "请输入您的账户信息以开始管理您的项目",
+      "submit": "登录",
+      "rememberMe": "记住账号",
+      "forgotPassword": "忘记密码?",
+      "phoneLogin": "手机号登录",
+      "qrcodeLogin": "扫码登录",
+      "noAccount": "还没有账号?",
+      "createAccount": "创建账号"
+    },
+    "register": {
+      "title": "创建账号",
+      "subTitle": "让您的应用程序管理变得简单而有趣",
+      "passwordHint": "使用 8 个或更多字符，混合字母、数字和符号",
+      "confirmPasswordPlaceholder": "请再次输入密码",
+      "agree": "我同意",
+      "agreement": "隐私政策 & 条款",
+      "submit": "注册",
+      "hasAccount": "已经有账号了?",
+      "goLogin": "去登录"
+    },
+    "codeLogin": {
+      "title": "欢迎回来",
+      "subTitle": "请输入您的手机号码以开始管理您的项目",
+      "codePlaceholder": "请输入验证码",
+      "getCode": "获取验证码",
+      "resendIn": "{{count}}秒后重新获取",
+      "submit": "登录"
+    },
+    "forgetPassword": {
+      "title": "忘记密码",
+      "subTitle": "输入您的电子邮件，我们将向您发送重置密码的连接",
+      "submit": "发送重置链接"
+    },
+    "qrcodeLogin": {
+      "title": "欢迎回来",
+      "subTitle": "请用手机扫描二维码登录",
+      "description": "扫码后点击 '确认'，即可完成登录"
+    },
+    "thirdParty": {
+      "title": "其他登录方式",
+      "wechat": "微信登录",
+      "qq": "QQ 登录",
+      "github": "GitHub 登录",
+      "google": "Google 登录"
+    },
+    "page": {
+      "loginTitle": "统一管理平台",
+      "loginDescription": "主机基座 + 子应用微前端门户",
+      "sloganTitle": "开箱即用的中后台管理系统",
+      "sloganDescription": "丰富的组件库 · 多种布局模式 · 主题定制"
+    },
+    "loginSuccess": "登录成功",
+    "loginFailed": "登录失败",
+    "layout": {
+      "panelLeft": "靠左",
+      "panelCenter": "居中",
+      "panelRight": "靠右"
+    }
+  },
+  "preferences": {
+    "title": "偏好设置",
+    "subTitle": "个性化系统配置",
+    "reset": "重置偏好设置",
+    "pinNav": "固定偏好设置导航栏",
+    "unpinNav": "取消固定偏好设置导航栏",
+    "copyPreferences": "复制偏好设置",
+    "clearCacheAndLogout": "清空缓存并登出",
+    "tabs": {
+      "appearance": "外观",
+      "layout": "布局",
+      "shortcutKey": "快捷键",
+      "general": "通用"
+    },
+    "blocks": {
+      "theme": "主题",
+      "builtinTheme": "内置主题",
+      "radius": "圆角",
+      "fontSize": "字体大小",
+      "other": "其他",
+      "layout": "布局",
+      "contentArea": "内容区域",
+      "sidebar": "侧边栏",
+      "header": "顶部栏",
+      "navigationMenu": "导航菜单",
+      "breadcrumb": "面包屑",
+      "tabbar": "标签栏",
+      "widgets": "界面控件",
+      "footer": "底部栏",
+      "copyright": "版权信息",
+      "globalShortcuts": "全局快捷键",
+      "general": "通用",
+      "animation": "动画"
+    },
+    "theme": {
+      "light": "浅色",
+      "dark": "深色",
+      "auto": "跟随系统",
+      "grayMode": "灰色模式",
+      "colorWeakMode": "色弱模式",
+      "semiDarkSidebar": "深色侧边栏",
+      "semiDarkSidebarTip": "开启后侧边栏将使用深色主题",
+      "semiDarkSub": "深色子菜单",
+      "semiDarkSubTip": "开启后子菜单将使用深色主题",
+      "semiDarkHeader": "深色顶栏",
+      "fontSizeLabel": "字体大小",
+      "builtinNames": {
+        "default": "默认",
+        "violet": "紫罗兰",
+        "pink": "粉色",
+        "yellow": "黄色",
+        "skyBlue": "天蓝",
+        "green": "绿色",
+        "zinc": "锌色",
+        "deepGreen": "深绿",
+        "deepBlue": "深蓝",
+        "orange": "橙色",
+        "rose": "玫瑰",
+        "neutral": "中性",
+        "slate": "石板",
+        "gray": "灰色",
+        "custom": "自定义"
+      }
+    },
+    "layoutMode": {
+      "sidebar-nav": "垂直",
+      "sidebar-mixed-nav": "双列",
+      "header-nav": "水平",
+      "header-sidebar-nav": "顶部+侧边",
+      "mixed-nav": "混合",
+      "header-mixed-nav": "顶部双列",
+      "full-content": "全屏内容",
+      "tips": {
+        "sidebar-nav": "左侧导航菜单，简洁直观",
+        "sidebar-mixed-nav": "左侧双列导航，主菜单+子菜单",
+        "header-nav": "顶部导航菜单",
+        "header-sidebar-nav": "顶部主导航+侧边子导航",
+        "mixed-nav": "顶部导航+侧边导航混合",
+        "header-mixed-nav": "顶部主导航+双列子菜单",
+        "full-content": "不显示导航，全屏内容区域"
+      }
+    },
+    "content": {
+      "wide": "宽松",
+      "compact": "紧凑"
+    },
+    "sidebar": {
+      "enable": "显示侧边栏",
+      "draggable": "可拖拽调整宽度",
+      "collapsed": "折叠侧边栏",
+      "expandOnHover": "悬停展开",
+      "expandOnHoverTip": "鼠标悬停时自动展开侧边栏",
+      "collapsedShowTitle": "折叠时显示标题",
+      "autoActivateChild": "自动激活子菜单",
+      "autoActivateChildTip": "自动激活子菜单",
+      "buttonsLabel": "侧边栏按钮",
+      "buttons": {
+        "collapsed": "折叠按钮",
+        "fixed": "固定按钮"
+      },
+      "width": "侧边栏宽度"
+    },
+    "header": {
+      "enable": "显示顶部栏",
+      "mode": "模式",
+      "menuAlign": "菜单对齐",
+      "modes": {
+        "static": "静态",
+        "fixed": "固定",
+        "auto": "自动",
+        "auto-scroll": "自动滚动"
+      },
+      "aligns": {
+        "start": "左对齐",
+        "center": "居中",
+        "end": "右对齐"
+      }
+    },
+    "navigation": {
+      "styleLabel": "菜单风格",
+      "styles": {
+        "rounded": "圆角",
+        "plain": "简约"
+      },
+      "split": "拆分菜单",
+      "splitTip": "混合模式下是否拆分菜单",
+      "accordion": "手风琴模式"
+    },
+    "breadcrumb": {
+      "enable": "显示面包屑",
+      "hideOnlyOne": "仅一项时隐藏",
+      "showIcon": "显示图标",
+      "showHome": "显示首页",
+      "styleLabel": "面包屑风格",
+      "styles": {
+        "normal": "常规",
+        "background": "背景"
+      }
+    },
+    "tabbar": {
+      "enable": "显示标签栏",
+      "persist": "持久化标签",
+      "visitHistory": "浏览历史",
+      "visitHistoryTip": "记录标签页的浏览历史",
+      "maxCount": "最大标签数",
+      "maxCountTip": "标签页最大数量，0 为无限制",
+      "draggable": "可拖拽排序",
+      "wheelable": "滚轮切换",
+      "wheelableTip": "鼠标滚轮切换标签页",
+      "middleClickToClose": "中键关闭",
+      "showIcon": "显示图标",
+      "showMore": "显示更多",
+      "showMaximize": "显示最大化",
+      "styleLabel": "标签风格",
+      "styles": {
+        "chrome": "Chrome 风格",
+        "plain": "简约",
+        "card": "卡片",
+        "brisk": "灵动"
+      }
+    },
+    "widget": {
+      "globalSearch": "全局搜索",
+      "fullscreen": "全屏",
+      "languageToggle": "语言切换",
+      "notification": "通知",
+      "themeToggle": "主题切换",
+      "sidebarToggle": "侧边栏切换",
+      "lockScreen": "锁屏",
+      "refresh": "刷新",
+      "timezone": "时区",
+      "buttonPosition": "偏好设置按钮位置",
+      "positions": {
+        "auto": "自动",
+        "header": "顶栏",
+        "fixed": "固定",
+        "userDropdown": "用户下拉"
+      }
+    },
+    "footer": {
+      "enable": "启用底部栏",
+      "fixed": "固定底部"
+    },
+    "copyright": {
+      "enable": "启用版权",
+      "companyName": "公司名称",
+      "companySiteLink": "公司链接",
+      "date": "日期",
+      "icp": "ICP 备案号",
+      "icpLink": "ICP 链接"
+    },
+    "shortcutKeys": {
+      "enable": "启用快捷键",
+      "globalSearch": "全局搜索",
+      "lockScreen": "锁屏",
+      "logout": "退出登录"
+    },
+    "general": {
+      "language": "语言",
+      "timezone": "时区",
+      "dynamicTitle": "动态标题",
+      "watermark": "水印",
+      "watermarkContent": "水印内容",
+      "checkUpdates": "检查更新",
+      "enableCopyPreferences": "允许复制偏好设置"
+    },
+    "animation": {
+      "enable": "启用动画",
+      "progress": "进度条",
+      "loading": "加载动画",
+      "effect": "动画效果",
+      "effects": {
+        "fadeSlide": "淡入滑动",
+        "fade": "淡入",
+        "zoom": "缩放"
+      }
+    },
+    "custom": {
+      "empty": "暂无自定义配置",
+      "title": "自定义配置（{{count}} 项）"
+    }
+  },
+  "demo": {
+    "button": {
+      "title": "按钮",
+      "description": "daisyUI 按钮类名示例（btn/btn-primary/outline 等）",
+      "basic": "基础按钮",
+      "default": "默认",
+      "primary": "主要",
+      "secondary": "次要",
+      "accent": "强调",
+      "outline": "描边",
+      "ghost": "幽灵",
+      "link": "链接",
+      "permissionDemo": "权限控制演示（Permission 组件）",
+      "view": "查看（有权限）",
+      "deleteHidden": "删除（无权限·hide）",
+      "deleteDisabled": "删除（无权限·disabled）",
+      "permissionHint": "mock 权限集只含 demo:button:view —— 「删除(hide)」应不可见，「删除(disabled)」应禁用。"
+    },
+    "table": {
+      "title": "表格",
+      "username": "用户名",
+      "nickname": "昵称",
+      "status": "状态",
+      "enabled": "启用",
+      "disabled": "禁用"
+    }
+  },
+  "pages": {
+    "dashboard": {
+      "placeholder": "仪表盘占位页（C3 接入真实内容/子应用）"
+    },
+    "profile": {
+      "basicTitle": "基本资料",
+      "basicPlaceholder": "用户下拉框多级菜单占位页（/profile/basic）",
+      "securityTitle": "安全设置",
+      "securityPlaceholder": "用户下拉框多级菜单占位页（/profile/security）"
+    },
+    "forbidden": "无权限访问该页面",
+    "notFound": "页面不存在",
+    "unregisteredComponent": "未注册的本地页面组件："
+  },
+  "widgets": {
+    "preferencesButton": "偏好设置",
+    "backTop": "回到顶部",
+    "languageToggle": "切换语言",
+    "layoutToggle": "布局",
+    "tabbar": {
+      "contextMenu": {
+        "close": "关闭",
+        "pin": "固定",
+        "unpin": "取消固定",
+        "maximize": "最大化",
+        "restore": "还原",
+        "reload": "重新加载",
+        "openInNewWindow": "在新窗口打开",
+        "closeLeft": "关闭左侧",
+        "closeRight": "关闭右侧",
+        "closeOther": "关闭其他",
+        "closeAll": "关闭所有"
+      }
+    },
+    "timezone": {
+      "title": "设置时区"
+    },
+    "header": {
+      "fullscreen": "全屏",
+      "exitFullscreen": "退出全屏",
+      "reload": "重新加载"
+    },
+    "notification": {
+      "title": "通知",
+      "markAllRead": "全部标记为已读",
+      "markRead": "标记为已读",
+      "remove": "删除",
+      "clear": "清除通知",
+      "viewAll": "查看全部"
+    },
+    "lockScreen": {
+      "clickToUnlock": "点击解锁",
+      "passwordPlaceholder": "请输入锁屏密码",
+      "passwordError": "密码错误",
+      "enter": "进入",
+      "backToLogin": "返回登录",
+      "title": "锁定屏幕",
+      "unlock": "解锁"
+    },
+    "search": {
+      "placeholder": "搜索菜单，支持标题、URL模糊查询",
+      "search": "搜索",
+      "select": "选择",
+      "toggle": "切换",
+      "notFound": "没有找到",
+      "noHistory": "暂无搜索历史",
+      "recent": "最近搜索"
+    },
+    "checkUpdates": {
+      "title": "发现新版本",
+      "description": "系统检测到新版本，请刷新页面以获取最新内容。",
+      "refresh": "刷新"
+    },
+    "userDropdown": {
+      "logout": "退出登录",
+      "notice": "提示",
+      "logoutConfirm": "确认要退出登录吗？",
+      "changePassword": "修改密码"
+    },
+    "changePassword": {
+      "title": "修改密码",
+      "subtitle": "定期更换密码，可提升账号安全性",
+      "oldLabel": "原密码",
+      "oldPlaceholder": "请输入原密码",
+      "newLabel": "新密码",
+      "newPlaceholder": "请输入新密码",
+      "newPasswordHint": "{{min}}-{{max}} 位，且至少覆盖下列 {{required}} 类字符",
+      "charClasses": {
+        "lower": "小写字母",
+        "upper": "大写字母",
+        "digit": "数字",
+        "symbol": "特殊符号"
+      },
+      "lengthError": "密码长度需为 {{min}}-{{max}} 位",
+      "charClassError": "密码需至少包含大写字母、小写字母、数字、特殊符号中的 {{required}} 类",
+      "confirmLabel": "确认密码",
+      "confirmPlaceholder": "请再次输入新密码",
+      "showPassword": "显示密码",
+      "hidePassword": "隐藏密码",
+      "required": "此项为必填项",
+      "sameAsOld": "新密码与原密码一致。",
+      "mismatch": "新密码与确认密码不一致！",
+      "success": "修改成功"
+    }
+  },
+  "menus": {
+    "dashboard": "首页",
+    "components": {
+      "title": "组件示例",
+      "button": "按钮",
+      "table": "表格"
+    },
+    "system": {
+      "title": "系统管理",
+      "users": "用户管理",
+      "menus": "菜单管理",
+      "roles": "角色管理"
+    },
+    "profile": {
+      "title": "个人中心",
+      "basic": "基本资料",
+      "security": "安全设置"
+    }
+  }
+}

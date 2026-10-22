@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <script src="/config.js"></script>
+    <title>统一管理平台</title>
+  </head>
+  <body>
+    <div id="root">
+      <div
+        id="app-loading"
+        style="
+          position: fixed;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-direction: column;
+          gap: 14px;
+          font-family:
+            system-ui,
+            -apple-system,
+            sans-serif;
+          background: #f8f9fc;
+        "
+      >
+        <div
+          style="
+            box-sizing: border-box;
+            width: 26px;
+            height: 26px;
+            border: 3px solid rgba(0, 0, 0, 0.08);
+            border-top-color: hsl(212 100% 45%);
+            border-radius: 50%;
+            animation: app-spin 0.8s linear infinite;
+          "
+        ></div>
+        <span
+          id="app-loading-text"
+          style="color: rgba(0, 0, 0, 0.4); font-size: 13px"
+          >加载中…</span
+        >
+      </div>
+      <style>
+        @keyframes app-spin {
+          to {
+            transform: rotate(360deg);
+          }
+        }
+      </style>
+    </div>
+
+    <script>
+      (function () {
+        var LOADING_TEXT = { zh: '加载中…', en: 'Loading…' };
+        var cfg = window.__APP_CONFIG__ || {};
+        var code = '';
+        try {
+          var marker = localStorage.getItem('portal_user_locale');
+          var prefs = localStorage.getItem('admin-preferences');
+          var prefsLocale = '';
+          if (prefs) {
+            var state = JSON.parse(prefs).state;
+            prefsLocale = (state && state.app && state.app.locale) || '';
+          }
+          var app = (cfg.preferences && cfg.preferences.app) || {};
+          var cfgLocale = app.locale || '';
+
+          code = marker ? marker || prefsLocale : cfgLocale || prefsLocale;
+        } catch (e) {}
+
+        var isZh =
+          String(code || 'zh-CN')
+            .replace(/_/g, '-')
+            .toLowerCase()
+            .indexOf('zh') === 0;
+
+        var sys = cfg.system || {};
+        var name = isZh ? sys.name : sys.nameEn || sys.name;
+        if (name) document.title = name;
+        document.documentElement.lang = isZh ? 'zh-CN' : 'en-US';
+
+        var text = document.getElementById('app-loading-text');
+        if (text) text.textContent = isZh ? LOADING_TEXT.zh : LOADING_TEXT.en;
+      })();
+    </script>
+
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

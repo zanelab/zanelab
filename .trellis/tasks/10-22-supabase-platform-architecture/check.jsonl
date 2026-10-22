@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/portal-web/frontend/index.md", "reason": "portal-web quality standards"}
+{"file": ".trellis/spec/ui/frontend/index.md", "reason": "UI quality standards"}
+{"file": ".trellis/spec/types/backend/index.md", "reason": "type safety standards"}
+{"file": ".trellis/spec/tsconfig/frontend/index.md", "reason": "TypeScript config conventions"}

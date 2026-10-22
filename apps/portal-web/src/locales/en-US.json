@@ -1,0 +1,493 @@
+{
+  "common": {
+    "back": "Back",
+    "cancel": "Cancel",
+    "close": "Close",
+    "confirm": "OK",
+    "noData": "No data",
+    "refresh": "Refresh",
+    "http": {
+      "biz10001": "Incorrect username or password",
+      "biz10002": "Account disabled",
+      "sessionExpired": "Your session has expired. Please sign in again",
+      "sessionTimeout": "Session timed out. Please sign in again",
+      "refreshFailed": "Token refresh failed",
+      "requestFailed": "Request failed",
+      "networkError": "Network error, please check your connection",
+      "forbidden": "No permission to access",
+      "serverError": "Server error, please try again later"
+    }
+  },
+  "session": {
+    "platformAdmin": "Platform Admin",
+    "tenantAdmin": "Tenant Admin",
+    "platformAdminEnd": "Platform Admin",
+    "tenantInfo": "Tenant",
+    "projectSpaces": "Project Spaces",
+    "switch": "Switch",
+    "switchTenant": "Switch tenant",
+    "all": "All",
+    "default": "Default",
+    "manage": "Manage",
+    "manageTip": "Enter admin portal",
+    "emptyOrg": "No project space joined yet",
+    "copyTenantName": "Copy tenant name",
+    "copyTenantCode": "Copy tenant code",
+    "copySuccess": "Copied",
+    "searchTenantPlaceholder": "Search by name",
+    "noMatchedTenant": "No matching tenant",
+    "orgListTitle": "Project Space List",
+    "orgListTip": "Lists the project spaces you have access to under the current tenant. Click one to enter.",
+    "orgSearchPlaceholder": "Project space name / description",
+    "orgEmpty": "You have not joined any project space. Please contact an administrator.",
+    "tagPlatform": "P",
+    "tagTenant": "T",
+    "tagOrg": "S"
+  },
+  "auth": {
+    "validation": {
+      "usernameRequired": "Please enter your username",
+      "passwordRequired": "Please enter your password",
+      "passwordMismatch": "The two passwords do not match",
+      "agreeRequired": "Please agree to the privacy policy and terms",
+      "codeRequired": "Please enter a {{length}}-digit code",
+      "phoneRequired": "Please enter your phone number",
+      "phoneInvalid": "Invalid phone number",
+      "emailRequired": "Please enter your email",
+      "emailInvalid": "The email address is invalid"
+    },
+    "login": {
+      "title": "Welcome back",
+      "subTitle": "Enter your account information to start managing your project",
+      "submit": "Sign in",
+      "rememberMe": "Remember me",
+      "forgotPassword": "Forgot password?",
+      "phoneLogin": "Phone sign-in",
+      "qrcodeLogin": "QR code sign-in",
+      "noAccount": "Don't have an account?",
+      "createAccount": "Create account"
+    },
+    "register": {
+      "title": "Create account 🚀",
+      "subTitle": "Making your app management simple and fun",
+      "passwordHint": "Use 8 or more characters with a mix of letters, numbers and symbols",
+      "confirmPasswordPlaceholder": "Please re-enter your password",
+      "agree": "I agree to",
+      "agreement": "Privacy Policy & Terms",
+      "submit": "Sign up",
+      "hasAccount": "Already have an account?",
+      "goLogin": "Sign in"
+    },
+    "codeLogin": {
+      "title": "Welcome back 📲",
+      "subTitle": "Enter your phone number to start managing your project",
+      "codePlaceholder": "Please enter the code",
+      "getCode": "Get code",
+      "resendIn": "Resend in {{count}}s",
+      "submit": "Sign in"
+    },
+    "forgetPassword": {
+      "title": "Forgot password 🤦🏻‍♂️",
+      "subTitle": "Enter your email and we will send you a password reset link",
+      "submit": "Send reset link"
+    },
+    "qrcodeLogin": {
+      "title": "Welcome back 📱",
+      "subTitle": "Scan the QR code with your phone to sign in",
+      "description": "After scanning, tap 'Confirm' to complete sign-in"
+    },
+    "thirdParty": {
+      "title": "Other sign-in options",
+      "wechat": "WeChat",
+      "qq": "QQ",
+      "github": "GitHub",
+      "google": "Google"
+    },
+    "page": {
+      "loginTitle": "Unified Management Platform",
+      "loginDescription": "Host shell + micro-frontend portal",
+      "sloganTitle": "Out-of-the-box admin system",
+      "sloganDescription": "Rich components · Multiple layouts · Theme customization"
+    },
+    "loginSuccess": "Signed in successfully",
+    "loginFailed": "Sign-in failed",
+    "layout": {
+      "panelLeft": "Left",
+      "panelCenter": "Center",
+      "panelRight": "Right"
+    }
+  },
+  "preferences": {
+    "title": "Preferences",
+    "subTitle": "Personalize system settings",
+    "reset": "Reset preferences",
+    "pinNav": "Pin preferences nav",
+    "unpinNav": "Unpin preferences nav",
+    "copyPreferences": "Copy preferences",
+    "clearCacheAndLogout": "Clear cache and log out",
+    "tabs": {
+      "appearance": "Appearance",
+      "layout": "Layout",
+      "shortcutKey": "Shortcuts",
+      "general": "General"
+    },
+    "blocks": {
+      "theme": "Theme",
+      "builtinTheme": "Built-in theme",
+      "radius": "Radius",
+      "fontSize": "Font size",
+      "other": "Other",
+      "layout": "Layout",
+      "contentArea": "Content area",
+      "sidebar": "Sidebar",
+      "header": "Header",
+      "navigationMenu": "Navigation menu",
+      "breadcrumb": "Breadcrumb",
+      "tabbar": "Tab bar",
+      "widgets": "Widgets",
+      "footer": "Footer",
+      "copyright": "Copyright",
+      "globalShortcuts": "Global shortcuts",
+      "general": "General",
+      "animation": "Animation"
+    },
+    "theme": {
+      "light": "Light",
+      "dark": "Dark",
+      "auto": "Follow system",
+      "grayMode": "Gray mode",
+      "colorWeakMode": "Color-weak mode",
+      "semiDarkSidebar": "Dark sidebar",
+      "semiDarkSidebarTip": "The sidebar will use a dark theme when enabled",
+      "semiDarkSub": "Dark sub-menu",
+      "semiDarkSubTip": "The sub-menu will use a dark theme when enabled",
+      "semiDarkHeader": "Dark header",
+      "fontSizeLabel": "Font size",
+      "builtinNames": {
+        "default": "Default",
+        "violet": "Violet",
+        "pink": "Pink",
+        "yellow": "Yellow",
+        "skyBlue": "Sky Blue",
+        "green": "Green",
+        "zinc": "Zinc",
+        "deepGreen": "Deep Green",
+        "deepBlue": "Deep Blue",
+        "orange": "Orange",
+        "rose": "Rose",
+        "neutral": "Neutral",
+        "slate": "Slate",
+        "gray": "Gray",
+        "custom": "Custom"
+      }
+    },
+    "layoutMode": {
+      "sidebar-nav": "Vertical",
+      "sidebar-mixed-nav": "Two-column",
+      "header-nav": "Horizontal",
+      "header-sidebar-nav": "Header + sidebar",
+      "mixed-nav": "Mixed",
+      "header-mixed-nav": "Header two-column",
+      "full-content": "Full content",
+      "tips": {
+        "sidebar-nav": "Left navigation menu, clean and intuitive",
+        "sidebar-mixed-nav": "Left two-column navigation, main menu + sub-menu",
+        "header-nav": "Top navigation menu",
+        "header-sidebar-nav": "Top main navigation + side sub-navigation",
+        "mixed-nav": "Top navigation + side navigation mixed",
+        "header-mixed-nav": "Top main navigation + two-column sub-menu",
+        "full-content": "No navigation, full-screen content area"
+      }
+    },
+    "content": {
+      "wide": "Wide",
+      "compact": "Compact"
+    },
+    "sidebar": {
+      "enable": "Show sidebar",
+      "draggable": "Draggable width",
+      "collapsed": "Collapse sidebar",
+      "expandOnHover": "Expand on hover",
+      "expandOnHoverTip": "Automatically expand sidebar on hover",
+      "collapsedShowTitle": "Show title when collapsed",
+      "autoActivateChild": "Auto-activate sub-menu",
+      "autoActivateChildTip": "Automatically activate sub-menus",
+      "buttonsLabel": "Sidebar buttons",
+      "buttons": {
+        "collapsed": "Collapse button",
+        "fixed": "Fixed button"
+      },
+      "width": "Sidebar width"
+    },
+    "header": {
+      "enable": "Show header",
+      "mode": "Mode",
+      "menuAlign": "Menu alignment",
+      "modes": {
+        "static": "Static",
+        "fixed": "Fixed",
+        "auto": "Auto",
+        "auto-scroll": "Auto scroll"
+      },
+      "aligns": {
+        "start": "Left",
+        "center": "Center",
+        "end": "Right"
+      }
+    },
+    "navigation": {
+      "styleLabel": "Menu style",
+      "styles": {
+        "rounded": "Rounded",
+        "plain": "Plain"
+      },
+      "split": "Split menu",
+      "splitTip": "Whether to split menus in mixed mode",
+      "accordion": "Accordion mode"
+    },
+    "breadcrumb": {
+      "enable": "Show breadcrumb",
+      "hideOnlyOne": "Hide when only one",
+      "showIcon": "Show icon",
+      "showHome": "Show home",
+      "styleLabel": "Breadcrumb style",
+      "styles": {
+        "normal": "Normal",
+        "background": "Background"
+      }
+    },
+    "tabbar": {
+      "enable": "Show tab bar",
+      "persist": "Persist tabs",
+      "visitHistory": "Visit history",
+      "visitHistoryTip": "Record tab browsing history",
+      "maxCount": "Max tabs",
+      "maxCountTip": "Maximum number of tabs, 0 for unlimited",
+      "draggable": "Draggable",
+      "wheelable": "Wheel switch",
+      "wheelableTip": "Switch tabs with mouse wheel",
+      "middleClickToClose": "Middle-click to close",
+      "showIcon": "Show icon",
+      "showMore": "Show more",
+      "showMaximize": "Show maximize",
+      "styleLabel": "Tab style",
+      "styles": {
+        "chrome": "Chrome style",
+        "plain": "Plain",
+        "card": "Card",
+        "brisk": "Brisk"
+      }
+    },
+    "widget": {
+      "globalSearch": "Global search",
+      "fullscreen": "Fullscreen",
+      "languageToggle": "Language switch",
+      "notification": "Notification",
+      "themeToggle": "Theme switch",
+      "sidebarToggle": "Sidebar toggle",
+      "lockScreen": "Lock screen",
+      "refresh": "Refresh",
+      "timezone": "Timezone",
+      "buttonPosition": "Preferences button position",
+      "positions": {
+        "auto": "Auto",
+        "header": "Header",
+        "fixed": "Fixed",
+        "userDropdown": "User dropdown"
+      }
+    },
+    "footer": {
+      "enable": "Enable footer",
+      "fixed": "Fixed footer"
+    },
+    "copyright": {
+      "enable": "Enable copyright",
+      "companyName": "Company name",
+      "companySiteLink": "Company link",
+      "date": "Date",
+      "icp": "ICP number",
+      "icpLink": "ICP link"
+    },
+    "shortcutKeys": {
+      "enable": "Enable shortcuts",
+      "globalSearch": "Global search",
+      "lockScreen": "Lock screen",
+      "logout": "Log out"
+    },
+    "general": {
+      "language": "Language",
+      "timezone": "Timezone",
+      "dynamicTitle": "Dynamic title",
+      "watermark": "Watermark",
+      "watermarkContent": "Watermark content",
+      "checkUpdates": "Check updates",
+      "enableCopyPreferences": "Allow copying preferences"
+    },
+    "animation": {
+      "enable": "Enable animation",
+      "progress": "Progress bar",
+      "loading": "Loading animation",
+      "effect": "Animation effect",
+      "effects": {
+        "fadeSlide": "Fade slide",
+        "fade": "Fade",
+        "zoom": "Zoom"
+      }
+    },
+    "custom": {
+      "empty": "No custom configuration",
+      "title": "Custom configuration ({{count}} items)"
+    }
+  },
+  "demo": {
+    "button": {
+      "title": "Button",
+      "description": "daisyUI button class examples (btn/btn-primary/outline etc.)",
+      "basic": "Basic buttons",
+      "default": "Default",
+      "primary": "Primary",
+      "secondary": "Secondary",
+      "accent": "Accent",
+      "outline": "Outline",
+      "ghost": "Ghost",
+      "link": "Link",
+      "permissionDemo": "Permission control demo (Permission component)",
+      "view": "View (permitted)",
+      "deleteHidden": "Delete (no permission · hide)",
+      "deleteDisabled": "Delete (no permission · disabled)",
+      "permissionHint": "The mock permission set only contains demo:button:view — 'Delete (hide)' should be invisible and 'Delete (disabled)' should be disabled."
+    },
+    "table": {
+      "title": "Table",
+      "username": "Username",
+      "nickname": "Nickname",
+      "status": "Status",
+      "enabled": "Enabled",
+      "disabled": "Disabled"
+    }
+  },
+  "pages": {
+    "dashboard": {
+      "placeholder": "Dashboard placeholder (real content/sub-app lands in C3)"
+    },
+    "profile": {
+      "basicTitle": "Basic Profile",
+      "basicPlaceholder": "User-dropdown multi-level menu placeholder (/profile/basic)",
+      "securityTitle": "Security",
+      "securityPlaceholder": "User-dropdown multi-level menu placeholder (/profile/security)"
+    },
+    "forbidden": "No permission to access this page",
+    "notFound": "Page not found",
+    "unregisteredComponent": "Unregistered local page component: "
+  },
+  "widgets": {
+    "preferencesButton": "Preferences",
+    "backTop": "Back to top",
+    "languageToggle": "Switch language",
+    "layoutToggle": "Layout",
+    "tabbar": {
+      "contextMenu": {
+        "close": "Close",
+        "pin": "Pin",
+        "unpin": "Unpin",
+        "maximize": "Maximize",
+        "restore": "Restore",
+        "reload": "Reload",
+        "openInNewWindow": "Open in new window",
+        "closeLeft": "Close tabs to the left",
+        "closeRight": "Close tabs to the right",
+        "closeOther": "Close other tabs",
+        "closeAll": "Close all tabs"
+      }
+    },
+    "timezone": {
+      "title": "Set timezone"
+    },
+    "header": {
+      "fullscreen": "Fullscreen",
+      "exitFullscreen": "Exit fullscreen",
+      "reload": "Reload"
+    },
+    "notification": {
+      "title": "Notifications",
+      "markAllRead": "Mark all as read",
+      "markRead": "Mark as read",
+      "remove": "Delete",
+      "clear": "Clear notifications",
+      "viewAll": "View all"
+    },
+    "lockScreen": {
+      "clickToUnlock": "Click to unlock",
+      "passwordPlaceholder": "Enter lock screen password",
+      "passwordError": "Wrong password",
+      "enter": "Enter",
+      "backToLogin": "Back to login",
+      "title": "Lock screen",
+      "unlock": "Unlock"
+    },
+    "search": {
+      "placeholder": "Search menus by title or URL",
+      "search": "Search",
+      "select": "Select",
+      "toggle": "Navigate",
+      "notFound": "No results found for ",
+      "noHistory": "No search history",
+      "recent": "Recent searches"
+    },
+    "checkUpdates": {
+      "title": "New version found",
+      "description": "A new version has been detected. Refresh the page to get the latest content.",
+      "refresh": "Refresh"
+    },
+    "userDropdown": {
+      "logout": "Log out",
+      "notice": "Notice",
+      "logoutConfirm": "Are you sure you want to log out?",
+      "changePassword": "Change password"
+    },
+    "changePassword": {
+      "title": "Change Password",
+      "subtitle": "Changing your password regularly keeps your account secure",
+      "oldLabel": "Current password",
+      "oldPlaceholder": "Enter current password",
+      "newLabel": "New password",
+      "newPlaceholder": "Enter new password",
+      "newPasswordHint": "{{min}}-{{max}} characters, covering at least {{required}} of the character types below",
+      "charClasses": {
+        "lower": "Lowercase",
+        "upper": "Uppercase",
+        "digit": "Digits",
+        "symbol": "Symbols"
+      },
+      "lengthError": "Password length must be {{min}}-{{max}}",
+      "charClassError": "Password must include at least {{required}} of: uppercase, lowercase, digits, symbols",
+      "confirmLabel": "Confirm password",
+      "confirmPlaceholder": "Re-enter new password",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password",
+      "required": "This field is required",
+      "sameAsOld": "The new password is the same as the current one.",
+      "mismatch": "The new password and the confirmation do not match!",
+      "success": "Updated successfully"
+    }
+  },
+  "menus": {
+    "dashboard": "Dashboard",
+    "components": {
+      "title": "Components",
+      "button": "Button",
+      "table": "Table"
+    },
+    "system": {
+      "title": "System",
+      "users": "Users",
+      "menus": "Menus",
+      "roles": "Roles"
+    },
+    "profile": {
+      "title": "Profile",
+      "basic": "Basic Profile",
+      "security": "Security"
+    }
+  }
+}
