@@ -1,0 +1,35 @@
+{
+  "name": "zanelab",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "packageManager": "pnpm@10.16.1",
+  "scripts": {
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "prepare": "lefthook install",
+    "dev": "pnpm --filter @zanelab/portal-web dev",
+    "dev:iam": "pnpm --filter @zanelab/iam-web dev",
+    "build": "turbo run build",
+    "preview": "pnpm --filter @zanelab/portal-web preview",
+    "test": "turbo run test",
+    "test:watch": "pnpm --filter @zanelab/portal-web test:watch",
+    "lint": "turbo run lint",
+    "lint:css": "stylelint \"apps/*/src/**/*.css\" \"packages/*/src/**/*.css\"",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@changesets/cli": "^3.0.3",
+    "@commitlint/cli": "^19.8.1",
+    "@zanelab/commitlint-config": "workspace:*",
+    "@zanelab/prettier-config": "workspace:*",
+    "@zanelab/stylelint-config": "workspace:*",
+    "lefthook": "^1.13.6",
+    "oxlint": "^1.79.0",
+    "prettier": "^3.6.2",
+    "prettier-plugin-tailwindcss": "^0.7.1",
+    "stylelint": "^16.21.0",
+    "turbo": "^2.11.7"
+  }
+}

@@ -1,0 +1,28 @@
+# 构建上下文忽略（减小镜像体积、避免把本地依赖/产物打进层）
+.git
+.gitignore
+.github
+.idea
+.vscode
+.codebuddy
+.trellis
+node_modules
+**/node_modules
+# dist
+# **/dist
+coverage
+*.log
+npm-debug.log*
+pnpm-debug.log*
+.DS_Store
+Thumbs.db
+
+# 子应用（apps/iam，独立构建独立端口，不参与主应用镜像）
+apps/iam
+
+# 注意：根目录 nginx.conf 不能忽略——Dockerfile 需 COPY nginx.conf
+.dockerignore
+
+# 文档与测试配置
+docs
+*.md

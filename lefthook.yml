@@ -1,0 +1,20 @@
+# lefthook git hooks（pnpm install 后经 prepare script 自动激活）
+# 文档：https://lefthook.dev/configuration/
+
+commit-msg:
+  commands:
+    commitlint:
+      run: pnpm exec commitlint --config commitlint.config.ts --edit {1}
+
+pre-commit:
+  commands:
+    prettier-check:
+      # 只对 staged 的 js/ts/tsx/css/md/json 做 prettier --check（秒级）；
+      # 失败时提示跑 pnpm format，不在 hook 里改写文件。
+      # 不用 {staged_files} 内联展开：staged 文件多时命令行会超过
+      # Windows 长度上限（sh -c 报"命令行太长"，首次全量提交即踩坑），
+      # 改为从 git diff 取列表经 xargs 自动分批，命令行长度恒定。
+      # xargs -s 6000：pnpm exec 在 Windows 下还会再起一层 cmd，
+      # 实际上限低于 sh 的 8191（实测约 6900），留余量取 6000。
+      run: >
+        git diff --cached --name-only --diff-filter=ACMR | grep -E '\.(js|mjs|cjs|jsx|ts|mts|cts|tsx|css|scss|md|json|jsonc)$' | xargs -r -s 6000 pnpm exec prettier --check

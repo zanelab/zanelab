@@ -1,0 +1,11 @@
+{
+  "name": "@zanelab/tsconfig",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./base.json": "./base.json",
+    "./react-app.json": "./react-app.json",
+    "./node.json": "./node.json"
+  }
+}

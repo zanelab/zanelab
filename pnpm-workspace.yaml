@@ -1,0 +1,12 @@
+# pnpm 11 workspace/settings。allowBuilds 允许 esbuild/msw 运行 postinstall。
+# workspace 成员：apps/*（portal 与 iam）、packages/*（阶段 4+ 抽包）、
+# tooling/*（tsconfig 配置包）。
+# apps/iam 已迁入 workspace（原独立子应用目录改名而来），独立 lockfile 废除，
+# 依赖由根 lockfile 统一管理。
+allowBuilds:
+  esbuild: true
+  msw: true
+packages:
+  - apps/*
+  - packages/*
+  - tooling/*

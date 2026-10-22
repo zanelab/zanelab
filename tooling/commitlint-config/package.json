@@ -1,0 +1,20 @@
+{
+  "name": "@zanelab/commitlint-config",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./index.mjs"
+  },
+  "files": [
+    "index.mjs"
+  ],
+  "dependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "@zanelab/node-utils": "workspace:*",
+    "commitlint-plugin-function-rules": "^4.1.1",
+    "cz-git": "^1.11.2",
+    "czg": "^1.11.1"
+  }
+}
