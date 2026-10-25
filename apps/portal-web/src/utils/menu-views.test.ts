@@ -107,6 +107,7 @@ describe('findFirstNavigablePath（默认落点，09-14 切租户/空间兜底�
         activeRule: '/iam',
         props: {},
         prefetch: false,
+        public: false,
       },
     };
     const menus: MenuItem[] = [

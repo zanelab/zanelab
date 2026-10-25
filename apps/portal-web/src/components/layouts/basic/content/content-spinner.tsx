@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { useContentSpinner } from './use-content-spinner';
 
+/**
+ * 上游 Spinner 组件 — 1:1 port of shadcn-ui spinner.vue.
+ * spinning 时延迟 minLoadingTime 显示，backdrop-blur 覆盖层 +
+ * 跳跃方块 loader（loader-jump-ani / loader-shadow-ani CSS 移植）。
+ */
 function Spinner({
   spinning,
   className = '',
@@ -8,13 +13,15 @@ function Spinner({
 }: {
   spinning: boolean;
   className?: string;
-
+  /** 根元素 inline style —— 由 LayoutContentCore 的 overlay 槽位注入
+      （fixed + z-150 的可见矩形定位）；等价参考实现 中 reka-ui Slot
+      将 overlayStyle 合并到本组件根元素（Vue 属性透传到根 DOM） */
   style?: React.CSSProperties;
 }) {
   const [showSpinner, setShowSpinner] = useState(false);
   const [renderSpinner, setRenderSpinner] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-
+  /** 最小加载时间 */
   const minLoadingTime = 50;
 
   useEffect(() => {
@@ -93,9 +100,15 @@ function Spinner({
   );
 }
 
+/**
+ * LayoutContentSpinner — 1:1 port of basic/content/content-spinner.vue.
+ * 路由切换加载动画，由 useContentSpinner 驱动（transition.loading 偏好）。
+ */
 export function LayoutContentSpinner({
   style,
 }: {
+  /** 透传到 Spinner 根元素（Vue 属性透传的 React 等价 —— overlay 定位
+      依赖此转发，见 Spinner 的 style 注释） */
   style?: React.CSSProperties;
 }) {
   const { spinning } = useContentSpinner();

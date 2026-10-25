@@ -1,5 +1,9 @@
 import type { ReactNode } from 'react';
 
+/**
+ * LayoutFooter — business footer wrapper.
+ * Ported from packages/effects/layouts/src/basic/footer/footer.vue
+ */
 interface LayoutFooterProps {
   children?: ReactNode;
 }

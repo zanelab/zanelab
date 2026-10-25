@@ -2,11 +2,18 @@ import { useLayoutStore } from '../../../../stores/layout-store';
 import { switchThemeMode } from '../../../../utils/theme-transition';
 
 interface ThemeButtonProps {
+  /** isDark（等价于 defineModel<boolean>） */
   modelValue?: boolean;
 
+  /** 类型 */
   type?: 'icon' | 'normal';
 }
 
+/**
+ * ThemeButton — 1:1 port of widgets/theme-toggle/theme-button.vue.
+ * 太阳/月亮切换按钮；点击走 switchThemeMode（radial View Transition，见
+ * utils/theme-transition.ts——与 tooltip 三选一/偏好抽屉共用同一入口）。
+ */
 export function ThemeButton({
   modelValue: isDark,
   type = 'normal',
@@ -14,6 +21,7 @@ export function ThemeButton({
   const storeIsDark = useLayoutStore((s) => s.isDark);
   const dark = isDark ?? storeIsDark;
 
+  // 按钮展示"将切换到"的主题（reference: isDark ? 'light' : 'dark'）
   const theme = dark ? 'light' : 'dark';
 
   return (

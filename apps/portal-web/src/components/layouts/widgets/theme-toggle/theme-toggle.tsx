@@ -30,11 +30,17 @@ const PRESETS: Array<{
 ];
 
 interface ThemeToggleProps {
+  /** 悬停时以 tooltip 展示三个模式选项 */
   shouldOnHover?: boolean;
 
+  /** 根元素 class（等价参考实现 的 Vue class 透传，header 传 mt-0.5 mr-1） */
   className?: string;
 }
 
+/**
+ * ThemeToggle — 1:1 port of widgets/theme-toggle/theme-toggle.vue.
+ * ThemeButton（点击在 light/dark 间切换）+ hover tooltip 三选一（light/dark/auto）。
+ */
 export function ThemeToggle({
   shouldOnHover = false,
   className = '',
@@ -69,7 +75,11 @@ export function ThemeToggle({
                     ? 'bg-primary/10 text-primary border-primary/40'
                     : 'text-base-content/70 hover:bg-base-200',
                 ].join(' ')}
-                onClick={(e) => switchThemeMode(item.name, e)}
+                onClick={(e) =>
+                  // 统一走 switchThemeMode（radial View Transition）——此前此处
+                  // 直接写 store 硬切无过渡（与 ThemeButton 点击路径不一致）
+                  switchThemeMode(item.name, e)
+                }
               >
                 {item.icon}
               </button>

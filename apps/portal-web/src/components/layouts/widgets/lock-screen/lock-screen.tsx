@@ -3,12 +3,16 @@ import { useTranslation } from 'react-i18next';
 import { AppIcon } from '../../../icons/app-icon';
 
 interface LockScreenProps {
+  /** 头像 */
   avatar?: string;
 
+  /** 锁屏密码（等价于 accessStore.lockScreenPassword） */
   password?: string;
 
+  /** 返回登录 */
   onToLogin?: () => void;
 
+  /** 解锁成功 */
   onUnlock?: () => void;
 }
 
@@ -16,6 +20,10 @@ function pad(n: number) {
   return String(n).padStart(2, '0');
 }
 
+/**
+ * LockScreen — 1:1 port of widgets/lock-screen/lock-screen.vue.
+ * Clock face + keyhole unlock form; validates against the lock-screen password.
+ */
 export function LockScreen({
   avatar = '',
   password = '',
@@ -30,11 +38,13 @@ export function LockScreen({
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    // 实时时钟
     const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
   useEffect(() => {
+    // 锁定时禁止页面滚动（等价于 useScrollLock）
     const original = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => {
@@ -101,6 +111,7 @@ export function LockScreen({
         </div>
       </div>
 
+      {/* 解锁表单 */}
       {showUnlockForm ? (
         <div
           className="flex-center size-full"
@@ -112,6 +123,9 @@ export function LockScreen({
           }}
         >
           <div className="mb-10 flex w-[90%] max-w-75 flex-col items-center px-4">
+            {/* enter-x（reference lock-screen.vue:132-152 交错入场动画 ——
+             * avatar / 输入框容器 / 三个按钮各带 enter-x，index.css 的
+             * nth-child 交错规则作用于它们；底部时间块带 enter-x/enter-y） */}
             <div className="enter-x mb-6 size-20">
               {avatar ? (
                 <img

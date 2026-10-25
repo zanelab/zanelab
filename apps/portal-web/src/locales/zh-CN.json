@@ -18,32 +18,6 @@
       "serverError": "服务器错误，请稍后重试"
     }
   },
-  "session": {
-    "platformAdmin": "平台管理",
-    "tenantAdmin": "租户管理",
-    "platformAdminEnd": "平台管理端",
-    "tenantInfo": "租户信息",
-    "projectSpaces": "项目空间",
-    "switch": "切换",
-    "switchTenant": "切换租户",
-    "all": "全部",
-    "default": "默认",
-    "manage": "管理",
-    "manageTip": "进入管理端",
-    "emptyOrg": "当前未加入任何项目空间",
-    "copyTenantName": "复制租户名称",
-    "copyTenantCode": "复制租户编码",
-    "copySuccess": "复制成功",
-    "searchTenantPlaceholder": "搜索名称",
-    "noMatchedTenant": "暂无匹配的租户",
-    "orgListTitle": "项目空间列表",
-    "orgListTip": "展示当前租户下具备权限的项目空间列表，点击可进入项目空间进行查看和使用",
-    "orgSearchPlaceholder": "项目空间名称/描述",
-    "orgEmpty": "当前未加入任何项目空间，请联系管理员开通",
-    "tagPlatform": "平",
-    "tagTenant": "租",
-    "tagOrg": "项"
-  },
   "auth": {
     "validation": {
       "usernameRequired": "请输入用户名",
@@ -443,7 +417,8 @@
       "logout": "退出登录",
       "notice": "提示",
       "logoutConfirm": "确认要退出登录吗？",
-      "changePassword": "修改密码"
+      "changePassword": "修改密码",
+      "login": "登录"
     },
     "changePassword": {
       "title": "修改密码",
@@ -472,22 +447,12 @@
     }
   },
   "menus": {
-    "dashboard": "首页",
-    "components": {
-      "title": "组件示例",
-      "button": "按钮",
-      "table": "表格"
-    },
     "system": {
       "title": "系统管理",
       "users": "用户管理",
       "menus": "菜单管理",
       "roles": "角色管理"
     },
-    "profile": {
-      "title": "个人中心",
-      "basic": "基本资料",
-      "security": "安全设置"
-    }
+    "home": "首页"
   }
 }

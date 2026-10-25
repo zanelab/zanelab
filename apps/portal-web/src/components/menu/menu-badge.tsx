@@ -37,6 +37,8 @@ export function MenuBadge({
     ? variantsMap[badgeVariants] || badgeVariants
     : variantsMap.default;
 
+  // badgeStyle（reference menu-badge.vue:33-38）：badgeClass 是合法颜色时
+  // 以内联 backgroundColor 呈现（支持任意 CSS 颜色自定义徽章色）
   const badgeStyle: React.CSSProperties =
     badgeClass && isValidColor(badgeClass)
       ? { backgroundColor: badgeClass }

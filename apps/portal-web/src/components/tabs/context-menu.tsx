@@ -9,8 +9,10 @@ import type { IContextMenuItem } from './types';
 import { AppIcon } from '../icons/app-icon';
 
 interface ContextMenuProps {
+  /** 菜单项（接收 handlerData 返回菜单列表） */
   items: (data: any) => IContextMenuItem[];
 
+  /** 传递给菜单 handler 的数据 */
   handlerData?: any;
   children: ReactNode;
   itemClass?: string;
@@ -59,6 +61,7 @@ export function ContextMenu({
   let left = state?.x ?? 0;
   let top = state?.y ?? 0;
   if (state) {
+    // 视口边界钳制
     const menuHeight =
       menuRef.current?.offsetHeight ??
       state.menus.length * MENU_HEIGHT_ESTIMATE;

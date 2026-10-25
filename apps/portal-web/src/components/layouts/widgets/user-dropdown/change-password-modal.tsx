@@ -30,13 +30,16 @@ interface PasswordFieldProps {
   label: string;
   placeholder: string;
 
+  /** 前缀图标（AppIcon 标识符） */
   icon: string;
   autoComplete: string;
   value: string;
   error?: string;
 
+  /** 无错误时展示的浅色说明（如新密码策略） */
   hint?: ReactNode;
 
+  /** 字段下方的附加内容（如新密码的字符类实时反馈） */
   extra?: ReactNode;
   visible: boolean;
   inputRef?: RefObject<HTMLInputElement | null>;
@@ -44,6 +47,10 @@ interface PasswordFieldProps {
   onChange: (value: string) => void;
 }
 
+/**
+ * 密码输入行：daisyUI `.input` 本身是 inline-flex（含 gap/内边距），可直接内嵌
+ * 「前缀图标 + 原生 input + 显隐按钮」，无需相对定位包裹——图标与输入框基线自动对齐。
+ */
 function PasswordField({
   label,
   placeholder,
@@ -66,6 +73,7 @@ function PasswordField({
       </label>
       <label
         className={`input w-full transition-colors ${
+          // 报错时保持红框（不再叠加 primary 聚焦色，避免聚焦后错误态被覆盖）
           error ? 'input-error' : 'focus-within:border-primary'
         }`}
       >
@@ -83,14 +91,14 @@ function PasswordField({
         <button
           type="button"
           className="btn btn-ghost btn-xs btn-circle shrink-0 opacity-50 hover:opacity-100"
-
+          // 不参与键盘 Tab 序：三个密码框已是主流导航顺序，显隐按钮只作鼠标辅助
           tabIndex={-1}
           aria-label={
             visible
               ? t('widgets.changePassword.hidePassword')
               : t('widgets.changePassword.showPassword')
           }
-
+          // 阻止 mousedown 抢焦点，否则点显隐会把刚输入的输入框失焦
           onMouseDown={(e) => e.preventDefault()}
           onClick={onToggleVisible}
         >
@@ -107,6 +115,11 @@ function PasswordField({
   );
 }
 
+/**
+ * 新密码策略实时反馈：4 个字符类标记（已达标的置成功态）+ 已覆盖类数。
+ * 策略是「4 类里覆盖 3 类」，只给一条静态提示用户无法判断当前输入是否达标，
+ * 故这里边输边反馈（纯展示，不参与校验；提交时仍由 validatePasswordPolicy 把关）。
+ */
 function PasswordPolicyHint({ password }: { password: string }) {
   const { t } = useTranslation();
   const matched = matchPasswordCharClasses(password);
@@ -142,6 +155,22 @@ function PasswordPolicyHint({ password }: { password: string }) {
   );
 }
 
+/**
+ * ChangePasswordModal — 修改密码弹窗，迁移自旧项目
+ * Micro-public/src/layouts/PaLayout/{PassWordForm.tsx, index.tsx 的 open 开关}。
+ *
+ * 差异说明（不影响业务口径）：
+ * - 旧项目是 antd `ModalForm` + `ProFormText.Password`；新项目无 antd，改为 daisyUI
+ *   `modal` + 受控 input + 手写校验（与 authentication/forms/register.tsx 同构）。
+ * - 新密码校验改按后端 PasswordValidator 口径：长度 [8,32] + 4 类字符覆盖 ≥3 类
+ *   （旧项目是 8-14 位且非纯数字/纯下划线/纯字母），常量见 @zanelab/utils 的 password-policy。
+ * - 提交口径与旧项目一致：三个密码字段 `btoa` 后 PUT change/pwd（见 api/auth.ts）。
+ *
+ * 弹窗 portal 到 body：入口在下拉面板（AnchoredPortal，带 z-index/overflow 上下文）内，
+ * 不 portal 会被裁剪或压在面板下面（同 lock-screen-modal 先例）。
+ * 视觉沿用项目里 modal 的既有约定：左标题 + 右上关闭按钮（tenant-switcher）、
+ * 底部右对齐操作区（timezone-button）。
+ */
 export function ChangePasswordModal({
   open,
   onOpenChange,
@@ -154,6 +183,7 @@ export function ChangePasswordModal({
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // 各字段明文/密文（默认全密文）
   const [visible, setVisible] = useState<Record<PasswordFieldName, boolean>>({
     oldPassword: false,
     newPassword: false,
@@ -162,6 +192,7 @@ export function ChangePasswordModal({
   const [submitting, setSubmitting] = useState(false);
   const oldInputRef = useRef<HTMLInputElement>(null);
 
+  // 每次打开重置表单（等价旧项目 ModalForm 每次打开都是空表单），并聚焦原密码
   useEffect(() => {
     if (open) {
       setValues({ oldPassword: '', newPassword: '', confirmPassword: '' });
@@ -189,6 +220,7 @@ export function ChangePasswordModal({
     const newPassword = values.newPassword.trim();
     const confirmPassword = values.confirmPassword.trim();
 
+    // 校验顺序：必填 → 长度 → 字符类覆盖 → 新旧不同 → 两次一致
     const next: Record<string, string> = {};
     if (!oldPassword) next.oldPassword = t('widgets.changePassword.required');
     if (!newPassword) {
@@ -226,6 +258,8 @@ export function ChangePasswordModal({
       notify.success(t('widgets.changePassword.success'));
       onOpenChange(false);
     } catch (error) {
+      // 失败提示已由 http 拦截器统一 notify（spec/http-api-guidelines.md）；
+      // 保持弹窗打开，用户可直接修正后重试。
       console.warn('[changePassword] failed:', error);
     } finally {
       setSubmitting(false);
@@ -235,12 +269,16 @@ export function ChangePasswordModal({
   if (!open) return null;
 
   return createPortal(
+    // zIndex 1100 > AnchoredPortal 面板的 1000（daisyUI .modal 默认 z-999）：
+    // 本弹窗由下拉菜单项打开，此时下拉面板仍开着且 portal 到 body（z-1000），
+    // 不提级的话面板会压在弹窗之上。面板会在下一次 pointerdown 时自动收起。
     <div
       className="modal modal-open modal-middle"
       style={{ zIndex: 1100 }}
       onClick={() => onOpenChange(false)}
     >
       <div className="modal-box max-w-md" onClick={(e) => e.stopPropagation()}>
+        {/* 头部：标题 + 副标题 + 关闭（对齐 tenant-switcher 的 modal 头部结构） */}
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <h3 className="text-base-content text-lg font-semibold">

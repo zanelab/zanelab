@@ -1,9 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
-  getCurrentOrg,
   getCurrentTenant,
   isCachedEndUsable,
-  isSameOrg,
   pickDefaultEnd,
   pickPermittedTenant,
   type UserOrgVO,
@@ -37,68 +35,10 @@ const tenant: UserTenantPerVO = {
   username: 'u',
 };
 
-describe('isSameOrg', () => {
-  it('引用相等即同一空间（getCurrentOrg 从同一 orgList 选出）', () => {
-    expect(isSameOrg(orgs[1], orgs[1])).toBe(true);
-  });
-
-  it('orgCode 相同即同一空间（不同对象）', () => {
-    expect(isSameOrg(orgs[0], { ...orgs[0] })).toBe(true);
-  });
-
-  it('不同空间返回 false', () => {
-    expect(isSameOrg(orgs[0], orgs[1])).toBe(false);
-  });
-
-  it('字段缺失（orgCode 空串、orgId 缺失）时不误判：只有同一引用算当前项', () => {
-    const noCode = [
-      { orgCode: '', orgName: 'A', isDefault: true },
-      { orgCode: '', orgName: 'B', isDefault: false },
-      { orgCode: '', orgName: 'C', isDefault: false },
-      { orgCode: '', orgName: 'D', isDefault: false },
-    ] as unknown as UserOrgVO[];
-
-    const highlighted = noCode.filter((o) => isSameOrg(noCode[0], o));
-    expect(highlighted).toHaveLength(1);
-    expect(highlighted[0].orgName).toBe('A');
-  });
-
-  it('orgId 重复时不按 orgId 判身份：只有引用命中的那一条算当前项', () => {
-    const dup = [
-      { orgId: 1, orgCode: '', orgName: 'A', isDefault: true },
-      { orgId: 1, orgCode: '', orgName: 'B', isDefault: false },
-      { orgId: 1, orgCode: '', orgName: 'C', isDefault: false },
-      { orgId: 1, orgCode: '', orgName: 'D', isDefault: false },
-    ] as unknown as UserOrgVO[];
-
-    const highlighted = dup.filter((o) => isSameOrg(dup[0], o));
-    expect(highlighted).toHaveLength(1);
-    expect(highlighted[0].orgName).toBe('A');
-  });
-
-  it('入参为空返回 false', () => {
-    expect(isSameOrg(undefined, orgs[0])).toBe(false);
-    expect(isSameOrg(orgs[0], undefined)).toBe(false);
-  });
-});
-
-describe('getCurrentOrg（X-Org 命中 → isDefault → 第一个）', () => {
+describe('getCurrentTenant（X-Tenant 命中 → isPerm → isDefault → 第一个）', () => {
   beforeEach(() => {
     cache.remove(X_ORG);
     cache.remove(X_TENANT);
-  });
-
-  it('无缓存时取 isDefault 空间', () => {
-    expect(getCurrentOrg(tenant)?.orgCode).toBe('org-a');
-  });
-
-  it('缓存命中时取缓存指向的空间', () => {
-    cache.set(X_ORG, 'org-c');
-    expect(getCurrentOrg(tenant)?.orgCode).toBe('org-c');
-  });
-
-  it('无 orgList 时返回 undefined', () => {
-    expect(getCurrentOrg(undefined)).toBeUndefined();
   });
 
   it('getCurrentTenant 无缓存时取 isDefault 租户', () => {

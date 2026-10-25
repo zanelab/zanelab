@@ -69,6 +69,7 @@ export const Tabs: FC<TabsProps> = (props) => {
         <div
           key={tab.key}
           className={`group tab-item translate-all [&:not(.is-active)]:hover:bg-base-200 relative flex cursor-pointer select-none ${typeClass} ${
+            // 激活底 /20：暗底上 /15 色差过小（09-09 主题色适配，同 tabs-chrome）
             tab.key === active ? 'is-active bg-primary/20' : ''
           } ${!tab.affixTab ? 'draggable' : 'affix-tab'}`}
           data-tab-item="true"

@@ -20,30 +20,6 @@ const ENVIRONMENTS = {
       [ENV_KEY]: 'http://stand-npa-portal-yundu-dev3-admin.patest.msxf.test',
     },
   },
-  test1: {
-    desc: '测试环境 test1',
-    vars: {
-      [ENV_KEY]: 'http://stand-npa-portal-yundu-test1-admin.patest.msxf.test',
-    },
-  },
-  test2: {
-    desc: '测试环境 test2',
-    vars: {
-      [ENV_KEY]: 'http://stand-npa-portal-yundu-test2-admin.patest.msxf.test',
-    },
-  },
-  test3: {
-    desc: '测试环境 test3',
-    vars: {
-      [ENV_KEY]: 'http://stand-npa-portal-yundu-test3-admin.patest.msxf.test',
-    },
-  },
-  poc: {
-    desc: 'POC 环境',
-    vars: {
-      [ENV_KEY]: 'http://stand-npa-portal-yundu-st-poc-admin.patest.msxf.test',
-    },
-  },
 };
 
 const DEFAULT_ENV = 'local';

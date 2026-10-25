@@ -1,5 +1,6 @@
 import type { ContentCompact } from '@zanelab/types';
 
+/** 等价于 上游布局模板 的 上游布局组件Props */
 export type AdminLayoutProps = LayoutCorePublicProps;
 
 export interface LayoutCorePublicProps {
@@ -48,7 +49,7 @@ export interface LayoutCorePublicProps {
   sidebarExtraVisible: boolean;
   sidebarExtraCollapse: boolean;
   sidebarDraggable: boolean;
-
+  /** 未传时由组件内部滚动监听驱动（等价于 上游布局模板 的 useScroll(document)） */
   headerIsHidden?: boolean;
   scrollY?: number;
   onToggleSidebar: () => void;
@@ -62,6 +63,7 @@ export interface LayoutCorePublicProps {
   onSetSidebarExtraCollapse: (collapse: boolean) => void;
   onSetHeaderIsHidden?: (hidden: boolean) => void;
 
+  /** Slots via React children */
   children?: React.ReactNode;
   slotLogo?: React.ReactNode;
   slotMixedMenu?: React.ReactNode;

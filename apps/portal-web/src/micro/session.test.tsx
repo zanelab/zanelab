@@ -38,11 +38,17 @@ describe('登录 → 拉菜单 → 渲染（§5.1 集成）', () => {
       nickname: '管理员',
     });
 
-    expect(useAuthStore.getState().token).toBe('mock-access-token');
-    expect(useMenuStore.getState().menus).toEqual(mockMenus);
+    expect(localStorage.getItem(appConfig.auth.tokenKey)).toBe(
+      'mock-access-token',
+    );
 
-    expect(useMenuStore.getState().permissions).toContain('system:user:list');
-    expect(useMenuStore.getState().permissions).toContain('demo:button:view');
+    expect(useAuthStore.getState().token).toBe('mock-access-token');
+    // JSON 往返消除 transformMenu 输出的显式 undefined 键差异
+    expect(JSON.parse(JSON.stringify(useMenuStore.getState().menus))).toEqual(
+      mockMenus,
+    );
+
+    expect(useMenuStore.getState().permissions).toContain('system:menu:list');
 
     render(<MenuProbe />);
     expect(screen.getByText('首页')).toBeTruthy();

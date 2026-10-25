@@ -10,6 +10,10 @@ import { SloganIcon } from './icons/slogan';
 import { Toolbar } from './toolbar';
 import { Copyright } from '../basic/copyright/copyright';
 
+/**
+ * AuthPageLayout — 1:1 port of authentication/authentication.vue.
+ * 面板位置由 preferences.app.authPageLayout 驱动（panel-left / panel-center / panel-right）。
+ */
 export function AuthPageLayout({
   appName = '',
   logo = '',
@@ -31,16 +35,22 @@ export function AuthPageLayout({
   const { authPanelCenter, authPanelLeft, authPanelRight } =
     useAuthPanelPosition();
 
+  // 左上角应用名：外部传入优先，否则按当前语言取系统名（config.js name / nameEn）
   const displayName = appName || systemName();
 
+  /** 根据主题选择合适的 logo 图标 */
   const logoSrc = useMemo(() => {
+    // 如果是暗色主题且提供了 logoDark，则使用暗色主题的 logo
     if (isDark && logoDark) {
       return logoDark;
     }
-
+    // 否则使用默认的 logo
     return logo;
   }, [isDark, logoDark, logo]);
 
+  /** copyright 插槽内容（v-bind="preferences.copyright" 等价；
+   * slotCopyright prop 优先 —— #copyright slot 覆盖）。
+   * 公司名未自定义（留空）时按语言取系统名，避免英文界面下仍显示中文名。 */
   const copyrightNode: ReactNode =
     slotCopyright ??
     (copyright ? (
@@ -59,8 +69,10 @@ export function AuthPageLayout({
     <div
       className={`flex min-h-full flex-1 overflow-x-hidden select-none ${isDark ? 'dark' : ''}`}
     >
+      {/* #toolbar slot 覆盖（reference authentication.vue:60-64） */}
       {toolbar ? (slotToolbar ?? <Toolbar toolbarList={toolbarList} />) : null}
 
+      {/* 左侧认证面板 */}
       {authPanelLeft ? (
         <AuthFormView
           className="min-h-full w-2/5 flex-1"
@@ -71,6 +83,7 @@ export function AuthPageLayout({
         </AuthFormView>
       ) : null}
 
+      {/* 头部 Logo 和应用名称（#logo slot 覆盖，reference :81-104） */}
       {slotLogo ??
         (logoSrc || displayName ? (
           <div
@@ -94,6 +107,7 @@ export function AuthPageLayout({
           </div>
         ) : null)}
 
+      {/* 系统介绍 */}
       {!authPanelCenter ? (
         <div className="relative hidden w-0 flex-1 lg:block">
           <div className="bg-background-deep absolute inset-0 size-full dark:bg-[#070709]">
@@ -124,6 +138,7 @@ export function AuthPageLayout({
         </div>
       ) : null}
 
+      {/* 中心认证面板 */}
       {authPanelCenter ? (
         <div className="flex-center relative w-full">
           <div className="login-background absolute top-0 left-0 size-full" />
@@ -137,6 +152,7 @@ export function AuthPageLayout({
         </div>
       ) : null}
 
+      {/* 右侧认证面板 */}
       {authPanelRight ? (
         <AuthFormView
           className="min-h-full w-2/5 flex-1"

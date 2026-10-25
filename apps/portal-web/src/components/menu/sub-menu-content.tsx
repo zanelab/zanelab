@@ -14,6 +14,7 @@ interface SubMenuContentProps {
   title?: React.ReactNode;
 }
 
+/** 子菜单展开指示：右向（弹层模式）/ 下向（其余） */
 const ChevronRight = () => <AppIcon name="chevron-right" className="size-4" />;
 
 const ChevronDown = () => <AppIcon name="chevron-down" className="size-4" />;
@@ -41,6 +42,7 @@ export function SubMenuContent({
   const hiddenTitle =
     mode === 'vertical' && isFirstLevel && collapse && !getCollapseShowTitle;
 
+  // Arrow direction: ChevronRight for popup-mode submenus, ChevronDown otherwise
   const useRightArrow =
     (mode === 'horizontal' && !isFirstLevel) ||
     (mode === 'vertical' && collapse);
@@ -66,7 +68,7 @@ export function SubMenuContent({
       {!isMenuMore && showArrowIcon && (
         <span
           className="admin-sub-menu-content__icon-arrow size-4"
-
+          // iconArrowStyle：展开时 180° 旋转（reference sub-menu-content.vue:71-73）
           style={{ transform: opened ? 'rotate(180deg)' : undefined }}
         >
           {useRightArrow ? <ChevronRight /> : <ChevronDown />}

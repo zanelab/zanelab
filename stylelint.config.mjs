@@ -4,7 +4,7 @@ export default {
   rules: {
     // BEM 与 Tailwind/daisyUI 工具类结构性冲突，本仓不做类名模式约束
     'selector-class-pattern': null,
-    // vben 白名单只覆盖 Tailwind v3 的 at-rules；v4 CSS-first 配置新增
+    // 上游白名单只覆盖 Tailwind v3 的 at-rules；v4 CSS-first 配置新增
     // @source/@plugin/@custom-variant/@theme/@utility（本文件直接使用）
     'at-rule-no-unknown': [
       true,

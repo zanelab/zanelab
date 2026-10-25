@@ -130,7 +130,7 @@ export function GlobalSearch({
         : null}
 
       <div
-        className="group md:bg-accent flex h-8 cursor-pointer items-center gap-3 rounded-2xl border-none bg-none px-2 py-0.5 outline-hidden md:w-48"
+        className="group md:bg-accent flex h-8 cursor-pointer items-center gap-3 rounded-2xl border-none bg-none px-2 py-0.5 outline-hidden"
         onClick={toggleOpen}
       >
         <AppIcon

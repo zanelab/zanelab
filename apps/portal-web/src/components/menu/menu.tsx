@@ -51,16 +51,22 @@ export function Menu({
   const itemsRef = useRef<Record<string, MenuItemRegistered>>({});
   const subMenusRef = useRef<Record<string, MenuItemRegistered>>({});
   const menuRef = useRef<HTMLUListElement>(null);
-
+  // 注册表版本 —— 等价 watch(items, initMenu)（menu.vue:99 对 reactive
+  // 注册表的 deep watch：注册/注销时重跑 initMenu）
   const [registryVersion, bumpRegistry] = useReducer((v: number) => v + 1, 0);
 
   const isMenuPopup =
     mode === 'horizontal' || (mode === 'vertical' && collapse);
 
+  // Clear opened menus when collapsing
   useEffect(() => {
     if (collapse) setOpenedMenus([]);
   }, [collapse]);
 
+  // watch(() => props.defaultActive)（menu.vue:101-109）：prop 变化时同步
+  // activePath；未注册（非菜单项）时清空 —— 等价 updateActiveName 的回退链。
+  // Vue 中 activePath.value = '' 是同步赋值，updateActiveName 随后读到 ''
+  // 走不到回退；React 的 setState 异步，故以本地变量 current 承载清空语义
   useEffect(() => {
     if (defaultActive === activePath) return;
     let current = activePath;
@@ -73,11 +79,14 @@ export function Menu({
     setActivePath(item ? item.path : defaultActive);
   }, [defaultActive]);
 
+  // useMenuScroll：aside 作用域 + a[role=menuitem].is-active（React port 中
+  // role 在 anchor 上，等价 reference use-menu-scroll.ts:28-30 的选择器）
   const enableScroll = scrollToActive && mode === 'vertical' && !collapse;
   const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!enableScroll) return;
 
+    // useDebounceFn(scrollToActiveItem, 320) 等价
     if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
     scrollTimerRef.current = setTimeout(() => {
       const el = document.querySelector('aside a[role=menuitem].is-active');
@@ -145,7 +154,9 @@ export function Menu({
       });
       onOpen?.(path, parentPaths);
     },
-
+    // mode/collapse 必入 deps：getActivePaths 实时读取二者（reference 经
+    // Vue 响应式 props 始终读实时值），运行时切换折叠后旧闭包会以展开态
+    // 过滤 openedMenus
     [accordion, onOpen, activePath, mode, collapse],
   );
 
@@ -153,6 +164,9 @@ export function Menu({
     (path: string, parentPaths: string[]) => {
       setOpenedMenus((prev) => {
         if (accordion) {
+          // reference closeMenu（menu.vue:279-289）：openedMenus = 该子菜单的
+          // parentPaths 后 close(path) 将自身移除 —— parentPaths 链含自身，
+          // 需 filter 掉，否则点击已展开的子菜单永远关不上
           const subMenu = subMenusRef.current[path];
           return (subMenu?.parentPaths ?? []).filter((p) => p !== path);
         }
@@ -187,6 +201,11 @@ export function Menu({
     [openedMenus, closeMenu, openMenu],
   );
 
+  // initMenu（menu.vue:226-235 + watch(items, initMenu)）等价：activePath
+  // 变化（reference 中 reactive 注册表的 active 标志翻转触发 deep watch）
+  // 或注册表变化（registryVersion）时展开激活项的父级。deps 不含
+  // collapse/mode —— reference 的 collapse watcher 只清空 openedMenus
+  // （上方 effect），取消折叠后不重展开
   useEffect(() => {
     const activeItem = activePath && itemsRef.current[activePath];
     if (!activeItem || mode === 'horizontal' || collapse) return;
@@ -248,6 +267,11 @@ export function Menu({
   }, [mode, theme, rounded, collapse, className]);
 
   function renderMenuItems(items: MenuRecordRaw[]): React.ReactNode {
+    // 同层兄弟节点间 key 必须唯一。后端菜单树可能下发 path 重复的节点
+    // （如 /npa-plt-system/admin/user 同时出现在多个分组），直接以 path 作
+    // key 会触发 React "two children with the same key" 警告。这里预统计
+    // 同层 path 出现次数：path 唯一时 key 仍取 path（保持 reconciliation
+    // 稳定），重复时追加 index 兜底唯一。
     const pathCounts = new Map<string, number>();
     for (const item of items) {
       pathCounts.set(item.path, (pathCounts.get(item.path) ?? 0) + 1);
@@ -298,8 +322,12 @@ export function Menu({
     return arr;
   }, [renderedItems]);
 
+  // 水平溢出 "更多"（menu.vue:148-199 sliceIndex + useResizeObserver 等价）
   const [sliceIndex, setSliceIndex] = useState(-1);
 
+  // sliceIndex 的 ref 镜像：handleResize 需读取当前值做"值未变直接返回"
+  // 判断（reference 读 sliceIndex.value），稳定化的 useCallback 会捕获过期
+  // state，故同步镜像到 ref
   const sliceIndexRef = useRef(-1);
   const applySliceIndex = useCallback((v: number) => {
     sliceIndexRef.current = v;
@@ -335,6 +363,9 @@ export function Menu({
     return slice === nodes.length ? -1 : slice;
   }, []);
 
+  // handleResize（menu.vue:193-205 的 1:1 等价，含 reference 自身的
+  // "直接执行一次 + 首帧再执行/否则 33.34ms 延迟" 结构；callback 内先置
+  // -1（还原全部项）再于下一帧重算，使测量发生在完整菜单上）
   const handleResize = useCallback(() => {
     if (sliceIndexRef.current === calcSliceIndex()) {
       return;
@@ -375,6 +406,9 @@ export function Menu({
 
   const showSlotMore = sliceIndex !== -1 && sliceIndex < itemNodes.length;
 
+  // "更多" 触发器的 active 聚合（reference sub-menu.vue:76-91 聚合注册到
+  // 自身上下文的 items/subMenus 的 active 标志）：被切走的顶层项包含激活
+  // 路径时，省略号触发器亮起
   const moreActive =
     showSlotMore &&
     menus.some(
@@ -383,6 +417,11 @@ export function Menu({
         (activePath === m.path || activePath.startsWith(`${m.path}/`)),
     );
 
+  // 根 SubMenuContext（menu.vue:141-146 的 createSubMenuContext 1:1）：
+  // level 1 + 根 mouseInChild ref + 真实注册表回调，无 handleMouseleave
+  // （deepDispatch 链在根自然终止）。其存在使顶级子菜单的
+  // handleMouseleave 早退分支（!collapse && vertical && subMenu）命中 ——
+  // reference 的垂直展开态子菜单从不因 mouseout 自动收起，只能点击收起
   const rootMouseInChild = useRef(false);
   const rootSubCtxValue = useMemo(
     () =>

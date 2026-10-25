@@ -8,6 +8,7 @@ import { LayoutFooterCore } from '../footer';
 import { LayoutTabbarCore } from '../tabbar';
 import type { LayoutCorePublicProps } from './types';
 
+/** 等价于 reference 的 SCROLL_FIXED_CLASS（use-scroll-lock.ts，admin 前缀） */
 const SCROLL_FIXED_CLASS = '__admin_scroll_fixed__';
 
 export function LayoutCore({
@@ -83,8 +84,11 @@ export function LayoutCore({
     isSideMode,
   } = useLayout(layout, isMobile);
 
+  // Header auto mode
   const isHeaderAutoMode = headerMode === 'auto';
 
+  // ── 滚动/自动隐藏 header（上游布局模板 useScroll + useMouse 等价实现）──
+  // props 未传时由组件内部驱动
   const [internalScrollY, setInternalScrollY] = useState(0);
   const [internalHeaderIsHidden, setInternalHeaderIsHidden] = useState(false);
   const scrollY = scrollYProp ?? internalScrollY;
@@ -98,6 +102,7 @@ export function LayoutCore({
     [onSetHeaderIsHiddenProp],
   );
 
+  // Header wrapper height
   const headerWrapperHeight = useMemo(() => {
     let h = 0;
     if (headerVisible && !headerHidden) {
@@ -109,6 +114,8 @@ export function LayoutCore({
     return h;
   }, [headerVisible, headerHidden, headerHeight, tabbarEnable, tabbarHeight]);
 
+  // useScroll(document) 等价：scrollY 驱动 header 阴影与 marginTop；
+  // auto-scroll 模式下按滚动方向（300ms 节流）隐藏/显示 header
   useEffect(() => {
     if (scrollYProp !== undefined) return;
     let lastY = window.scrollY;
@@ -140,6 +147,8 @@ export function LayoutCore({
     setHeaderIsHidden,
   ]);
 
+  // useMouse 等价：auto 模式下鼠标在触发区（顶部 12px）或 header 区域内显示，
+  // 否则隐藏（HEADER_TRIGGER_DISTANCE = 12）
   const HEADER_TRIGGER_DISTANCE = 12;
   const mouseYRef = useRef(-1);
   useEffect(() => {
@@ -165,10 +174,12 @@ export function LayoutCore({
     return () => window.removeEventListener('mousemove', onMouseMove);
   }, [headerMode, isMixedNav, isFullContent, headerWrapperHeight]);
 
+  // watch(isMobile, immediate) → 移动端默认折叠侧边栏
   useEffect(() => {
     if (isMobile) onSetSidebarCollapsed(true);
   }, [isMobile, onSetSidebarCollapsed]);
 
+  // Side collapse width
   const getSideCollapseWidth = useMemo(() => {
     return sidebarCollapseShowTitle || isSidebarMixedNav || isHeaderMixedNav
       ? sidebarExtraCollapsedWidth
@@ -181,14 +192,17 @@ export function LayoutCore({
     sideCollapseWidth,
   ]);
 
+  // Sidebar enable state
   const sidebarEnableState = useMemo(() => {
     return !isHeaderNav && sidebarEnable;
   }, [isHeaderNav, sidebarEnable]);
 
+  // Sidebar margin top
   const sidebarMarginTop = useMemo(() => {
     return isMixedNav && !isMobile ? headerHeight : 0;
   }, [isMixedNav, isMobile, headerHeight]);
 
+  // Sidebar width
   const getSidebarWidth = useMemo(() => {
     let w = 0;
     if (sidebarHidden) return w;
@@ -221,14 +235,17 @@ export function LayoutCore({
     sidebarWidth,
   ]);
 
+  // Sidebar extra width
   const sidebarExtraWidth = useMemo(() => {
     return sidebarExtraCollapse ? sidebarExtraCollapsedWidth : sidebarWidth;
   }, [sidebarExtraCollapse, sidebarExtraCollapsedWidth, sidebarWidth]);
 
+  // Show sidebar
   const showSidebar = useMemo(() => {
     return isSideMode && sidebarEnable && !sidebarHidden;
   }, [isSideMode, sidebarEnable, sidebarHidden]);
 
+  // Header fixed
   const headerFixed = useMemo(() => {
     return (
       isMixedNav ||
@@ -238,10 +255,12 @@ export function LayoutCore({
     );
   }, [isMixedNav, headerMode]);
 
+  // Mask visible
   const maskVisible = useMemo(() => {
     return !sidebarCollapsed && isMobile;
   }, [sidebarCollapsed, isMobile]);
 
+  // Main style
   const mainStyle = useMemo(() => {
     let width = '100%';
     let sidebarAndExtraWidth = 'unset';
@@ -297,6 +316,7 @@ export function LayoutCore({
     getSideCollapseWidth,
   ]);
 
+  // Tabbar style
   const tabbarStyle = useMemo((): React.CSSProperties => {
     let width: string;
     let marginLeft = 0;
@@ -327,6 +347,10 @@ export function LayoutCore({
     getSidebarWidth,
   ]);
 
+  // Content style
+  // 用 padding-top 而非 margin-top（09-29）：margin 在盒子外，会被算进外层可滚动
+  // 高度 → 内容不高也会多出滚动条；padding 在盒子内（border-box），由 flex:1
+  // 吸收，不产生额外可滚动高度。固定头部/页脚的偏移量与内容 padding 合并。
   const contentStyle = useMemo((): React.CSSProperties => {
     const headerOffset =
       headerFixed &&
@@ -354,11 +378,13 @@ export function LayoutCore({
     contentPaddingBottom,
   ]);
 
+  // Header z-index
   const headerZIndex = useMemo(() => {
     const offset = isMixedNav ? 1 : 0;
     return zIndex + offset;
   }, [zIndex, isMixedNav]);
 
+  // Header wrapper style
   const headerWrapperStyle = useMemo((): React.CSSProperties => {
     return {
       height: isFullContent ? '0' : `${headerWrapperHeight}px`,
@@ -378,17 +404,20 @@ export function LayoutCore({
     headerZIndex,
   ]);
 
+  // Sidebar z-index
   const sidebarZIndex = useMemo(() => {
     let offset = isMobile || isSideMode ? 1 : -1;
     if (isMixedNav) offset += 1;
     return zIndex + offset;
   }, [isMobile, isSideMode, isMixedNav, zIndex]);
 
+  // Footer width
   const footerWidth = useMemo(() => {
     if (!footerFixed) return '100%';
     return mainStyle.width;
   }, [footerFixed, mainStyle.width]);
 
+  // Show header toggle button
   const showHeaderToggleButton = useMemo(() => {
     return (
       isMobile ||
@@ -406,6 +435,7 @@ export function LayoutCore({
     isMixedNav,
   ]);
 
+  // Show header logo
   const showHeaderLogo = useMemo(() => {
     return !isSideMode || isMixedNav || isMobile;
   }, [isSideMode, isMixedNav, isMobile]);
@@ -422,6 +452,7 @@ export function LayoutCore({
     zIndex,
   };
 
+  // Toggle button icon（原 strokeWidth 1.5，收拢统一为 2 —— 略粗可接受，已拍板）
   const toggleIcon = showSidebar ? (
     <AppIcon name="layout-sidebar-collapse" className="size-5" />
   ) : (

@@ -10,6 +10,7 @@
     "prepare": "lefthook install",
     "dev": "pnpm --filter @zanelab/portal-web dev",
     "dev:iam": "pnpm --filter @zanelab/iam-web dev",
+    "dev:home": "pnpm --filter @zanelab/home-web dev",
     "build": "turbo run build",
     "preview": "pnpm --filter @zanelab/portal-web preview",
     "test": "turbo run test",
@@ -17,7 +18,9 @@
     "lint": "turbo run lint",
     "lint:css": "stylelint \"apps/*/src/**/*.css\" \"packages/*/src/**/*.css\"",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "clean": "node scripts/clean.mjs",
+    "clean:dry": "node scripts/clean.mjs --dry-run"
   },
   "devDependencies": {
     "@changesets/cli": "^3.0.3",

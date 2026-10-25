@@ -8,6 +8,7 @@ interface PreferencesProps {
   showButton?: boolean;
   children?: React.ReactNode;
 
+  /** 清空偏好并登出（清空缓存并登出按钮） */
   onClearPreferencesAndLogout?: () => void;
 }
 

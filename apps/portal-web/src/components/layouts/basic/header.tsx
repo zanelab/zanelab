@@ -12,6 +12,10 @@ interface LayoutHeaderProps {
   slotLogo?: React.ReactNode;
 }
 
+/**
+ * LayoutHeaderCore — 1:1 port of layout-ui layout-header.vue.
+ * 隐藏时以负 marginTop 收起（保留占位参与过渡），而非直接卸载。
+ */
 export function LayoutHeaderCore({
   height,
   theme,

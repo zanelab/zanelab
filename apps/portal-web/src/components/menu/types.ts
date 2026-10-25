@@ -18,6 +18,9 @@ export interface SubMenuProps {
 
   isMenuMore?: boolean;
 
+  /** active 覆盖：由 Menu 为 "更多" 触发器计算（聚合被切走项的激活
+      状态，等价 reference sub-menu.vue:76-91 的注册表聚合）；未传时
+      走 activePath 前缀匹配 */
   activeOverride?: boolean;
   badge?: string | number;
   badgeType?: 'dot' | string;
@@ -89,8 +92,12 @@ export interface SubMenuContextValue {
   level: number;
   parentPaths: string[];
 
+  /** 子级悬停状态（等价 reference subMenu.mouseInChild ref ——
+      子级 mouseenter/leave 时写父级的该标志，父级 leave 的 300ms
+      定时器据其决定是否关闭） */
   mouseInChild?: { current: boolean };
 
+  /** 向父级派发 leave（等价 reference handleMouseleave deepDispatch） */
   handleMouseleave?: (deepDispatch?: boolean) => void;
   addSubMenu: (item: MenuItemRegistered) => void;
   removeSubMenu: (item: MenuItemRegistered) => void;

@@ -5,6 +5,10 @@ import { useTimezoneStore } from '../../../../stores/timezone-store';
 import type { TimezoneOption } from '../../../../stores/timezone-store';
 import { AppIcon } from '../../../icons/app-icon';
 
+/**
+ * TimezoneButton — 1:1 port of widgets/timezone/timezone-button.vue.
+ * 时区选择：选项与当前值来自 useTimezoneStore（持久化），确认带 loading 态。
+ */
 export function TimezoneButton({ className = '' }: { className?: string }) {
   const { t } = useTranslation();
   const timezone = useTimezoneStore((s) => s.timezone);
@@ -17,6 +21,7 @@ export function TimezoneButton({ className = '' }: { className?: string }) {
   const [options, setOptions] = useState<TimezoneOption[]>([]);
 
   useEffect(() => {
+    // onOpenChange(true)：回填当前时区并加载选项
     if (!open) return;
     setSelected(timezone);
     let cancelled = false;
@@ -29,6 +34,7 @@ export function TimezoneButton({ className = '' }: { className?: string }) {
   }, [open, timezone, getTimezoneOptions]);
 
   const handleConfirm = async () => {
+    // onConfirm：confirmLoading → setTimezone → close
     try {
       setConfirmLoading(true);
       if (selected) {
@@ -44,7 +50,7 @@ export function TimezoneButton({ className = '' }: { className?: string }) {
     <>
       <button
         type="button"
-        className={`btn btn-ghost btn-sm btn-square hover:animate-[shrink_0.3s_ease-in-out] ${className}`}
+        className={`btn btn-ghost btn-sm btn-circle hover:animate-[shrink_0.3s_ease-in-out] ${className}`}
         title={t('widgets.timezone.title')}
         onClick={() => setOpen(true)}
       >

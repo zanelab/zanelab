@@ -6,6 +6,10 @@ import i18n from '../../../locales/i18n';
 import { registerRoutes } from '../../../router/route-meta';
 import { Breadcrumb } from './breadcrumb';
 
+// 切语言组件渲染测试（09-09-i18n R6）：面包屑为 menuTitle 的直接消费点，
+// route-meta 存原始值（title/i18nKey），渲染期解析——changeLanguage 后
+// useTranslation 订阅触发重渲染，标题以新语言重算。
+
 afterEach(() => {
   cleanup();
 });

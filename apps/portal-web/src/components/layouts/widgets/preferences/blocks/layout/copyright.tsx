@@ -44,6 +44,7 @@ export function Copyright({
       >
         {t('preferences.copyright.enable')}
       </SwitchItem>
+      {/* 留空 → 版权栏按当前语言显示系统名（占位提示实际会展示的名字） */}
       <InputItem
         value={copyrightCompanyName}
         onChange={onCopyrightCompanyNameChange}

@@ -6,6 +6,8 @@ declare global {
   }
 }
 
+// 与 public/config.js 保持一致的默认配置。运行时配置缺失时回退到这里。
+// api.baseURL 默认留空 = 同源（MVP 由 MSW mock /api/*），接真后端时改 config.js。
 export const DEFAULT_CONFIG: AppConfig = {
   version: '20250907',
   system: {
@@ -18,42 +20,38 @@ export const DEFAULT_CONFIG: AppConfig = {
     loginPath: '/login',
     tokenKey: 'portal_token',
     refreshTokenKey: 'portal_refresh_token',
-  },
-  supabase: {
-    url: import.meta.env.VITE_SUPABASE_URL || '',
-    anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+    loginPage: {
+      layout: 'panel-right',
+      showCodeLogin: true,
+      showQrcodeLogin: true,
+      showThirdPartyLogin: true,
+      showRegister: true,
+      showForgetPassword: true,
+      showRememberMe: true,
+      showColorToggle: true,
+      showLayoutToggle: true,
+    },
   },
   api: {
     baseURL: '',
     menusEndpoint: '/api/user/menus',
-    userInfoEndpoint: '/api/user/info',
     loginEndpoint: '/sys/auth/login',
     logoutEndpoint: '/sys/auth/logout',
     refreshEndpoint: '/sys/auth/refresh',
-    otpEndpoint: '/sys/auth/otp',
     useMock: false,
-    agentBaseURL: '/agent/api/v1',
-    userPerEndpoint: '/home/user/getUserPer',
-    powerAgentEndpoint: '/share/findPowerAgent',
   },
   route: {
-    homePath: '/dashboard',
+    homePath: '/home',
     forbiddenPath: '/403',
     notFoundPath: '/404',
   },
   layout: {
     theme: 'light',
     layout: 'sidebar-nav',
-    authPageLayout: 'panel-right',
     fixedHeader: true,
     showBreadcrumb: true,
   },
   preferences: {},
-  session: {
-    showPlatformManagement: true,
-    showTenantManagement: true,
-    showTenantSwitcher: true,
-  },
   microApps: {},
   icons: {},
   i18n: { packUrls: {} },
@@ -63,6 +61,7 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+/** 深合并：target 为默认值，source 覆盖同名键；对象递归、其余整值替换。 */
 export function mergeConfig(
   target: Record<string, unknown>,
   source: Record<string, unknown>,
@@ -79,6 +78,10 @@ export function mergeConfig(
   return out;
 }
 
+/**
+ * 读取 window.__APP_CONFIG__ → 深合并默认值 → zod 校验。
+ * 校验失败：console.error 后回退默认配置（不允许抛异常卡死应用，见 spec）。
+ */
 export function loadConfig(): AppConfig {
   const raw = window.__APP_CONFIG__;
   const merged = raw
@@ -95,4 +98,5 @@ export function loadConfig(): AppConfig {
   return parsed.data;
 }
 
+/** 模块级配置实例：加载一次，供非 React 模块（http、api）同步读取。 */
 export const appConfig: AppConfig = loadConfig();

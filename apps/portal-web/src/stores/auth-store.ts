@@ -1,83 +1,42 @@
 import { create } from 'zustand';
-import { supabase } from '../lib/supabase';
-import type { Session, User } from '../lib/supabase';
+import type { UserInfo } from '../types';
 
 export interface AuthState {
-  session: Session | null;
-  user: User | null;
   token: string;
-  refreshToken: string | undefined;
-  isInitialized: boolean;
+  refreshToken?: string;
+  user: UserInfo | null;
 }
 
+/** 初始状态（未登录）；测试复位用（setState 部分合并，保留 action）。 */
 export const initialAuthState: AuthState = {
-  session: null,
-  user: null,
   token: '',
   refreshToken: undefined,
-  isInitialized: false,
+  user: null,
 };
 
 interface AuthStore extends AuthState {
-  init: () => Promise<void>;
-  setSession: (session: Session | null) => void;
   setToken: (token: string) => void;
-  logout: () => Promise<void>;
+  setAuth: (payload: {
+    token: string;
+    refreshToken?: string;
+    user?: UserInfo | null;
+  }) => void;
+  setUser: (user: UserInfo) => void;
+
+  /** 登出：token/refreshToken/user 三字段全清（语义同旧 authSlice reducer）。 */
+  logout: () => void;
 }
 
+/** 登录态（docs/技术方案.md §5.1/§5.3）：token 权威在 store，localStorage 仅持久化。 */
 export const useAuthStore = create<AuthStore>()((set) => ({
   ...initialAuthState,
 
-  init: async () => {
-    const {
-      data: { subscription: _unused },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      set({
-        session,
-        user: session?.user ?? null,
-        token: session?.access_token ?? '',
-        refreshToken: session?.refresh_token,
-      });
-    });
-
-    try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (session) {
-        set({
-          session,
-          user: session.user,
-          token: session.access_token,
-          refreshToken: session.refresh_token,
-          isInitialized: true,
-        });
-      } else {
-        set({ isInitialized: true });
-      }
-    } catch (err) {
-      console.error('[auth-store] init failed:', err);
-      set({ isInitialized: true });
-    }
-  },
-
-  setSession: (session) =>
-    set({
-      session,
-      user: session?.user ?? null,
-      token: session?.access_token ?? '',
-      refreshToken: session?.refresh_token,
-    }),
-
   setToken: (token) => set({ token }),
 
-  logout: async () => {
-    await supabase.auth.signOut();
-    set({
-      session: null,
-      user: null,
-      token: '',
-      refreshToken: undefined,
-    });
-  },
+  setAuth: ({ token, refreshToken, user }) =>
+    set({ token, refreshToken, user: user ?? null }),
+
+  setUser: (user) => set({ user }),
+
+  logout: () => set({ token: '', refreshToken: undefined, user: null }),
 }));

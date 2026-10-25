@@ -2,13 +2,15 @@ import { delay, http, HttpResponse } from 'msw';
 import type { MenuItem } from '../types';
 import { TOKEN_HEADER } from '../constants/auth';
 
-export const mockUser = {
-  id: 1,
-  username: 'admin',
-  nickname: '管理员',
-  avatar: '',
-};
+// MSW mock 契约（docs/技术方案.md §4/§10，父级 design §4）。
+// MVP 无后端：这些 handler 让 host 的登录/菜单链路可独立运行。
+// 统一响应体 { code, data, msg }，code===0 为成功。
+//
+// 登录参数已迁移为旧项目契约 { loginChanel, email, password, code }，
+// 密码经 encryptPassword 加密（base64 或 SM4-ECB）。mock 侧 base64 解码
+// 校验明文；SM4 密文 atob 会抛错 → 放行（dev 模式仅验证 UI 流程）。
 
+/** 旧项目登录响应体（LoginResponseVO） */
 const mockLoginResponse = {
   token: 'mock-access-token',
   userId: 1,
@@ -21,96 +23,64 @@ export const mockMenus: MenuItem[] = [
   {
     id: 1,
     name: '首页',
-    path: '/dashboard',
-    component: 'dashboard',
+    path: '/home',
     icon: 'home',
-    i18nKey: 'menus.dashboard',
-  },
-  {
-    id: 2,
-    name: '组件示例',
-    path: '/components',
-    icon: 'components',
-    i18nKey: 'menus.components.title',
-    children: [
-      {
-        id: 21,
-        name: '按钮',
-        path: '/components/button',
-        component: 'components/button',
-        permission: 'demo:button:view',
-        icon: 'button',
-        i18nKey: 'menus.components.button',
-      },
-      {
-        id: 22,
-        name: '表格',
-        path: '/components/table',
-        component: 'components/table',
-        permission: 'demo:table:view',
-        icon: 'table',
-        i18nKey: 'menus.components.table',
-      },
-    ],
+    type: 'menu',
   },
   {
     id: 3,
     name: '系统管理',
-    path: '/system',
-    appName: 'iam',
+    path: '/iam',
     icon: 'system',
-    i18nKey: 'menus.system.title',
+    appName: 'iam',
+    type: 'app',
     children: [
       {
         id: 31,
         name: '用户管理',
-        path: '/system/users',
-        permission: 'system:user:list',
-        i18nKey: 'menus.system.users',
+        path: '/iam/users',
+        appName: 'iam',
+        type: 'menu',
+        children: [
+          {
+            id: 311,
+            name: '查看',
+            path: '',
+            permission: 'system:user:list',
+          },
+        ],
       },
       {
         id: 32,
         name: '菜单管理',
-        path: '/system/menus',
-        permission: 'system:menu:list',
-        i18nKey: 'menus.system.menus',
+        path: '/iam/menus',
+        appName: 'iam',
+        type: 'menu',
+        children: [
+          {
+            id: 321,
+            name: '查看',
+            path: '',
+            permission: 'system:menu:list',
+          },
+        ],
       },
       {
         id: 33,
         name: '角色管理',
-        path: '/system/roles',
-        i18nKey: 'menus.system.roles',
-      },
-    ],
-  },
-  {
-    id: 4,
-    name: '个人中心',
-    path: '/profile',
-    icon: 'user',
-    menuType: 'user-dropdown',
-    i18nKey: 'menus.profile.title',
-    children: [
-      {
-        id: 41,
-        name: '基本资料',
-        path: '/profile/basic',
-        component: 'profile/basic',
-        i18nKey: 'menus.profile.basic',
-        icon: 'svg:M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2|M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z',
-      },
-      {
-        id: 42,
-        name: '安全设置',
-        path: '/profile/security',
-        component: 'profile/security',
-        i18nKey: 'menus.profile.security',
-        icon: 'shield',
+        path: '/iam/roles',
+        appName: 'iam',
+        type: 'menu',
       },
     ],
   },
 ];
 
+/**
+ * 旧后端原始菜单格式（/user/menu/tree 返回结构）。
+ * fetchMenus 内 transformMenu 转换为项目 MenuItem 格式。
+ * 结构与 mockMenus 一致，用原始字段名（uri/type/menuType 数字）。
+ */
 const mockRawMenus = [
   {
     id: 1,
@@ -118,8 +88,8 @@ const mockRawMenus = [
     code: 'home',
     parent: 'root',
     name: '首页',
-    component: 'dashboard',
-    uri: '/dashboard',
+    component: '',
+    uri: '/home',
     type: 'menu',
     sort: 0,
     icon: 'home',
@@ -127,89 +97,6 @@ const mockRawMenus = [
     scopes: ['O'],
     menuType: 1,
     children: null,
-  },
-  {
-    id: 2,
-    pid: 0,
-    code: 'components',
-    parent: 'root',
-    name: '组件示例',
-    component: '',
-    uri: '/components',
-    type: 'group',
-    sort: 1,
-    icon: 'components',
-    hidden: false,
-    scopes: ['O'],
-    menuType: 0,
-    children: [
-      {
-        id: 21,
-        pid: 2,
-        code: 'button',
-        parent: 'components',
-        name: '按钮',
-        component: 'components/button',
-        uri: '/button',
-        type: 'menu',
-        sort: 1,
-        icon: 'button',
-        hidden: false,
-        scopes: ['O'],
-        menuType: 1,
-        children: [
-          {
-            id: 211,
-            pid: 21,
-            code: 'btn_view',
-            parent: 'button',
-            name: '查看',
-            component: 'BTN_VIEW',
-            uri: '/button:view',
-            type: 'button',
-            sort: 1,
-            icon: null,
-            hidden: false,
-            scopes: ['O'],
-            menuType: 2,
-            children: null,
-          },
-        ],
-      },
-      {
-        id: 22,
-        pid: 2,
-        code: 'table',
-        parent: 'components',
-        name: '表格',
-        component: 'components/table',
-        uri: '/table',
-        type: 'menu',
-        sort: 2,
-        icon: 'table',
-        hidden: false,
-        scopes: ['O'],
-        menuType: 1,
-        children: [
-          {
-            id: 221,
-            pid: 22,
-            code: 'tbl_view',
-            parent: 'table',
-            name: '查看',
-            component: 'TBL_VIEW',
-            uri: '/table:view',
-            type: 'button',
-            sort: 1,
-            icon: null,
-            hidden: false,
-            scopes: ['O'],
-            menuType: 2,
-            children: null,
-          },
-        ],
-      },
-    ],
   },
   {
     id: 3,
@@ -240,7 +127,24 @@ const mockRawMenus = [
         hidden: false,
         scopes: ['O'],
         menuType: 1,
-        children: null,
+        children: [
+          {
+            id: 311,
+            pid: 31,
+            code: 'user_list',
+            parent: 'users',
+            name: '查看',
+            component: 'USER_LIST',
+            uri: 'system:user:list',
+            type: 'button',
+            sort: 1,
+            icon: null,
+            hidden: false,
+            scopes: ['O'],
+            menuType: 2,
+            children: null,
+          },
+        ],
       },
       {
         id: 32,
@@ -256,7 +160,24 @@ const mockRawMenus = [
         hidden: false,
         scopes: ['O'],
         menuType: 1,
-        children: null,
+        children: [
+          {
+            id: 321,
+            pid: 32,
+            code: 'menu_list',
+            parent: 'menus',
+            name: '查看',
+            component: 'MENU_LIST',
+            uri: 'system:menu:list',
+            type: 'button',
+            sort: 1,
+            icon: null,
+            hidden: false,
+            scopes: ['O'],
+            menuType: 2,
+            children: null,
+          },
+        ],
       },
       {
         id: 33,
@@ -276,73 +197,32 @@ const mockRawMenus = [
       },
     ],
   },
-  {
-    id: 4,
-    pid: 0,
-    code: 'profile',
-    parent: 'root',
-    name: '个人中心',
-    component: '',
-    uri: '/profile',
-    type: 'group',
-    sort: 4,
-    icon: 'user',
-    hidden: false,
-    scopes: ['O'],
-    menuType: 0,
-    children: [
-      {
-        id: 41,
-        pid: 4,
-        code: 'basic',
-        parent: 'profile',
-        name: '基本资料',
-        component: 'profile/basic',
-        uri: '/profile/basic',
-        type: 'menu',
-        sort: 1,
-        icon: 'svg:M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2|M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z',
-        hidden: false,
-        scopes: ['O'],
-        menuType: 1,
-        children: null,
-      },
-      {
-        id: 42,
-        pid: 4,
-        code: 'security',
-        parent: 'profile',
-        name: '安全设置',
-        component: 'profile/security',
-        uri: '/profile/security',
-        type: 'menu',
-        sort: 2,
-        icon: 'shield',
-        hidden: false,
-        scopes: ['O'],
-        menuType: 1,
-        children: null,
-      },
-    ],
-  },
 ];
 
+// 公开菜单子集：未登录可访问的项（home）
+const mockPublicRawMenus = [mockRawMenus[0]];
+
+/**
+ * 校验加密密码：优先 base64 解码比对明文，SM4 密文 atob 会抛错 → 放行（dev）。
+ */
 function checkPassword(encrypted: string): boolean {
   try {
     return atob(encrypted) === '123456';
   } catch {
+    // SM4 密文非合法 base64，dev 模式仅验证 email 即可
     return true;
   }
 }
 
 export const handlers = [
+  // 登录（旧项目真实端点 /sys/auth/login）
   http.post('/sys/auth/login', async ({ request }) => {
     await delay(50);
     const body = (await request.json()) as {
-      email?: string;
+      username?: string;
       password?: string;
     };
-    if (body.email === 'admin' && checkPassword(body.password ?? '')) {
+    if (body.username === 'admin' && checkPassword(body.password ?? '')) {
       return HttpResponse.json({
         code: 0,
         data: mockLoginResponse,
@@ -356,10 +236,12 @@ export const handlers = [
     });
   }),
 
+  // 登出
   http.post('/sys/auth/logout', () =>
     HttpResponse.json({ code: 0, data: null, msg: 'ok' }),
   ),
 
+  // Token 刷新
   http.post('/sys/auth/refresh', async ({ request }) => {
     const body = (await request.json()) as { refreshToken?: string };
     if (body.refreshToken === 'mock-refresh-token') {
@@ -372,22 +254,27 @@ export const handlers = [
     return HttpResponse.json({ code: 10001, data: null, msg: '刷新令牌无效' });
   }),
 
-  http.post('/sys/auth/otp', () =>
-    HttpResponse.json({ code: 0, data: { success: true }, msg: 'ok' }),
-  ),
+  // 按身份返回菜单：无 token → 公开子集（home）；有 token → 全量
+  http.get('/sys/user/menus', ({ request }) => {
+    const token = request.headers.get(TOKEN_HEADER);
+    return HttpResponse.json({
+      code: 0,
+      data: token ? mockRawMenus : mockPublicRawMenus,
+      msg: 'ok',
+    });
+  }),
 
-  http.get('/api/user/info', () =>
-    HttpResponse.json({ code: 0, data: mockUser, msg: 'ok' }),
-  ),
+  // 旧格式菜单端点（DEFAULT_CONFIG 兼容测试）
+  http.get('/api/user/menus', ({ request }) => {
+    const token = request.headers.get(TOKEN_HEADER);
+    return HttpResponse.json({
+      code: 0,
+      data: token ? mockRawMenus : mockPublicRawMenus,
+      msg: 'ok',
+    });
+  }),
 
-  http.get('/sys/user/menus', () =>
-    HttpResponse.json({ code: 0, data: mockRawMenus, msg: 'ok' }),
-  ),
-
-  http.get('/api/user/menus', () =>
-    HttpResponse.json({ code: 0, data: mockRawMenus, msg: 'ok' }),
-  ),
-
+  // 需要登录态保护的示例端点：无令牌返回 401（用于 401 单飞集成用例）
   http.get('/api/protected', ({ request }) => {
     const token = request.headers.get(TOKEN_HEADER);
     if (!token) {

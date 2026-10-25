@@ -9,6 +9,10 @@ interface LayoutExtraMenuProps extends MenuProps {
   menus?: MenuRecordRaw[];
 }
 
+/**
+ * LayoutExtraMenu — 1:1 port of basic/menu/extra-menu.vue.
+ * 第二列菜单：内部处理导航，defaultActive 取 route meta activePath ?? path。
+ */
 export function LayoutExtraMenu({
   accordion = true,
   collapse,

@@ -8,6 +8,12 @@ interface ToolMoreProps {
   menus?: IContextMenuItem[];
 }
 
+/**
+ * ToolMore — 1:1 port of tabs-ui widgets/tool-more.vue.
+ * reference 由 上游 DropdownMenu 组件（reka-ui，click 触发 + portal 到 body）渲染；
+ * React port 以 AnchoredPortal 等价 —— tabbar 外层 overflow-hidden 会裁剪
+ * 内联 absolute 下拉（daisyUI dropdown-content 同样被裁剪）。
+ */
 export const ToolMore: FC<ToolMoreProps> = ({ menus }) => {
   const [open, setOpen] = useState(false);
   const anchorRef = useRef<HTMLDivElement>(null);

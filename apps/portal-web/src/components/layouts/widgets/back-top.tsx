@@ -3,15 +3,23 @@ import { useTranslation } from 'react-i18next';
 import { AppIcon } from '../../icons/app-icon';
 
 interface BackTopProps {
+  /** 距离底部距离 */
   bottom?: number;
 
+  /** 距离右侧距离 */
   right?: number;
 
+  /** 触发滚动的目标元素选择器（缺省为 document） */
   target?: string;
 
+  /** 滚动高度达到此值后才显示按钮 */
   visibilityHeight?: number;
 }
 
+/**
+ * BackTop — 1:1 port of UI 库 BackTop.
+ * 滚动超过 visibilityHeight 后显示，fade-down 过渡，支持 target 容器。
+ */
 export function BackTop({
   bottom = 20,
   right = 24,
@@ -29,6 +37,7 @@ export function BackTop({
     if (target) {
       const found = document.querySelector<HTMLElement>(target);
       if (!found) {
+        // reference use-backtop.ts：target 无匹配时直接抛错
         throw new Error(`target does not exist: ${target}`);
       }
       el = found;
@@ -42,6 +51,8 @@ export function BackTop({
       }
     };
 
+    // useThrottleFn(handleScroll, 300, /* trailing */ true) 等价：
+    // leading 触发 + trailing 补发，不丢失最后一次滚动事件
     let lastExec = 0;
     let timer: ReturnType<typeof setTimeout> | null = null;
     const handleScrollThrottled = () => {
@@ -67,6 +78,7 @@ export function BackTop({
       passive: true,
     });
 
+    // Give visible an initial value
     handleScroll();
     return () => {
       container.removeEventListener('scroll', handleScrollThrottled);

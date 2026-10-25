@@ -1,5 +1,9 @@
 import type { SVGProps } from 'react';
 
+/**
+ * Slogan illustration for the authentication page.
+ * 1:1 port of authentication/icons/slogan.vue
+ */
 export function SloganIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg

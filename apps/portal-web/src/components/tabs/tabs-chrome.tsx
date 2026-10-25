@@ -81,10 +81,15 @@ export const TabsChrome: FC<TabsProps> = (props) => {
             itemClass="pr-6"
           >
             <div className="relative size-full px-1">
+              {/* divider */}
               {i !== 0 && tab.key !== active && (
                 <div className="tabs-chrome__divider bg-border absolute top-1/2 left-[var(--gap)] z-0 h-4 w-px translate-y-[-50%] transition-all" />
               )}
+              {/* background */}
               <div className="tabs-chrome__background absolute z-[-1] size-full px-[calc(var(--gap)-1px)] py-0 transition-opacity duration-150">
+                {/* 激活态背景统一 primary（09-09 主题色适配）：此前暗色回退
+                    bg-accent（reference 的 dark: 变体），换主题色时标签无感；
+                    /20 保证暗底上有可见色差（/15 在暗色下几乎无色差） */}
                 <div className="tabs-chrome__background-content group-[.is-active]:bg-primary/20 h-full rounded-tl-[var(--gap)] rounded-tr-[var(--gap)] duration-150" />
                 <svg
                   className="tabs-chrome__background-before group-[.is-active]:fill-primary/20 absolute bottom-0 -left-px fill-transparent transition-all duration-150"
@@ -102,6 +107,7 @@ export const TabsChrome: FC<TabsProps> = (props) => {
                 </svg>
               </div>
 
+              {/* extra */}
               <div className="tabs-chrome__extra absolute top-1/2 right-[var(--gap)] z-3 size-4 translate-y-[-50%]">
                 {!tab.affixTab && tabsView.length > 1 && tab.closable && (
                   <AppIcon
@@ -125,6 +131,7 @@ export const TabsChrome: FC<TabsProps> = (props) => {
                 )}
               </div>
 
+              {/* tab-item-main */}
               <div className="tabs-chrome__item-main text-accent-foreground group-[.is-active]:text-primary z-2 mx-[calc(var(--gap)*2)] my-0 flex h-full items-center overflow-hidden rounded-tl-[5px] rounded-tr-[5px] pr-4 pl-2 duration-150">
                 {showIcon && tab.icon && (
                   <span className="mr-1 flex size-4 items-center overflow-hidden">

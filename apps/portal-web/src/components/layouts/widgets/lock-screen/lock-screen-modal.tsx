@@ -11,6 +11,7 @@ interface LockScreenModalProps {
   onSubmit?: (password: string) => void;
 }
 
+/** SVG avatar placeholder when no src is given */
 function AvatarFallback() {
   return (
     <div className="avatar avatar-placeholder">
@@ -21,6 +22,10 @@ function AvatarFallback() {
   );
 }
 
+/**
+ * LockScreenModal — password prompt shown when the screen is locked.
+ * React port of widgets/lock-screen/lock-screen-modal.vue
+ */
 export function LockScreenModal({
   avatar = '',
   text = '',
@@ -34,6 +39,7 @@ export function LockScreenModal({
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    // Reset form when opened, then focus the password field
     if (open) {
       setPassword('');
       setError(false);
@@ -52,6 +58,10 @@ export function LockScreenModal({
 
   if (!open) return null;
 
+  // portal 到 body：本组件渲染在 user-dropdown（header）内，header 是
+  // fixed + z-index 200 的 stacking context（低于侧边栏 201）——不 portal 的话
+  // .modal 的 z-999 被困在 header 上下文里，盖不住侧边栏（同 preferences-drawer 先例）。
+  // 外层 onClick = 点击空白区域（backdrop）关闭；modal-box 内 stopPropagation。
   return createPortal(
     <div
       className="modal modal-open modal-middle"

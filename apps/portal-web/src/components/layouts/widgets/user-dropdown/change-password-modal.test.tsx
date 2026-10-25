@@ -24,6 +24,12 @@ vi.mock('@zanelab/utils', async (importOriginal) => {
 
 import { ChangePasswordModal } from './change-password-modal';
 
+// 新密码校验按后端 PasswordValidator 口径（常量见 @zanelab/utils 的 password-policy）：
+// 长度 [8,32]，且 4 类字符（小写/大写/数字/符号）里至少覆盖 3 类；
+// 其后才是「新旧不同」与「两次一致」。提交口径同旧项目：btoa 后 PUT change/pwd。
+//
+// 用例里的合法值统一用 3 类以上：Oldpwd123 / Newpwd123（大写+小写+数字）。
+
 afterEach(cleanup);
 beforeEach(() => {
   changePasswordMock.mockReset();
@@ -31,6 +37,7 @@ beforeEach(() => {
   notifySuccessMock.mockReset();
 });
 
+/** 弹窗内三个密码输入框（原密码 / 新密码 / 确认密码） */
 const passwordInputs = () =>
   Array.from(
     document.querySelectorAll('.modal-box input'),
@@ -69,6 +76,7 @@ describe('ChangePasswordModal', () => {
       expect(modal.parentElement).toBe(document.body);
       expect(host.contains(modal)).toBe(false);
 
+      // 由下拉菜单项打开时下拉面板仍开着（portal 到 body，z-1000），弹窗必须压住它
       expect(modal.style.zIndex).toBe('1100');
     } finally {
       document.body.removeChild(host);
@@ -136,10 +144,12 @@ describe('ChangePasswordModal', () => {
 
     fill(['', 'abcdefgh', '']);
 
+    // 仅小写：1/3
     expect(document.querySelector('.modal-box')!.textContent).toContain('1/3');
 
     fill(['', 'Abcdefg1', '']);
 
+    // 小写+大写+数字：3/3
     expect(document.querySelector('.modal-box')!.textContent).toContain('3/3');
   });
 

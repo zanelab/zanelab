@@ -12,9 +12,24 @@ import { z } from 'zod';
 
 import { AuthTitle } from './auth-title';
 
+/**
+ * AuthenticationCodeLogin — 1:1 port of common-ui/ui/authentication/code-login.vue.
+ * 上游 schema 表单引擎 → 受控 input + zod（等价参考实现 playground code-login.vue 的
+ * rules：phoneNumber min(1) + /^\d{11}$/ refine（"请输入手机号" /
+ * "手机号码格式错误"，mobileTip/mobileErrortip），code length(6)
+ * （codeTip "请输入{0}位验证码"））。
+ *
+ * 上游 PinInput 组件（codeLength=6 + 发送验证码按钮）→ 受控 input + 独立按钮；
+ * 倒计时为 上游 PinInput 组件 语义的等价实现（maxTime 60s，每秒递减，期间
+ * 按钮禁用并显示 "{0}秒后重新获取"）；handleSendCode 等价 playground
+ * 的实现：先校验手机号，通过后模拟 3s 发送（reference 的 antd
+ * message.loading/success 提示依赖应用层消息基础设施，port demo 无
+ * 该设施 —— 差异在此文档化）。
+ */
 const CODE_LENGTH = 6;
 const MAX_TIME = 60;
 
+/** 校验文案走语言包（提交/发送时按当前语言构建） */
 const buildCodeLoginSchema = (t: TFunction) =>
   z.object({
     code: z.string().length(CODE_LENGTH, {
@@ -58,10 +73,12 @@ export function AuthenticationCodeLogin({
   const [values, setValues] = useState({ code: '', phoneNumber: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // 发送验证码（playground code-login.vue:49-63 等价：校验手机号 → 3s 模拟）
   const [sending, setSending] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // startCountdown（pin-input input.vue:73-80 等价：countdown > 0 时每秒递减）
   useEffect(() => {
     if (countdown > 0) {
       timerRef.current = setTimeout(() => {
@@ -73,10 +90,12 @@ export function AuthenticationCodeLogin({
     };
   }, [countdown]);
 
+  /** handleSendCode：先校验手机号，通过后模拟 3s 发送并启动倒计时 */
   async function handleSendCode() {
     const phone = values.phoneNumber;
     const phoneValid = phone.length >= 1 && /^\d{11}$/.test(phone);
     if (!phoneValid) {
+      // validateField('phoneNumber') 失败 → 抛错不启动倒计时
       setErrors((prev) => ({
         ...prev,
         phoneNumber: phone
@@ -88,17 +107,20 @@ export function AuthenticationCodeLogin({
     setErrors((prev) => ({ ...prev, phoneNumber: '' }));
     setSending(true);
 
+    // sendCodeApi：3s 模拟发送（message 提示为应用层设施，port 未含）
     await new Promise((resolve) => setTimeout(resolve, 3000));
     setSending(false);
     setCountdown(MAX_TIME);
   }
 
+  /** handleSend（pin-input input.vue:58-70 等价） */
   function handleSend(e: React.MouseEvent) {
     e.preventDefault();
     if (sending || countdown > 0) return;
     void handleSendCode();
   }
 
+  // createText：倒计时 > 0 时 "{0}秒后重新获取"，否则 "获取验证码"
   const sendButtonText =
     countdown > 0
       ? t('auth.codeLogin.resendIn', { count: countdown })
@@ -121,6 +143,7 @@ export function AuthenticationCodeLogin({
   }
 
   return (
+    // @keydown.enter.prevent（code-login.vue:81）—— 显式 preventDefault
     <form
       className="space-y-4"
       onKeyDown={(e) => {

@@ -7,9 +7,6 @@ coverage/
 pnpm-lock.yaml
 
 # Runtime config & vendored third-party assets (not formatted)
-apps/portal/public/config.js
-apps/portal/public/iconfont.js
-apps/portal/public/mockServiceWorker.js
 apps/portal-web/public/config.js
 apps/portal-web/public/iconfont.js
 apps/portal-web/public/mockServiceWorker.js

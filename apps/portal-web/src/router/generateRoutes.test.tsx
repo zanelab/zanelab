@@ -21,21 +21,38 @@ describe('generateRoutes（§7.1）', () => {
     return useRoutes(routes);
   }
 
-  it('本地页菜单 → 叶子路由，路径去前导斜杠', () => {
+  it('已注册子应用菜单 → activeRule/* 占位兜底，路径去前导斜杠', () => {
+    appConfig.microApps = {
+      home: {
+        name: 'home',
+        entry: '//localhost:8083',
+        container: '#subapp-home-container',
+        activeRule: '/home',
+        props: {},
+        prefetch: false,
+        public: ['/home'],
+      },
+      iam: {
+        name: 'iam',
+        entry: '//localhost:8081',
+        container: '#subapp-container',
+        activeRule: '/system',
+        props: {},
+        prefetch: false,
+        public: false,
+      },
+    };
     const routes = buildMenuRoutes(mockMenus);
     const paths = routes.map((r) => r.path);
-    expect(paths).toContain('dashboard');
-    expect(paths).toContain('components/button');
-    expect(paths).toContain('components/table');
+    expect(paths).toContain('home/*');
+    expect(paths).toContain('system/*');
   });
 
-  it('user-dropdown 类型条目照常生成路由，子项下渗、目录父项不产自身路由（09-08）', () => {
+  it('未注册子应用的菜单项不产路由（elementFor 返回 null）', () => {
     const routes = buildMenuRoutes(mockMenus);
     const paths = routes.map((r) => r.path);
-
-    expect(paths).not.toContain('profile');
-    expect(paths).toContain('profile/basic');
-    expect(paths).toContain('profile/security');
+    expect(paths).not.toContain('home');
+    expect(paths).not.toContain('system');
   });
 
   it('纯目录节点（无 component/appName）不产自身路由，叶子扁平下渗', () => {
@@ -47,24 +64,31 @@ describe('generateRoutes（§7.1）', () => {
     expect(paths).not.toContain('system');
   });
 
-  it('已注册子应用根路由渲染占位（null），* 兜底让 /system/* 全部匹配', () => {
+  it('已注册子应用根路由渲染占位（null），* 兜底让子应用内部路径全部匹配', () => {
     appConfig.microApps = {
       iam: {
         name: 'iam',
         entry: '//localhost:8081',
         container: '#subapp-container',
-        activeRule: '/system',
+        activeRule: '/iam',
         props: {},
         prefetch: false,
+        public: false,
       },
     };
     const routes = buildMenuRoutes(mockMenus);
-    const systemRoute = routes.find((r) => r.path === 'system');
-    expect(systemRoute).toBeTruthy();
+    const iamRoute = routes.find((r) => r.path === 'iam');
+    expect(iamRoute).toBeTruthy();
 
-    expect(systemRoute?.children?.map((r) => r.path)).toEqual(['*']);
+    // app 节点的叶子子项（users/menus/roles）各自产占位路由，* 兜底收尾
+    expect(iamRoute?.children?.map((r) => r.path)).toEqual([
+      'users',
+      'menus',
+      'roles',
+      '*',
+    ]);
 
-    const { container } = render(<>{systemRoute?.element}</>);
+    const { container } = render(<>{iamRoute?.element}</>);
     expect(container.innerHTML).toBe('');
   });
 
@@ -72,11 +96,11 @@ describe('generateRoutes（§7.1）', () => {
     const routes = generateRoutes(mockMenus);
     const paths = routes.map((r) => r.path);
 
-    expect(paths).not.toContain('system');
-    expect(paths).not.toContain('system/*');
+    expect(paths).not.toContain('iam');
+    expect(paths).not.toContain('iam/*');
 
     render(
-      <MemoryRouter initialEntries={['/system/some/page']}>
+      <MemoryRouter initialEntries={['/iam/some/page']}>
         <RoutesProbe routes={routes} />
       </MemoryRouter>,
     );
@@ -106,6 +130,7 @@ describe('generateRoutes（§7.1）', () => {
       activeRule: '/npa-plt-system/',
       props: {},
       prefetch: false,
+      public: false,
     };
 
     it('已注册子应用 → activeRule/* 占位兜底（归一化首尾斜杠）', () => {
@@ -149,10 +174,21 @@ describe('generateRoutes（§7.1）', () => {
   });
 
   it('generateRoutes 附带兜底：home 重定向 + 403 + 404', () => {
+    appConfig.microApps = {
+      home: {
+        name: 'home',
+        entry: '//localhost:8083',
+        container: '#subapp-home-container',
+        activeRule: '/home',
+        props: {},
+        prefetch: false,
+        public: ['/home'],
+      },
+    };
     const routes = generateRoutes(mockMenus);
     const paths = routes.map((r) => r.path);
 
-    expect(paths).toContain('dashboard');
+    expect(paths).toContain('home/*');
     expect(paths).toContain('403');
     expect(paths).toContain('*');
     expect(paths).toContain('');

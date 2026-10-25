@@ -18,32 +18,6 @@
       "serverError": "Server error, please try again later"
     }
   },
-  "session": {
-    "platformAdmin": "Platform Admin",
-    "tenantAdmin": "Tenant Admin",
-    "platformAdminEnd": "Platform Admin",
-    "tenantInfo": "Tenant",
-    "projectSpaces": "Project Spaces",
-    "switch": "Switch",
-    "switchTenant": "Switch tenant",
-    "all": "All",
-    "default": "Default",
-    "manage": "Manage",
-    "manageTip": "Enter admin portal",
-    "emptyOrg": "No project space joined yet",
-    "copyTenantName": "Copy tenant name",
-    "copyTenantCode": "Copy tenant code",
-    "copySuccess": "Copied",
-    "searchTenantPlaceholder": "Search by name",
-    "noMatchedTenant": "No matching tenant",
-    "orgListTitle": "Project Space List",
-    "orgListTip": "Lists the project spaces you have access to under the current tenant. Click one to enter.",
-    "orgSearchPlaceholder": "Project space name / description",
-    "orgEmpty": "You have not joined any project space. Please contact an administrator.",
-    "tagPlatform": "P",
-    "tagTenant": "T",
-    "tagOrg": "S"
-  },
   "auth": {
     "validation": {
       "usernameRequired": "Please enter your username",
@@ -443,7 +417,8 @@
       "logout": "Log out",
       "notice": "Notice",
       "logoutConfirm": "Are you sure you want to log out?",
-      "changePassword": "Change password"
+      "changePassword": "Change password",
+      "login": "Sign in"
     },
     "changePassword": {
       "title": "Change Password",
@@ -472,22 +447,12 @@
     }
   },
   "menus": {
-    "dashboard": "Dashboard",
-    "components": {
-      "title": "Components",
-      "button": "Button",
-      "table": "Table"
-    },
     "system": {
       "title": "System",
       "users": "Users",
       "menus": "Menus",
       "roles": "Roles"
     },
-    "profile": {
-      "title": "Profile",
-      "basic": "Basic Profile",
-      "security": "Security"
-    }
+    "home": "Home"
   }
 }

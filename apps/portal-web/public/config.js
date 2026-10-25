@@ -7,24 +7,31 @@ window.__APP_CONFIG__ = {
     favicon: '/favicon.ico',
   },
   auth: {
-    loginPath: '/login',
+    loginPath: '/iam/login',
     tokenKey: 'portal_token',
     refreshTokenKey: 'portal_refresh_token',
+    loginPage: {
+      layout: 'panel-center',
+      showCodeLogin: false,
+      showQrcodeLogin: false,
+      showThirdPartyLogin: false,
+      showRegister: false,
+      showForgetPassword: false,
+      showRememberMe: true,
+      showColorToggle: false,
+      showLayoutToggle: false,
+    },
   },
   api: {
     baseURL: '/auth/api/v1',
     menusEndpoint: '/user/menu/tree',
-    userInfoEndpoint: '/sys/user/info',
     loginEndpoint: '/sys/auth/login',
     logoutEndpoint: '/sys/auth/logout',
     refreshEndpoint: '/sys/auth/refresh',
-    otpEndpoint: '/sys/auth/otp',
-    userPerEndpoint: '/home/user/getUserPer',
-    powerAgentEndpoint: '/share/findPowerAgent',
     useMock: false,
   },
   route: {
-    homePath: '/dashboard',
+    homePath: '/home',
     forbiddenPath: '/403',
     notFoundPath: '/404',
   },
@@ -32,7 +39,6 @@ window.__APP_CONFIG__ = {
   layout: {
     theme: 'light',
     layout: 'header-nav',
-    authPageLayout: 'panel-center',
     fixedHeader: true,
     showBreadcrumb: true,
   },
@@ -40,7 +46,7 @@ window.__APP_CONFIG__ = {
   preferences: {
     app: {
       locale: 'zh-CN',
-      enablePreferences: false,
+      enablePreferences: true,
     },
     tabbar: {
       enable: false,
@@ -48,27 +54,19 @@ window.__APP_CONFIG__ = {
     widget: {
       sidebarToggle: false,
       lockScreen: false,
-      fullscreen: false,
+      fullscreen: true,
 
       languageToggle: true,
       refresh: false,
-      themeToggle: false,
-      notification: false,
-      timezone: false,
+      themeToggle: true,
+      notification: true,
+      timezone: true,
     },
     shortcutKeys: {
-      enable: false,
-      globalSearch: false,
-      globalLockScreen: false,
+      enable: true,
+      globalSearch: true,
+      globalLockScreen: true,
     },
-  },
-
-  session: {
-    showPlatformManagement: true,
-
-    showTenantManagement: true,
-
-    showTenantSwitcher: true,
   },
 
   icons: {
@@ -77,19 +75,29 @@ window.__APP_CONFIG__ = {
       paths: ['M3 3v18h18', 'M7 16v-5', 'M12 16V8', 'M17 16v-9'],
     },
   },
-
   iconPackUrl: '/icons/pack.json',
-
   i18n: {
-    packUrls: {},
+    packUrls: {
+
+    },
   },
   microApps: {
-    iam: {
+    'home': {
+      name: 'home',
+      entry: '//localhost:8083',
+      container: '#subapp-home-container',
+      activeRule: '/home',
+      props: {},
+      public: ['/home'],
+      prefetch: true,
+    },
+    'iam': {
       name: 'iam',
       entry: '//localhost:8081',
-      container: '#subapp-container',
+      container: '#subapp-iam-container',
       activeRule: '/iam',
       props: {},
+      public: true,
       prefetch: true,
     },
   },

@@ -5,12 +5,23 @@ import { switchLocale } from '../../../locales/i18n';
 import { AnchoredPortal } from '@zanelab/ui';
 import { AppIcon } from '../../icons/app-icon';
 
+/** 等价于 上游常量包 SUPPORT_LANGUAGES */
 const SUPPORT_LANGUAGES: Array<{ label: string; value: string }> = [
   { label: '简体中文', value: 'zh-CN' },
   { label: 'English', value: 'en-US' },
 ];
 
-export function LanguageToggle({ className = '' }: { className?: string }) {
+/**
+ * LanguageToggle — 1:1 port of widgets/language-toggle.vue.
+ * 下拉单选语言菜单（上游单选下拉 → 受控下拉 + radio 选项）。
+ * loadLocaleMessages 在 React port 中暂无 i18n 运行时，切换仅更新偏好。
+ */
+export function LanguageToggle({
+  /** 根元素 class（等价参考实现 的 Vue class 透传，header 传 mr-1） */
+  className = '',
+}: {
+  className?: string;
+}) {
   const { t } = useTranslation();
   const preferences = usePreferencesStore();
   const [open, setOpen] = useState(false);
@@ -19,6 +30,7 @@ export function LanguageToggle({ className = '' }: { className?: string }) {
   async function handleUpdate(value: string | undefined) {
     if (!value) return;
 
+    // 切语言：写 umi_locale + 整页刷新（对齐旧项目 umi setLocale，见 locales/i18n.switchLocale）
     switchLocale(value);
     setOpen(false);
   }
@@ -27,7 +39,7 @@ export function LanguageToggle({ className = '' }: { className?: string }) {
     <div className={`relative ${className}`} ref={anchorRef}>
       <button
         type="button"
-        className="btn btn-ghost btn-sm btn-square hover:animate-[shrink_0.3s_ease-in-out]"
+        className="btn btn-ghost btn-sm btn-circle hover:animate-[shrink_0.3s_ease-in-out]"
         title={t('widgets.languageToggle')}
         onClick={() => setOpen((v) => !v)}
       >

@@ -302,16 +302,16 @@ html.grayscale-mode {
   opacity: 0 !important;
 }
 
-.vben-link {
+.auth-link {
   color: hsl(var(--primary));
   cursor: pointer;
 }
 
-.vben-link:hover {
+.auth-link:hover {
   color: hsl(var(--primary-600));
 }
 
-.vben-link:active {
+.auth-link:active {
   color: hsl(var(--primary-700));
 }
 

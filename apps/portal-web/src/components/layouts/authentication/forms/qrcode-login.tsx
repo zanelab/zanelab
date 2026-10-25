@@ -5,6 +5,12 @@ import QRCode from 'qrcode';
 
 import { AuthTitle } from './auth-title';
 
+/**
+ * AuthenticationQrCodeLogin — 1:1 port of common-ui/ui/authentication/qrcode-login.vue.
+ * useQRCode（@vueuse/integrations）→ qrcode 包 toDataURL 的 effect 等价
+ * （errorCorrectionLevel: 'H'，margin: 4 与 reference 选项一致）。
+ */
+
 interface QrCodeLoginProps {
   loading?: boolean;
   loginPath?: string;
@@ -12,6 +18,7 @@ interface QrCodeLoginProps {
   subTitle?: string;
   submitButtonText?: string;
 
+  /** 二维码下方提示文案（等价 description） */
   description?: string;
   showBack?: boolean;
   slotTitle?: ReactNode;
@@ -33,7 +40,8 @@ export function AuthenticationQrCodeLogin({
   const navigate = useNavigate();
   const { t } = useTranslation();
 
-  const [text] = useState('https://vben.vvbin.cn');
+  // 扫码登录演示内容 —— 实际接入时由后端下发登录 ticket URL
+  const [text] = useState('https://zanelab.local');
   const [qrcode, setQrcode] = useState('');
 
   useEffect(() => {

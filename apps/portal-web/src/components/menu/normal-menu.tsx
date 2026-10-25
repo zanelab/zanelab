@@ -43,6 +43,8 @@ export function NormalMenu({
           onMouseEnter={() => onEnter?.(menu)}
         >
           {menuIcon(menu) && (
+            // size-[1em]：span 仅有 max-height 无宽度，svg 需显式尺寸
+            //（1em 随 .admin-normal-menu__icon 的 font-size 1.25×base 缩放）
             <span className="admin-normal-menu__icon">
               {renderMenuIcon(menuIcon(menu), 'size-[1em]')}
             </span>

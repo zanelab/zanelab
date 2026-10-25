@@ -60,6 +60,7 @@ export const TabsView: FC<TabsViewProps> = (props) => {
 
   return (
     <div className={`flex h-full flex-1 overflow-hidden ${className ?? ''}`}>
+      {/* Left scroll button */}
       {showScrollButton && (
         <span
           className={`flex items-center border-r px-2 ${
@@ -89,6 +90,7 @@ export const TabsView: FC<TabsViewProps> = (props) => {
         </div>
       </div>
 
+      {/* Right scroll button */}
       {showScrollButton && (
         <span
           className={`flex items-center border-l px-2 ${

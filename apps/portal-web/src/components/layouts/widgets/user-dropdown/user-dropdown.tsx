@@ -14,31 +14,42 @@ export interface UserDropdownMenu {
   handler: () => void;
   icon?: ReactNode;
   text: string;
-
+  /** 子菜单（多级）：有 children 的项为目录语义（不导航，悬停级联向左弹出） */
   children?: UserDropdownMenu[];
 }
 
 interface UserDropdownProps {
+  /** 头像 */
   avatar?: string;
 
+  /** 描述 */
   description?: string;
 
+  /** 是否启用快捷键 */
   enableShortcutKey?: boolean;
 
+  /** 菜单数组 */
   menus?: UserDropdownMenu[];
 
+  /** 标签文本 */
   tagText?: string;
 
+  /** 文本 */
   text?: string;
 
+  /** 触发方式 */
   trigger?: 'both' | 'click' | 'hover';
 
+  /** hover 触发时，延迟响应的时间 */
   hoverDelay?: number;
 
+  /** 锁屏提交（等价于 accessStore.lockScreen(password)） */
   onLockScreen?: (password: string) => void;
 
+  /** 退出登录（确认弹窗后触发） */
   onLogout?: () => void;
 
+  /** 清除偏好并退出登录 */
   onClearPreferencesAndLogout?: () => void;
 }
 
@@ -60,6 +71,11 @@ const ChevronLeftIcon = () => (
   <AppIcon name="chevron-left" className="mr-2 ml-auto size-3 opacity-50" />
 );
 
+/**
+ * 自定义菜单项（递归）：叶子=按钮（handler 跳转）；父项=目录（daisyUI
+ * dropdown-hover 悬停级联，dropdown-left 向左弹——下拉框锚定 header 最右缘，
+ * 右弹会溢出视口）。子面板结构与主面板一致，任意层级递归成立。
+ */
 function DropdownMenuItems({ items }: { items: UserDropdownMenu[] }) {
   return items.map((menu) =>
     menu.children?.length ? (
@@ -75,6 +91,7 @@ function DropdownMenuItems({ items }: { items: UserDropdownMenu[] }) {
           {menu.text}
           <ChevronLeftIcon />
         </button>
+        {/* 级联子面板（对齐旧项目租户管理 Popover：min 150 / max 250 / 最高 300 可滚） */}
         <div className="dropdown-content border-base-300 bg-base-100 max-h-75 max-w-62 min-w-40 overflow-y-auto rounded-md border py-1 shadow-lg">
           <DropdownMenuItems items={menu.children} />
         </div>
@@ -93,6 +110,15 @@ function DropdownMenuItems({ items }: { items: UserDropdownMenu[] }) {
   );
 }
 
+/**
+ * UserDropdown — 1:1 port of widgets/user-dropdown/user-dropdown.vue.
+ *
+ * 结构对应：
+ * - DropdownMenu (shadcn) → 受控弹出面板（click / hover 触发，hover 有延迟）
+ * - LockScreenModal + accessStore.lockScreen → LockScreenModal + onLockScreen 回调
+ * - Preferences ref.open() → useOpenPreferences().handleOpenPreferences()
+ * - useMagicKeys Alt+L / Alt+Q → window keydown（e.code 判定）
+ */
 export function UserDropdown({
   avatar = '',
   description = '',
@@ -140,6 +166,7 @@ export function UserDropdown({
     }
   }
 
+  // hover 触发（等价于 useHoverToggle，带 hoverDelay 延迟）
   function handleMouseEnter() {
     if (!hoverEnabled) return;
     clearHoverTimer();
@@ -179,10 +206,12 @@ export function UserDropdown({
     setLogoutModalOpen(false);
   }
 
+  // 设置 - 打开偏好设置抽屉
   function handleOpenSettings() {
     handleOpenPreferences();
   }
 
+  // Alt+L 锁屏 / Alt+Q 退出登录（等价于 useMagicKeys whenever）
   useEffect(() => {
     if (!shortcutKeysEnabled) return;
     function handleKeyDown(e: KeyboardEvent) {
@@ -205,6 +234,7 @@ export function UserDropdown({
 
   return (
     <>
+      {/* 偏好设置抽屉（preferencesButtonPosition.userDropdown 时由本组件承担） */}
       {showInUserDropdown
         ? createPortal(
             <PreferencesDrawer
@@ -216,10 +246,13 @@ export function UserDropdown({
         : null}
 
       <div className="relative" ref={anchorRef}>
+        {/* 触发器：头像 */}
         <button
           type="button"
           className="hover:bg-base-200 mr-2 ml-1 cursor-pointer rounded-full p-1.5"
           onClick={() => {
+            // click/both：点击切换展开；hover：点击仅展开（触屏等无 hover
+            // 环境仍可用，且避免悬停展开后一次点击立刻收起）
             if (clickEnabled) {
               setOpenPopover((v) => !v);
             } else {
@@ -234,6 +267,8 @@ export function UserDropdown({
           </div>
         </button>
 
+        {/* portal 到 body（reka-ui DropdownMenuPortal 等价）—— header 外层
+            overflow-hidden 会裁剪内联 absolute 下拉；mr-2 → offsetX 8 */}
         <AnchoredPortal
           open={openPopover}
           anchorRef={anchorRef}
@@ -245,6 +280,7 @@ export function UserDropdown({
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
           >
+            {/* 用户信息（对齐旧项目 Avatar：头像 40px + 姓名 + 租户名 12px 省略） */}
             <div className="flex items-center gap-2 px-4 py-3">
               <div className="size-10 shrink-0">
                 <Avatar avatar={avatar} alt={text} />
@@ -271,8 +307,10 @@ export function UserDropdown({
               </div>
             </div>
 
+            {/* 自定义菜单（支持多级：父项悬停级联，见 DropdownMenuItems） */}
             <DropdownMenuItems items={menus} />
 
+            {/* 设置（偏好设置按钮位于用户下拉时显示） */}
             {showInUserDropdown ? (
               <button
                 type="button"
@@ -284,6 +322,7 @@ export function UserDropdown({
               </button>
             ) : null}
 
+            {/* 锁定屏幕 */}
             {preferences.widget.lockScreen ? (
               <button
                 type="button"
@@ -300,6 +339,7 @@ export function UserDropdown({
               </button>
             ) : null}
 
+            {/* 退出登录 */}
             <button
               type="button"
               className="hover:bg-base-200/60 flex w-full cursor-pointer items-center px-4 py-1 text-sm leading-8"
@@ -317,6 +357,7 @@ export function UserDropdown({
         </AnchoredPortal>
       </div>
 
+      {/* 锁屏密码弹窗 */}
       {preferences.widget.lockScreen ? (
         <LockScreenModal
           avatar={avatar}
@@ -327,6 +368,7 @@ export function UserDropdown({
         />
       ) : null}
 
+      {/* 退出登录确认弹窗 */}
       {logoutModalOpen
         ? createPortal(
             <div className="modal modal-open modal-middle">

@@ -156,27 +156,3 @@ channel:
 #
 # prompt_injection:
 #   skip_keyword: "no-trellis"   # "" disables the escape hatch entirely
-
-# Auto-detected monorepo packages
-packages:
-  iam-web:
-    path: apps/iam-web
-  portal-web:
-    path: apps/portal-web
-  types:
-    path: packages/types
-  ui:
-    path: packages/ui
-  utils:
-    path: packages/utils
-  commitlint-config:
-    path: tooling/commitlint-config
-  node-utils:
-    path: tooling/node-utils
-  prettier-config:
-    path: tooling/prettier-config
-  stylelint-config:
-    path: tooling/stylelint-config
-  tsconfig:
-    path: tooling/tsconfig
-default_package: @zanelab/iam-web

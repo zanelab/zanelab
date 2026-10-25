@@ -17,22 +17,36 @@ interface IBreadcrumb {
 }
 
 interface BreadcrumbProps {
+  /** 覆盖内部派生的面包屑数据（默认从 route-meta 匹配链派生，等价于 route.matched） */
   items?: IBreadcrumb[];
 
+  /** 仅一条时隐藏（等价于 hideWhenOnlyOne） */
   hideWhenOnlyOne?: boolean;
   showHome?: boolean;
   showIcon?: boolean;
 
+  /** 面包屑样式 */
   type?: BreadcrumbStyleType;
   onSelect?: (path: string) => void;
 }
 
+/** mdi home-outline（reference 首页图标；与 builtin home 不同字形） */
 const HomeIcon = () => <AppIcon name="home-outline" className="size-5" />;
 
+/** chevron right（BreadcrumbSeparator） */
 const ChevronRight = () => <AppIcon name="chevron-right" className="size-3" />;
 
+/** chevron down（DropdownMenuTrigger 的展开指示） */
 const ChevronDown = () => <AppIcon name="chevron-down" className="size-4" />;
 
+/**
+ * Breadcrumb — 1:1 port of widgets/breadcrumb.vue + BreadcrumbView.
+ * 面包屑数据从 route-meta 匹配链内部派生（等价于 reference 的 route.matched 计算，
+ * 过滤 hideInBreadcrumb / hideChildrenInMenu）；showHome 时插入 icon-only 首页项。
+ * normal / background 两种样式；background 为箭头形分段（breadcrumb-background.vue）。
+ * 有意省略：reference 的 breadcrumb-transition TransitionGroup（breadcrumb.vue:44/96，
+ * 纯装饰性的 item-enter 进场动画）—— React 等价规则下不移植，以静态渲染替代。
+ */
 export function Breadcrumb({
   items,
   hideWhenOnlyOne,
@@ -44,8 +58,10 @@ export function Breadcrumb({
   const navigate = useNavigate();
   const location = useLocation();
 
+  // 订阅语言变化（09-09-i18n）：changeLanguage 后匹配链标题经 menuTitle 重算
   useTranslation();
 
+  // breadcrumbs computed（breadcrumb.vue:32-66）—— route.matched 等价
   const breadcrumbs: IBreadcrumb[] =
     items ??
     (() => {
@@ -55,13 +71,16 @@ export function Breadcrumb({
           continue;
         }
         result.push({
+          // route-meta 的 icon 为后端标识符字符串 → AppIcon 解析（09-08-icon-registry）
           icon: renderMenuIcon(meta.icon as ReactNode, 'size-4'),
           path: meta.path,
 
+          // 渲染期经 menuTitle 解析（09-09-i18n）：i18nKey 命中取翻译，否则回退 title
           title: menuTitle({ name: meta.title ?? '', i18nKey: meta.i18nKey }),
         });
       }
       if (showHome) {
+        // reference: { icon: 'mdi:home-outline', isHome: true, path: '/' } —— 无 title
         result.unshift({ icon: <HomeIcon />, isHome: true, path: '/' });
       }
       if (hideWhenOnlyOne && result.length === 1) {
@@ -84,6 +103,7 @@ export function Breadcrumb({
   }
 
   if (type === 'background') {
+    // background 样式：箭头形分段（breadcrumb-background.vue scoped style 1:1 移植）
     return (
       <nav className="breadcrumb-bg ml-2 flex">
         <style>{`
@@ -193,6 +213,7 @@ export function Breadcrumb({
     );
   }
 
+  // normal 样式：shadcn Breadcrumb（breadcrumb.vue）
   return (
     <nav className="text-muted-foreground ml-2 flex items-center gap-1 text-sm">
       {breadcrumbs.map((item, index) => {
@@ -241,6 +262,10 @@ export function Breadcrumb({
   );
 }
 
+/**
+ * 面包屑下拉子菜单 —— DropdownMenu + ChevronDown 触发器
+ * （reference breadcrumb.vue:45-63 的 React 等价，daisyUI dropdown 实现）
+ */
 function BreadcrumbDropdown({
   item,
   showIcon,
@@ -262,6 +287,7 @@ function BreadcrumbDropdown({
         className="dropdown-toggle hover:text-foreground flex items-center gap-1 transition-colors"
         onClick={() => setOpen((v) => !v)}
       >
+        {/* reference breadcrumb.vue:48 —— DropdownMenuTrigger 内 上游图标组件 为 size-5 */}
         {showIcon && item.icon ? (
           <span className="mr-1 size-5">{item.icon}</span>
         ) : null}

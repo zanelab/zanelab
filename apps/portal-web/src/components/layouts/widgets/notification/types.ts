@@ -6,7 +6,12 @@ export interface NotificationItem {
   message: string;
   title: string;
 
+  /**
+   * 跳转链接，可以是路由路径或完整 URL
+   * @example '/dashboard' 或 'https://example.com'
+   */
   link?: string;
+  /** 业务字段 */
   query?: Record<string, any>;
   state?: Record<string, any>;
 

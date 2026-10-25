@@ -10,7 +10,7 @@ export * from './preferences';
 export * from './theme-toggle';
 export * from './timezone';
 export * from './user-dropdown';
-
+// layout-ui widgets（sidebar-fixed-button / sidebar-collapse-button）与本项目额外的 BackTop
 export { BackTop } from './back-top';
 export { SidebarCollapseButton } from './sidebar-collapse-button';
 export { SidebarFixedButton } from './sidebar-fixed-button';

@@ -1,26 +1,38 @@
 import { useMemo } from 'react';
 import type { MouseEventHandler, ReactNode } from 'react';
 
+/**
+ * Logo — 1:1 port of UI 库 components/logo/logo.vue (上游 Logo 组件)。
+ */
 export interface LogoProps {
+  /** 是否收起文本 */
   collapsed?: boolean;
 
+  /** Logo 图片适应方式 */
   fit?: 'contain' | 'cover' | 'fill' | 'none' | 'scale-down';
 
+  /** Logo 跳转地址 */
   href?: string;
 
+  /** Logo 图片大小 */
   logoSize?: number;
 
   src?: string;
 
+  /** 暗色主题 Logo 图标（可选，若不设置则使用 src） */
   srcDark?: string;
 
+  /** Logo 文本 */
   text: string;
 
+  /** Logo 主题 */
   theme?: string;
 
+  /** 透传 class（logoClass 等价） */
   className?: string;
   onClick?: MouseEventHandler;
 
+  /** text 插槽（logo-text 等价） */
   slotText?: ReactNode;
 }
 
@@ -37,6 +49,7 @@ export function Logo({
   onClick,
   slotText,
 }: LogoProps) {
+  // 根据主题选择合适的 logo 图标：暗色主题且提供了 srcDark 时用暗色版
   const logoSrc = useMemo(() => {
     if (theme === 'dark' && srcDark) {
       return srcDark;

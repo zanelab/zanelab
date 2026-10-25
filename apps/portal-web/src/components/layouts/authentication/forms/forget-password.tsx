@@ -6,6 +6,14 @@ import { z } from 'zod';
 
 import { AuthTitle } from './auth-title';
 
+/**
+ * ForgetPassword — 1:1 port of common-ui/ui/authentication/forget-password.vue.
+ * 上游 schema 表单引擎 → 受控 input + zod（等价参考实现 playground
+ * forget-password.vue 的 rules：email min(1) "请输入邮箱"（emailTip）+
+ * email 格式 "你输入的邮箱格式不正确"（emailValidErrorTip）—— 空值与
+ * 格式错误区分提示）。
+ */
+/** 校验文案走语言包（提交时按当前语言构建） */
 const buildForgetPasswordSchema = (t: TFunction) =>
   z.object({
     email: z
@@ -54,6 +62,7 @@ export function ForgetPassword({
   }
 
   return (
+    // @keydown.enter.prevent（forget-password.vue:60）—— 显式 preventDefault
     <form
       className="space-y-4"
       onKeyDown={(e) => {

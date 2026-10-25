@@ -12,8 +12,13 @@ interface UseLayoutResult {
   isSideMode: boolean;
 }
 
+/**
+ * useLayout — 1:1 port of layout-ui hooks/use-layout.ts.
+ * 移动端强制 sidebar-nav；isMixedNav 包含 header-sidebar-nav。
+ */
 export function useLayout(mode: LayoutMode, isMobile = false): UseLayoutResult {
   return useMemo(() => {
+    // 移动端下强制侧边导航布局
     const currentLayout: LayoutMode = isMobile ? 'sidebar-nav' : mode;
 
     const isFullContent = currentLayout === 'full-content';

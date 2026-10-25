@@ -26,7 +26,7 @@ function inlineModuleScriptsToDynamicImport(): Plugin {
 export default defineConfig({
   plugins: [
     react(),
-    qiankun('pa_new', { useDevMode: true }),
+    qiankun('iam', { useDevMode: true }),
     inlineModuleScriptsToDynamicImport(),
   ],
   resolve: {

@@ -1,25 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { initialAuthState, useAuthStore } from './auth-store';
-import type { Session, User } from '../lib/supabase';
+import type { UserInfo } from '../types';
 
-function mockUser(overrides: Partial<User> = {}): User {
-  return {
-    id: 'user-1',
-    email: 'admin@example.com',
-    user_metadata: { nickname: '管理员' },
-    ...overrides,
-  } as unknown as User;
-}
-
-function mockSession(overrides: Partial<Session> = {}): Session {
-  const user = mockUser();
-  return {
-    access_token: 'abc',
-    refresh_token: 'r1',
-    user,
-    ...overrides,
-  } as unknown as Session;
-}
+const user: UserInfo = { id: 1, username: 'admin', nickname: '管理员' };
 
 beforeEach(() => {
   useAuthStore.setState(initialAuthState);
@@ -31,8 +14,6 @@ describe('useAuthStore', () => {
       token: '',
       refreshToken: undefined,
       user: null,
-      session: null,
-      isInitialized: false,
     });
   });
 
@@ -45,32 +26,30 @@ describe('useAuthStore', () => {
     expect(useAuthStore.getState().token).toBe('def');
   });
 
-  it('setSession 设置完整登录态（含 user）', () => {
-    const session = mockSession();
-    useAuthStore.getState().setSession(session);
+  it('setAuth 设置完整登录态（含 user）', () => {
+    useAuthStore.getState().setAuth({ token: 'abc', refreshToken: 'r1', user });
     expect(useAuthStore.getState()).toMatchObject({
       token: 'abc',
       refreshToken: 'r1',
-      user: session.user,
-      session,
+      user,
     });
   });
 
-  it('setSession(null) 清空 user', () => {
-    const session = mockSession();
-    useAuthStore.getState().setSession(session);
-    expect(useAuthStore.getState().user).not.toBeNull();
-    useAuthStore.getState().setSession(null);
+  it('setAuth 未带 user 时 user 置 null', () => {
+    useAuthStore.getState().setAuth({ token: 'abc' });
     expect(useAuthStore.getState().user).toBeNull();
-    expect(useAuthStore.getState().token).toBe('');
   });
 
-  it('logout 清空 session/token/user', () => {
-    const session = mockSession();
-    useAuthStore.getState().setSession(session);
+  it('setUser 更新当前用户', () => {
+    useAuthStore.getState().setAuth({ token: 'abc', user });
+    useAuthStore.getState().setUser({ ...user, nickname: '超管' });
+    expect(useAuthStore.getState().user?.nickname).toBe('超管');
+  });
+
+  it('logout 清空 token/refreshToken/user', () => {
+    useAuthStore.getState().setAuth({ token: 'abc', refreshToken: 'r1', user });
     useAuthStore.getState().logout();
     expect(useAuthStore.getState()).toMatchObject({
-      session: null,
       token: '',
       refreshToken: undefined,
       user: null,

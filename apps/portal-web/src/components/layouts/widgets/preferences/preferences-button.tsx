@@ -5,7 +5,9 @@ import { useOpenPreferences } from './use-open-preferences';
 import { PreferencesDrawer } from './preferences-drawer';
 
 export function PreferencesButton({
+  /** 清空偏好并登出（清空缓存并登出按钮） */
   onClearPreferencesAndLogout,
+  /** 根元素 class（等价 reference 的 Vue class 透传，header 传 mr-1） */
   className = '',
 }: {
   onClearPreferencesAndLogout?: () => void;

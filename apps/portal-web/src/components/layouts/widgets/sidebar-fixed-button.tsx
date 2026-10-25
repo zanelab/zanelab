@@ -5,6 +5,10 @@ interface SidebarFixedButtonProps {
   onExpandOnHoverChange: (value: boolean) => void;
 }
 
+/**
+ * SidebarFixedButton — toggle pin/unpin (expandOnHover) for the sidebar.
+ * Ported from layout-ui widgets/sidebar-fixed-button.vue
+ */
 export function SidebarFixedButton({
   expandOnHover,
   onExpandOnHoverChange,

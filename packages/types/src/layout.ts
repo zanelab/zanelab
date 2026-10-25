@@ -43,10 +43,12 @@ export type AuthPageLayoutType = 'panel-center' | 'panel-left' | 'panel-right';
 export type LogoFitType = 'contain' | 'cover' | 'fill' | 'none' | 'scale-down';
 
 export interface LayoutCoreProps {
+  /** 布局模式 */
   layout: LayoutMode;
-
+  /** 是否移动端 */
   isMobile: boolean;
 
+  /** Header */
   headerHeight: number;
   headerMode: HeaderMode;
   headerVisible: boolean;
@@ -54,6 +56,7 @@ export interface LayoutCoreProps {
   headerToggleSidebarButton: boolean;
   headerTheme: SidebarTheme;
 
+  /** Sidebar */
   sidebarEnable: boolean;
   sidebarHidden: boolean;
   sidebarWidth: number;
@@ -66,13 +69,16 @@ export interface LayoutCoreProps {
   sidebarFixedButton: boolean;
   sidebarCollapseShowTitle: boolean;
 
+  /** Tabbar */
   tabbarEnable: boolean;
   tabbarHeight: number;
 
+  /** Footer */
   footerEnable: boolean;
   footerFixed: boolean;
   footerHeight: number;
 
+  /** Content */
   contentCompact: ContentCompact;
   contentCompactWidth: number;
   contentPadding: number;
@@ -81,6 +87,7 @@ export interface LayoutCoreProps {
   contentPaddingLeft: number;
   contentPaddingRight: number;
 
+  /** z-index */
   zIndex: number;
 
   children?: React.ReactNode;

@@ -1,3 +1,7 @@
+/**
+ * Copyright component — displays copyright info in footer.
+ * Ported from packages/effects/layouts/src/basic/copyright/copyright.vue
+ */
 interface CopyrightProps {
   companyName?: string;
   companySiteLink?: string;

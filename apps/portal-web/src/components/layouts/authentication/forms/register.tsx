@@ -6,6 +6,18 @@ import { z } from 'zod';
 
 import { AuthTitle } from './auth-title';
 
+/**
+ * RegisterForm — 1:1 port of common-ui/ui/authentication/register.vue.
+ * 上游 schema 表单引擎 → 受控 input + zod（等价参考实现 playground register.vue 的
+ * rules：username min(1)、password min(1)、confirmPassword 与 password 的
+ * refine 一致性校验（dependencies.triggerFields: ['password'] —— password
+ * 变化时重校验，见下方 effect）、agreePolicy 必须勾选）。
+ *
+ * 上游密码输入组件（passwordStrength: true）→ PasswordStrength 组件
+ * （input-password/password-strength.vue 的 1:1 port：5 段强度条 +
+ * "使用 8 个或更多字符，混合字母、数字和符号" 提示）。
+ */
+/** 校验文案走语言包（提交时按当前语言构建） */
 const buildRegisterSchema = (t: TFunction) =>
   z
     .object({
@@ -29,17 +41,23 @@ const buildRegisterSchema = (t: TFunction) =>
       path: ['agreePolicy'],
     });
 
+/** checkPasswordStrength（password-strength.vue:27-46 的 1:1 port） */
 function checkPasswordStrength(password: string): number {
   let strength = 0;
 
+  // Check length
   if (password.length >= 8) strength++;
 
+  // Check for lowercase letters
   if (/[a-z]/.test(password)) strength++;
 
+  // Check for uppercase letters
   if (/[A-Z]/.test(password)) strength++;
 
+  // Check for numbers
   if (/\d/.test(password)) strength++;
 
+  // Check for special characters
   if (/[^\da-z]/i.test(password)) strength++;
   return strength;
 }
@@ -53,6 +71,7 @@ const STRENGTH_LIST = [
   '#55D187',
 ];
 
+/** PasswordStrength — password-strength.vue 的 1:1 port */
 function PasswordStrength({ password = '' }: { password?: string }) {
   const currentStrength = checkPasswordStrength(password);
   const currentColor = STRENGTH_LIST[currentStrength];
@@ -119,12 +138,16 @@ export function RegisterForm({
     setValues((v) => ({ ...v, [field]: value }));
   }
 
+  // dependencies.triggerFields: ['password']（register.vue:47-62 等价）：
+  // password 变化时重跑 confirmPassword 的依赖规则（仅在已存在错误时
+  // 重校验，等价参考实现 表单引擎的 trigger 重校验语义）
   useEffect(() => {
     if (!errors.confirmPassword) return;
     const ok =
       values.confirmPassword.length >= 1 &&
       values.confirmPassword === values.password;
     setErrors((prev) => (ok ? { ...prev, confirmPassword: '' } : prev));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [values.password]);
 
   async function handleSubmit(e?: FormEvent) {
@@ -143,6 +166,7 @@ export function RegisterForm({
   }
 
   return (
+    // @keydown.enter.prevent（register.vue:100）—— 显式 preventDefault
     <form
       className="space-y-4"
       onKeyDown={(e) => {
@@ -188,6 +212,7 @@ export function RegisterForm({
         {errors.password ? (
           <p className="text-destructive mt-1 text-xs">{errors.password}</p>
         ) : null}
+        {/* passwordStrength: true（上游密码输入组件）等价 */}
         <PasswordStrength password={values.password} />
         <p className="text-muted-foreground mt-1.5 text-xs">
           {t('auth.register.passwordHint')}
@@ -210,6 +235,7 @@ export function RegisterForm({
         ) : null}
       </div>
 
+      {/* agreePolicy（reference app register.vue：勾选后提交才有效） */}
       <div>
         <label className="label cursor-pointer justify-start gap-2 text-sm font-normal">
           <input
@@ -222,7 +248,7 @@ export function RegisterForm({
           {t('auth.register.agree')}
           <a
             href="#"
-            className="vben-link ml-1"
+            className="auth-link ml-1"
             onClick={(e) => e.preventDefault()}
           >
             {t('auth.register.agreement')}
@@ -252,7 +278,7 @@ export function RegisterForm({
         <span
           role="button"
           tabIndex={0}
-          className="vben-link text-sm font-normal"
+          className="auth-link text-sm font-normal"
           onClick={() => navigate(loginPath)}
           onKeyDown={(e) => e.key === 'Enter' && navigate(loginPath)}
         >

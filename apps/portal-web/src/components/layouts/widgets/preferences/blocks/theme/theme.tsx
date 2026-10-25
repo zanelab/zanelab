@@ -6,6 +6,8 @@ const SunIcon = () => <AppIcon name="sun" className="mx-9 size-5" />;
 
 const MoonIcon = () => <AppIcon name="moon" className="mx-9 size-5" />;
 
+// 跟随系统 —— 原为 sun 字形 + 重复的 M12 2v2M12 20v2 段（视觉冗余），
+// 收拢时直接复用 sun（冗余段消失，字形不变）
 const SystemIcon = () => <AppIcon name="sun" className="mx-9 size-5" />;
 
 const THEME_PRESET = [

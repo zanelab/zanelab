@@ -11,6 +11,10 @@ export function useTabsViewScroll(props: TabsProps) {
   const mutationObserverRef = useRef<MutationObserver | null>(null);
   const tabItemCountRef = useRef(0);
 
+  // props.tabs 每次渲染都是新引用（tabbar.tsx: currentTabs.map(toTabsTab)），
+  // 若放入 initScrollbar 依赖 → 每次 initScrollbar 重建 → useEffect 重跑 →
+  // calcShowScrollbarButton → setShowScrollButton → 重渲染 → 无限循环。
+  // 用 ref 读取最新值，不参与依赖。
   const propsTabsRef = useRef(props.tabs);
   propsTabsRef.current = props.tabs;
 

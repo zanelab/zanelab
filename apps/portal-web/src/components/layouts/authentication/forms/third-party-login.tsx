@@ -3,6 +3,15 @@ import { useTranslation } from 'react-i18next';
 
 import { GithubIcon, GoogleIcon, QQChatIcon, WeChatIcon } from './icons/brand';
 
+/**
+ * ThirdPartyLogin — 1:1 port of common-ui/ui/authentication/third-party-login.vue.
+ * 上游图标按钮 + tooltip → daisyUI tooltip（hover 显示，等价 Radix tooltip
+ * 的可见性行为；daisyUI 无 JS tooltip，CSS hover 承担）。
+ * DingdingLogin：reference 依赖外部钉钉 SDK 脚本（DTFrameLogin）与 app 的
+ * dingding auth 配置 —— port 无后端 auth 配置（useAppConfig 的 auth.dingding
+ * 不存在），故 DingdingLogin 有意不渲染（reference v-if="dingdingAuthConfig"
+ * 在无配置时同样不渲染），差异在下方注释文档化。
+ */
 export function ThirdPartyLogin() {
   const { t } = useTranslation();
   const [tooltip, setTooltip] = useState<string | null>(null);
@@ -12,6 +21,8 @@ export function ThirdPartyLogin() {
     { icon: <QQChatIcon />, label: t('auth.thirdParty.qq') },
     { icon: <GithubIcon />, label: t('auth.thirdParty.github') },
     { icon: <GoogleIcon />, label: t('auth.thirdParty.google') },
+    // DingdingLogin：需 dingding auth 配置（corpId/clientId）+ 外部 SDK；
+    // port 无该配置 —— 等价参考实现 dingdingAuthConfig 为空时的不渲染
   ];
 
   return (
@@ -36,6 +47,7 @@ export function ThirdPartyLogin() {
             >
               {icon}
             </button>
+            {/* tooltip-side="top" 等价：置于按钮上方 */}
             {tooltip === label ? (
               <div
                 role="tooltip"

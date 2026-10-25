@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import { getProps } from './main';
+import { LoginPage } from './pages/LoginPage';
 
 function SystemPage({ title }: { title: string }) {
   const props = getProps();
@@ -100,6 +101,7 @@ export function App() {
       <Route path="users" element={<SystemPage title="用户管理" />} />
       <Route path="roles" element={<SystemPage title="角色管理" />} />
       <Route path="chat" element={<ChatPage />} />
+      <Route path="login" element={<LoginPage />} />
       <Route path="*" element={<SystemPage title="系统管理" />} />
     </Routes>
   );

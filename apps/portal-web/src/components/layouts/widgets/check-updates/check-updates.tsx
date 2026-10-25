@@ -3,11 +3,18 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
 interface CheckUpdatesProps {
+  /** 轮询时间，分钟 */
   checkUpdatesInterval?: number;
 
+  /** 检查更新的地址 */
   checkUpdateUrl?: string;
 }
 
+/**
+ * CheckUpdates — polls the app entry for a new version (etag/last-modified)
+ * and prompts the user to refresh when it changes.
+ * React port of widgets/check-updates/check-updates.vue
+ */
 export function CheckUpdates({
   checkUpdatesInterval = 1,
   checkUpdateUrl = import.meta.env.BASE_URL || '/',
@@ -51,6 +58,7 @@ export function CheckUpdates({
     }
 
     if (!lastVersionTagRef.current) {
+      // 首次运行时不提示更新
       lastVersionTagRef.current = versionTag;
       return;
     }
@@ -71,6 +79,7 @@ export function CheckUpdates({
       return;
     }
 
+    // 每 checkUpdatesInterval(默认值为1) 分钟检查一次
     timerRef.current = setInterval(
       checkForUpdates,
       checkUpdatesInterval * 60 * 1000,
@@ -109,6 +118,8 @@ export function CheckUpdates({
 
   if (!open) return null;
 
+  // portal 到 body：全屏 overlay 不应依赖挂载祖先恰好无 stacking context
+  // （当前挂在 layout 根部 relative 容器才没被侧边栏盖住，见层级修复先例）。
   return createPortal(
     <div className="modal modal-open">
       <div className="modal-box">

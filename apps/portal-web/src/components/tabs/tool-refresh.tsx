@@ -11,6 +11,7 @@ export const ToolRefresh: FC<ToolRefreshProps> = ({ onRefresh }) => {
       className="flex-center border-base-300 text-base-content/60 hover:bg-base-200 hover:text-base-content h-full cursor-pointer border-l px-2 text-lg font-semibold"
       onClick={() => onRefresh?.()}
     >
+      {/* feather refresh-cw（双箭头），与 header 的 rotate-cw 是不同字形 */}
       <AppIcon name="refresh-cw" className="size-4" />
     </div>
   );

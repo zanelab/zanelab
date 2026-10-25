@@ -5,18 +5,26 @@ import { AppIcon } from '../../icons/app-icon';
 import type { AuthPageLayoutType } from '@zanelab/types';
 
 interface LayoutOption {
+  /** 图标注册名（BUILTIN_ICONS） */
   icon: string;
 
+  /** 语言包 key 后缀（auth.layout.*，渲染期经 t 解析） */
   labelKey: string;
   value: AuthPageLayoutType;
 }
 
+/** 等价于 layout-toggle.vue 的 menus（$t('authentication.layout.*')） */
 const LAYOUT_MENUS: LayoutOption[] = [
   { icon: 'panel-left', labelKey: 'panelLeft', value: 'panel-left' },
   { icon: 'inspection-panel', labelKey: 'panelCenter', value: 'panel-center' },
   { icon: 'panel-right', labelKey: 'panelRight', value: 'panel-right' },
 ];
 
+/**
+ * LayoutToggle — 1:1 port of widgets/layout-toggle.vue
+ * (AuthenticationLayoutToggle)。
+ * 下拉单选登录页面板位置（上游单选下拉 → 受控下拉 + radio 选项）。
+ */
 export function LayoutToggle() {
   const { t } = useTranslation();
   const authPageLayout = usePreferencesStore((s) => s.app.authPageLayout);
@@ -28,6 +36,7 @@ export function LayoutToggle() {
     setOpen(false);
   }
 
+  // 触发按钮图标随当前面板位置切换（PanelRight / PanelLeft / InspectionPanel）
   const triggerIcon =
     authPageLayout === 'panel-left'
       ? 'panel-left'

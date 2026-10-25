@@ -13,7 +13,6 @@
   },
   "dependencies": {
     "@ctrl/tinycolor": "^4.2.0",
-    "@supabase/supabase-js": "^2.118.0",
     "@zanelab/types": "workspace:*",
     "@zanelab/ui": "workspace:*",
     "@zanelab/utils": "workspace:*",
@@ -27,12 +26,14 @@
     "react-dom": "^19.2.8",
     "react-i18next": "^17.0.13",
     "react-router-dom": "^7.18.3",
+    "sm-crypto": "^0.3.13",
     "theme-colors": "^0.1.0",
     "zod": "^4.5.4",
     "zustand": "^5.0.15"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
+    "@zanelab/tsconfig": "workspace:*",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
@@ -42,7 +43,6 @@
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^6.1.0",
-    "@zanelab/tsconfig": "workspace:*",
     "jsdom": "^26.1.0",
     "msw": "^2.7.0",
     "oxlint": "^1.79.0",

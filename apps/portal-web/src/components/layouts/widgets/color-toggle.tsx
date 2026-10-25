@@ -22,6 +22,7 @@ interface ColorPreset {
   type: BuiltinThemeType;
 }
 
+/** 等价于 上游 preferences 包 COLOR_PRESETS（BUILT_IN_THEME_PRESETS 前 7 项） */
 const COLOR_PRESETS: ColorPreset[] = [
   { color: 'hsl(212 100% 45%)', type: 'default' },
   { color: 'hsl(245 82% 67%)', type: 'violet' },
@@ -32,6 +33,7 @@ const COLOR_PRESETS: ColorPreset[] = [
   { color: 'hsl(240 5% 26%)', type: 'zinc' },
 ];
 
+/** SVG: palette */
 const PaletteIcon = () => (
   <svg
     className="size-4"
@@ -50,6 +52,7 @@ const PaletteIcon = () => (
   </svg>
 );
 
+/** SVG: checkmark for active preset */
 const CheckIcon = () => (
   <svg className="size-3.5" viewBox="0 0 15 15" fill="currentColor">
     <path
@@ -60,6 +63,10 @@ const CheckIcon = () => (
   </svg>
 );
 
+/**
+ * ColorToggle — 1:1 port of widgets/color-toggle.vue.
+ * hover 展开预设主题色（同时更新 colorPrimary 与 builtinType，激活态按 builtinType 判定）。
+ */
 export function ColorToggle() {
   const builtinType = usePreferencesStore((s) => s.theme.builtinType);
   const updatePreferences = usePreferencesStore((s) => s.updatePreferences);

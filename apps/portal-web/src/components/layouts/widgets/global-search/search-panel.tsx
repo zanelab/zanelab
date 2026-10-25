@@ -37,6 +37,7 @@ function traverseTreeValues(
   }
 }
 
+// 存储所有需要转义的特殊字符
 const code = new Set([
   '$',
   '(',
@@ -54,10 +55,12 @@ const code = new Set([
   '}',
 ]);
 
+// 转换函数，用于转义特殊字符
 function transform(c: string) {
   return code.has(c) ? `\\${c}` : c;
 }
 
+// 创建搜索正则表达式
 function createSearchReg(key: string) {
   const keys = [...key].map((item) => transform(item)).join('.*');
   return new RegExp(`.*${keys}.*`);
@@ -77,9 +80,16 @@ function readSearchHistory(): MenuRecordRaw[] {
 function writeSearchHistory(items: MenuRecordRaw[]) {
   try {
     localStorage.setItem(HISTORY_KEY, JSON.stringify(items));
-  } catch {}
+  } catch {
+    // ignore quota errors
+  }
 }
 
+/**
+ * SearchPanel — result list of the global search modal with keyboard
+ * navigation and localStorage-backed search history.
+ * React port of widgets/global-search/search-panel.vue
+ */
 export function SearchPanel({
   keyword = '',
   menus = [],
@@ -103,6 +113,7 @@ export function SearchPanel({
 
   const searchItems = useMemo(() => [...menus], [menus]);
 
+  // 搜索函数，用于根据搜索关键词查找匹配的菜单项
   const search = useCallback(
     (searchKey: string) => {
       searchKey = searchKey.trim();
@@ -111,7 +122,7 @@ export function SearchPanel({
         setSearchResults([]);
         return;
       }
-
+      // 将搜索关键词转换为小写，确保大小写不敏感的搜索
       searchKey = searchKey.toLowerCase();
 
       const reg = createSearchReg(searchKey);
@@ -129,6 +140,8 @@ export function SearchPanel({
     [searchItems],
   );
 
+  // When the keyboard up and down keys move to an invisible place
+  // the scroll bar needs to scroll automatically
   function scrollIntoView() {
     const element = document.querySelector(
       `[data-search-item="${activeIndexRef.current}"]`,
@@ -138,11 +151,13 @@ export function SearchPanel({
     }
   }
 
+  // close search modal
   function handleClose() {
     setSearchResults([]);
     onClose?.();
   }
 
+  // enter keyboard event
   function handleEnter() {
     const result = resultsRef.current;
     const index = activeIndexRef.current;
@@ -165,6 +180,7 @@ export function SearchPanel({
     }
   }
 
+  // Arrow key up
   function handleUp() {
     if (resultsRef.current.length === 0) {
       return;
@@ -179,6 +195,7 @@ export function SearchPanel({
     scrollIntoView();
   }
 
+  // Arrow key down
   function handleDown() {
     if (resultsRef.current.length === 0) {
       return;
@@ -193,6 +210,7 @@ export function SearchPanel({
     scrollIntoView();
   }
 
+  // Activate when the mouse moves to a certain line
   function handleMouseenter(e: React.MouseEvent) {
     if (isNavigatingRef.current) return;
     const index = (e.target as HTMLElement)?.dataset.index;
@@ -216,6 +234,7 @@ export function SearchPanel({
     scrollIntoView();
   }
 
+  // Throttled search (200ms)
   useEffect(() => {
     if (throttleTimerRef.current) clearTimeout(throttleTimerRef.current);
     throttleTimerRef.current = setTimeout(() => {
@@ -228,14 +247,18 @@ export function SearchPanel({
     return () => {
       if (throttleTimerRef.current) clearTimeout(throttleTimerRef.current);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [keyword, search]);
 
+  // Initialize results with history
   useEffect(() => {
     if (searchHistory.length > 0) {
       setSearchResults(searchHistory);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Keyboard strokes
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Enter') {
@@ -253,8 +276,10 @@ export function SearchPanel({
     };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Track mousemove to re-enable hover activation
   useEffect(() => {
     const handler = () => {
       isNavigatingRef.current = false;
@@ -271,6 +296,7 @@ export function SearchPanel({
   return (
     <Scrollbar>
       <div className="flex! h-full justify-center px-2 sm:max-h-112.5">
+        {/* 无搜索结果 */}
         {keyword && uniqueResults.length === 0 && (
           <div className="text-muted-foreground text-center">
             <AppIcon name="search-x" className="mx-auto mt-4 size-12" />
@@ -282,6 +308,7 @@ export function SearchPanel({
             </p>
           </div>
         )}
+        {/* 历史搜索记录 & 没有搜索结果 */}
         {!keyword && uniqueResults.length === 0 && (
           <div className="text-muted-foreground text-center">
             <p className="my-10 text-xs">{t('widgets.search.noHistory')}</p>
@@ -297,7 +324,10 @@ export function SearchPanel({
           {uniqueResults.map((item, index) => (
             <li
               key={item.path}
-
+              // 底色必须互斥：bg-accent 与 bg-primary 同为 background-color 工具类，
+              // 同时书写时谁生效取决于 Tailwind 生成顺序（不是 class 顺序）——曾出现
+              // 浅灰底 + text-primary-foreground（近白）→ 文字看不见（09-24 修复）。
+              // 选中/悬停态：主题色 10% 淡底 + 正文深色（不再是白字）。
               className={[
                 'group flex-center mb-3 w-full cursor-pointer rounded-lg p-4',
                 activeIndex === index
@@ -312,6 +342,8 @@ export function SearchPanel({
               <AppIcon name="circle" className="mr-2 size-5 shrink-0" />
               <span className="flex-1">{item.name}</span>
               <div
+                // hover 用底色反馈：原先 hover:text-primary-foreground（近白）在浅底上
+                // 同样看不见；dark:hover:bg-accent 只对暗色生效，一并去掉
                 className="flex-center hover:bg-base-200 rounded-full p-1 hover:scale-110"
                 onClick={(e) => {
                   e.stopPropagation();

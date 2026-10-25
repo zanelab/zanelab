@@ -56,7 +56,7 @@ function GuardApp({ initialEntries }: { initialEntries: string[] }) {
 }
 
 describe('generateRoutes', () => {
-  it('mock 菜单生成 host 本地页 + 子应用路由（占位，容器在 SubAppLayer 常驻）', () => {
+  it('mock 菜单生成子应用路由（占位，容器在 SubAppLayer 常驻）', () => {
     appConfig.microApps = {
       iam: {
         name: 'iam',
@@ -65,12 +65,11 @@ describe('generateRoutes', () => {
         activeRule: '/system',
         props: {},
         prefetch: false,
+        public: false,
       },
     };
     const routes = generateRoutes(mockMenus);
     const paths = JSON.stringify(routes);
-    expect(paths).toContain('dashboard');
-    expect(paths).toContain('components/button');
 
     expect(paths).toContain('system');
   });
@@ -78,15 +77,45 @@ describe('generateRoutes', () => {
 
 describe('RouteGuard', () => {
   it('未登录 → 跳 loginPath 且带 from 来源（AC1）', async () => {
-    useAuthStore.setState({ isInitialized: true });
     render(<GuardApp initialEntries={['/system/users']} />);
     await waitFor(() => {
       expect(screen.getByTestId('path')).toHaveTextContent('/login');
     });
   });
 
+  it('未登录访问免鉴权子应用路径（public 子路径）→ 放行不跳登录', async () => {
+    appConfig.microApps = {
+      home: {
+        name: 'home',
+        entry: '//localhost:8083',
+        container: '#subapp-home-container',
+        activeRule: '/home',
+        props: {},
+        prefetch: false,
+        public: ['/home'],
+      },
+    };
+    render(
+      <MemoryRouter initialEntries={['/home']}>
+        <Routes>
+          <Route
+            path="/home"
+            element={
+              <RouteGuard>
+                <PathProbe />
+              </RouteGuard>
+            }
+          />
+          <Route path="/login" element={<PathProbe />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(screen.getByTestId('path')).toHaveTextContent('/home');
+    });
+  });
+
   it('未登录 → from 完整编码受保护路径，恰好一次跳转（09-07 回归）', async () => {
-    useAuthStore.setState({ isInitialized: true });
     render(<GuardApp initialEntries={['/dashboard']} />);
     await waitFor(() => {
       expect(screen.getByTestId('path')).toHaveTextContent(
@@ -96,7 +125,6 @@ describe('RouteGuard', () => {
   });
 
   it('守卫误挂载在登录页（含 from query）→ 跳裸 loginPath，from 不嵌套（09-07 回归）', async () => {
-    useAuthStore.setState({ isInitialized: true });
     render(
       <MemoryRouter
         initialEntries={[`${appConfig.auth.loginPath}?from=%2Fdashboard`]}
@@ -120,7 +148,7 @@ describe('RouteGuard', () => {
   });
 
   it('已登录+有权限 → 放行渲染 children', async () => {
-    useAuthStore.setState({ token: 't', isInitialized: true });
+    useAuthStore.getState().setAuth({ token: 't' });
     useMenuStore.getState().setMenus(mockMenus);
     render(<GuardApp initialEntries={['/dashboard']} />);
     await waitFor(() => {
@@ -137,7 +165,7 @@ describe('RouteGuard', () => {
         permission: 'system:user:list',
       },
     ];
-    useAuthStore.setState({ token: 't', isInitialized: true });
+    useAuthStore.setState({ token: 't' });
     useMenuStore.setState({ menus: guarded, permissions: ['other:perm'] });
     render(<GuardApp initialEntries={['/system/users']} />);
     await waitFor(() => {

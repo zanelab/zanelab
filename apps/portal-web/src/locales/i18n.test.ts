@@ -26,17 +26,13 @@ describe('menuTitle 兜底语义（三态）', () => {
   });
 
   it('有 i18nKey 且命中 → 取语言包翻译（两种语言断言）', async () => {
-    expect(menuTitle({ name: '首页', i18nKey: 'menus.dashboard' })).toBe(
-      '首页',
-    );
+    expect(menuTitle({ name: '首页', i18nKey: 'menus.home' })).toBe('首页');
     expect(menuTitle({ name: '系统管理', i18nKey: 'menus.system.title' })).toBe(
       '系统管理',
     );
 
     await i18n.changeLanguage('en-US');
-    expect(menuTitle({ name: '首页', i18nKey: 'menus.dashboard' })).toBe(
-      'Dashboard',
-    );
+    expect(menuTitle({ name: '首页', i18nKey: 'menus.home' })).toBe('Home');
     expect(menuTitle({ name: '系统管理', i18nKey: 'menus.system.title' })).toBe(
       'System',
     );
@@ -63,7 +59,7 @@ describe('语言包懒加载（loadMessagePack / config.i18n.packUrls）', () =>
     server.use(
       http.get('/i18n/test-pack-zh.json', () =>
         HttpResponse.json({
-          menus: { lazy: { custom: '懒加载文案' }, dashboard: '覆盖的首页' },
+          menus: { lazy: { custom: '懒加载文案' }, home: '覆盖的首页' },
         }),
       ),
     );
@@ -71,7 +67,7 @@ describe('语言包懒加载（loadMessagePack / config.i18n.packUrls）', () =>
     expect(menuTitle({ name: '原文', i18nKey: 'menus.lazy.custom' })).toBe(
       '懒加载文案',
     );
-    expect(menuTitle({ name: '首页', i18nKey: 'menus.dashboard' })).toBe(
+    expect(menuTitle({ name: '首页', i18nKey: 'menus.home' })).toBe(
       '覆盖的首页',
     );
     expect(menuTitle({ name: '系统管理', i18nKey: 'menus.system.title' })).toBe(

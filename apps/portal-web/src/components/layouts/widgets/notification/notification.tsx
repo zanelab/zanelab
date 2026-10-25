@@ -5,8 +5,10 @@ import { AnchoredPortal } from '@zanelab/ui';
 import { AppIcon } from '../../../icons/app-icon';
 
 interface NotificationProps {
+  /** 显示圆点 */
   dot?: boolean;
 
+  /** 消息列表 */
   notifications?: NotificationItem[];
   onClear?: () => void;
   onMakeAll?: () => void;
@@ -16,6 +18,11 @@ interface NotificationProps {
   onViewAll?: () => void;
 }
 
+/**
+ * Notification — 1:1 port of widgets/notification/notification.vue.
+ * 默认空列表（reference: notifications: () => []）。
+ * Popover with mark-all-read, per-item read/remove actions, clear + view all.
+ */
 export function Notification({
   dot = false,
   notifications = [],
@@ -41,14 +48,14 @@ export function Notification({
     <div className="relative mr-2" ref={anchorRef}>
       <button
         type="button"
-        className="btn btn-ghost btn-sm btn-square bell-button text-foreground relative"
+        className="btn btn-ghost btn-sm btn-circle bell-button text-foreground relative"
         onClick={(e) => {
           e.stopPropagation();
           setOpen(!open);
         }}
       >
         {dot ? (
-          <span className="bg-primary absolute top-0.5 right-0.5 size-2 rounded-sm" />
+          <span className="bg-primary absolute top-0.5 right-0.5 size-2 rounded-full" />
         ) : null}
         <AppIcon name="bell" className="size-4" />
       </button>

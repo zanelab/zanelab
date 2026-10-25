@@ -38,20 +38,37 @@ interface BasicLayoutProps {
   globalSearch?: ReactNode;
   themeToggle?: ReactNode;
 
+  /** header-right 自定义内容（等价参考实现 的 header-right-N 插槽） */
   rightExtra?: ReactNode;
 
+  /** rightExtra 的排序索引（等价 header-right-N 插槽名中的 N） */
   rightExtraIndex?: number;
 
+  /** Logo 文字插槽（等价参考实现 的 #logo-text，覆盖默认 app.name） */
   slotLogoText?: ReactNode;
 
+  /** extra 区域自定义内容（等价参考实现 的 #extra —— 在 CheckUpdates/BackTop 之前渲染） */
   extra?: ReactNode;
 
+  /**
+   * 锁屏覆盖层（等价参考实现 的 #lock-screen 槽位 —— 在 extra 区域内以
+   * 覆盖层渲染，由调用方控制显隐，layout/tab 状态保持挂载）。
+   * React port 默认等价实现为独立 /lock 路由（见 App.tsx 注释）；
+   * 需要保持布局挂载的场景可通过此 prop 注入覆盖层。
+   */
   lockScreen?: ReactNode;
 
+  /**
+   * 常驻内容层（LayoutContent layer 槽位的透传）：渲染在内容区 keyed/过渡
+   * 包装外层、不随路由切换重建。用于微前端容器等需要跨路由持久存在的
+   * DOM（见 App.tsx contentLayer 注入与 spec microfrontend-guidelines）。
+   */
   contentLayer?: ReactNode;
 
+  /** 点击 Logo 回调（等价于 reference 的 clickLogo emit） */
   clickLogo?: () => void;
 
+  /** 清空偏好并登出（等价于 reference 的 clearPreferencesAndLogout emit） */
   onClearPreferencesAndLogout?: () => void;
 }
 
@@ -72,6 +89,10 @@ export function BasicLayout({
 }: BasicLayoutProps) {
   const preferences = usePreferencesStore();
 
+  // layout 语义双轨（reference 同样如此）：
+  // - useLayout（layout-ui 语义）→ LayoutCore 布局骨架
+  // - useLayoutFromPreferences（preferences 语义，isMixedNav 仅 mixed-nav）
+  //   → 本组件的 logo/breadcrumb/menu 门控（等价 layout.vue 的 usePreferences）
   const layout = useLayout(preferences.app.layout, preferences.app.isMobile);
   const prefsLayout = useLayoutFromPreferences();
   const { fixed: showPreferencesFixed } = usePreferencesButtonPosition();
@@ -97,6 +118,9 @@ export function BasicLayout({
     handleSideMouseLeave,
     setSidebarExtraVisible,
     sidebarExtraVisible,
+    // mixHeaderMenus 已由 useMixedMenu 从 withParents(menus) 全树派生（子树切片
+    // 保留全树 parents，等价参考实现 generate-menus 数据），不再二次包装 ——
+    // 二次 withParents 会把 parents 重置为子树相对层级，破坏 parents[1] 语义
   } = useExtraMenu({ menus: mixHeaderMenus, currentPath: location.pathname });
 
   const [sidebarExpandOnHovering, setSidebarExpandOnHovering] = useState(false);
@@ -105,6 +129,8 @@ export function BasicLayout({
   const tabbarStoreRefresh = useTabbarStore((s) => s.refresh);
   const timezone = useTimezoneStore((s) => s.timezone);
 
+  // 时区更新后刷新页面（layout.vue:215-218；locale 部分无 i18n 运行时不适用）。
+  // refreshAll 等价：清空 cachedTabs + 刷新当前路由视图。
   const prevTimezoneRef = useRef(timezone);
   useEffect(() => {
     const prev = prevTimezoneRef.current;
@@ -117,6 +143,7 @@ export function BasicLayout({
     refreshAll();
   }, [timezone, tabbarStoreRefresh, location.pathname]);
 
+  // watch(layout)：sidebar-mixed-nav 下强制显示侧边栏（layout.vue:193-204）
   useEffect(() => {
     if (
       preferences.app.layout === 'sidebar-mixed-nav' &&
@@ -126,6 +153,8 @@ export function BasicLayout({
     }
   }, [preferences.app.layout, preferences.sidebar.hidden, preferences]);
 
+  // onMounted → autoCollapseMenuByRouteMeta（layout.vue:174-187）：
+  // 双列模式下当前路由 hideInMenu 时收起侧边额外面板
   useEffect(() => {
     if (
       (preferences.app.layout === 'header-mixed-nav' ||
@@ -134,6 +163,7 @@ export function BasicLayout({
     ) {
       setSidebarExtraVisible(false);
     }
+    // 仅挂载时执行（等价 onMounted）
   }, []);
 
   const sidebarTheme = useMemo<'dark' | 'light'>(() => {
@@ -148,6 +178,7 @@ export function BasicLayout({
     return isDark || preferences.theme.semiDarkHeader ? 'dark' : 'light';
   }, [isDark, preferences.theme.semiDarkHeader]);
 
+  // logoClass（layout.vue:74-86）—— preferences 语义
   const logoClass = useMemo(() => {
     const { collapsedShowTitle } = preferences.sidebar;
     const classes: string[] = [];
@@ -167,6 +198,7 @@ export function BasicLayout({
     return classes.join(' ');
   }, [preferences.sidebar, prefsLayout.isMixedNav, prefsLayout.isSideMixedNav]);
 
+  // logoCollapsed（layout.vue:93-103）—— preferences 语义
   const logoCollapsed = useMemo(() => {
     if (preferences.app.isMobile && preferences.sidebar.collapsed) {
       return true;
@@ -185,6 +217,7 @@ export function BasicLayout({
     );
   }, [preferences.app.isMobile, preferences.sidebar.collapsed, prefsLayout]);
 
+  // showHeaderNav（layout.vue:105-110）—— preferences 语义
   const showHeaderNav = useMemo(() => {
     return (
       !preferences.app.isMobile &&
@@ -194,6 +227,7 @@ export function BasicLayout({
     );
   }, [preferences.app.isMobile, prefsLayout]);
 
+  // logoTheme（layout.vue:112-119）：logo 在 header 中显示时跟随 header 主题
   const logoTheme = useMemo<'dark' | 'light'>(() => {
     const showLogoInHeader =
       !prefsLayout.isSideMode ||
@@ -254,6 +288,12 @@ export function BasicLayout({
         }
         onClickMask={() => preferences.setSidebarCollapsed(true)}
 
+        // 必须直传 store action（引用恒定），不能写成内联箭头 (c) => …：
+        // 上游布局组件 里 `useEffect(() => { if (isMobile) onSetSidebarCollapsed(true) },
+        // [isMobile, onSetSidebarCollapsed])` 把它当依赖 —— 内联箭头每次渲染都是新引用
+        // → effect 每渲染重跑 → 写 store → 本组件（整店订阅）重渲染 → 又是新箭头 →
+        // render→set→render 无限循环，React 19 直接抛 #185（Max update depth exceeded）。
+        // 实测触发条件：app.isMobile 为 true（视口 ≤767.98px）时才进入写分支。
         onSetSidebarCollapsed={preferences.setSidebarCollapsed}
         onSetSidebarExpandOnHovering={setSidebarExpandOnHovering}
         onSetSidebarExtraVisible={setSidebarExtraVisible}
@@ -387,6 +427,7 @@ export function BasicLayout({
             <LayoutFooter>
               {preferences.copyright.enable && (
                 <Copyright
+                  // 公司名未自定义（留空）时按当前语言取系统名，英文界面不显示中文名
                   companyName={
                     preferences.copyright.companyName || systemName()
                   }
@@ -402,12 +443,14 @@ export function BasicLayout({
         slotExtra={
           <>
             {extra}
+            {/* #extra 插槽（layout.vue:422 —— 用户内容在 CheckUpdates 之前） */}
             {preferences.app.enableCheckUpdates ? (
               <CheckUpdates
                 checkUpdatesInterval={preferences.app.checkUpdatesInterval}
               />
             ) : null}
             <BackTop />
+            {/* #lock-screen 槽位（layout.vue:429-431 —— 覆盖层渲染，条件由调用方控制） */}
             {lockScreen}
           </>
         }

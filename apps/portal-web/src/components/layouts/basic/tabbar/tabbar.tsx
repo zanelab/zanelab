@@ -11,6 +11,7 @@ interface LayoutTabbarProps {
   theme?: string;
 }
 
+/** store TabDefinition → tabs-ui TabDefinition（补齐必填 key） */
 function toTabsTab(tab: ReturnType<typeof useTabbar>['currentTabs'][number]) {
   return {
     ...tab,
@@ -18,12 +19,17 @@ function toTabsTab(tab: ReturnType<typeof useTabbar>['currentTabs'][number]) {
   } as unknown as TabsTabDefinition;
 }
 
+/**
+ * LayoutTabbar — 1:1 port of basic/tabbar/tabbar.vue.
+ * Delegates rendering to the tabs-ui TabsView + tool buttons, and drives
+ * tab state through useTabbar (tabbar store + router).
+ */
 export function LayoutTabbar({ showIcon, theme }: LayoutTabbarProps) {
   const preferences = usePreferencesStore();
   const tabbarStore = useTabbarStore();
   const headerHidden = usePreferencesStore((s) => s.header.hidden);
   const sidebarHidden = usePreferencesStore((s) => s.sidebar.hidden);
-
+  /** 主体区域是否最大化（header 与 sidebar 同时隐藏时视为最大化） */
   const contentIsMaximize = headerHidden && sidebarHidden;
 
   const {
@@ -43,6 +49,7 @@ export function LayoutTabbar({ showIcon, theme }: LayoutTabbarProps) {
     }));
   }, [tabbarStore, currentActive, currentTabs, createContextMenus]);
 
+  /** 主体区域最大化切换 */
   const toggleMaximize = useCallback(() => {
     const store = usePreferencesStore.getState();
     store.updatePreferences({
@@ -51,13 +58,17 @@ export function LayoutTabbar({ showIcon, theme }: LayoutTabbarProps) {
     });
   }, [contentIsMaximize]);
 
+  /** 刷新当前标签页（toolbar 的 @refresh="refreshTab" —— 无参，等价 refresh(router) 分支） */
   const refreshTab = useCallback(() => {
     const tab = tabbarStore.getTabByKey(currentActive);
     if (tab?.name) {
+      // 带查询串的 tab：按 key（fullPath）定位到 tab，但其 name 不含查询 ——
+      // 正确命中当前路由的刷新（视图翻转 + 进度条）
       tabbarStore.refresh(tab.name as string);
     }
   }, [tabbarStore, currentActive]);
 
+  // 刷新后如果不保持tab状态，关闭其他tab
   useEffect(() => {
     if (!preferences.tabbar.persist) {
       const tab = tabbarStore.getTabByKey(currentActive);
@@ -100,6 +111,7 @@ export function LayoutTabbar({ showIcon, theme }: LayoutTabbarProps) {
             onScreenChange={toggleMaximize}
           />
         ) : null}
+        {/* 「更多」固定在工具区最后 */}
         {preferences.tabbar.showMore ? <ToolMore menus={menus} /> : null}
       </div>
     </>

@@ -3,6 +3,17 @@ import { useIconStore } from '../../stores/icon-store';
 import { BUILTIN_ICONS } from './builtin-icons';
 import type { IconData } from '@zanelab/types';
 
+/**
+ * AppIcon — 后端菜单 icon 标识符 → path-data SVG 的单一解析入口
+ * （09-08-icon-registry）。解析顺序：
+ *   ① 运行时注册表（config.js icons / iconPackUrl / window.__registerIcons）
+ *   ② 内置表（BUILTIN_ICONS）
+ *   ③ `svg:` 前缀直通（标识符即 path data，`svg:` 后多段用 `|` 分隔）
+ *   ④ null（未命中：无图标，布局不塌、无文本泄漏）
+ *
+ * 渲染 stroke=currentColor strokeWidth=2（与项目手写 SVG 同构），跟主题色。
+ */
+
 const SVG_PROPS = {
   fill: 'none',
   stroke: 'currentColor',
@@ -20,6 +31,8 @@ function IconSvg({
   className?: string;
   onClick?: MouseEventHandler<SVGSVGElement>;
 }) {
+  // fill 模式（iconfont 风格）：用 fill 渲染、不设 stroke；
+  // stroke 模式（项目默认）：fill none + stroke currentColor
   const useFill = !!data.fill;
   return (
     <svg
@@ -35,6 +48,7 @@ function IconSvg({
   );
 }
 
+/** 标识符 → IconData；`svg:` 直通把标识符剩余部分按 path data 解析 */
 function resolveIconData(
   name: string,
   runtime: Record<string, IconData>,
@@ -52,6 +66,11 @@ function resolveIconData(
   return null;
 }
 
+/**
+ * AppIcon — 图标标识符 → path-data SVG 的单一渲染入口。
+ * 事件透传：图标本身作为交互元素的场景（如 tabbar 的关闭/图钉）可直接挂 onClick，
+ * 渲染结果与原内联 SVG 同构。
+ */
 export function AppIcon({
   name,
   className,
@@ -68,6 +87,10 @@ export function AppIcon({
   return <IconSvg data={data} className={className} onClick={onClick} />;
 }
 
+/**
+ * menu 组件的双态 icon（MenuRecordRaw.icon: string | ReactNode）：
+ * 标识符 → AppIcon 解析；ReactNode（含 JSX）原样透传。
+ */
 export function renderMenuIcon(
   icon: string | ReactNode,
   className?: string,

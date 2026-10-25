@@ -5,6 +5,10 @@ interface SidebarCollapseButtonProps {
   onCollapsedChange: (value: boolean) => void;
 }
 
+/**
+ * SidebarCollapseButton — toggle collapse/expand of the sidebar.
+ * Ported from layout-ui widgets/sidebar-collapse-button.vue
+ */
 export function SidebarCollapseButton({
   collapsed,
   onCollapsedChange,

@@ -5,6 +5,7 @@ import { TinyColor } from '@ctrl/tinycolor';
 import { convertToHsl } from '@zanelab/utils';
 import { AppIcon } from '../../../../../icons/app-icon';
 
+/** 等价 reference BuiltinThemePreset（@core/preferences constants.ts:3-7） */
 interface BuiltinThemePreset {
   color: string;
   darkPrimaryColor?: string;
@@ -12,6 +13,7 @@ interface BuiltinThemePreset {
   type: string;
 }
 
+/** BUILT_IN_THEME_PRESETS —— 1:1（constants.ts:10-107，含顺序） */
 const BUILTIN_THEME_PRESETS: BuiltinThemePreset[] = [
   { color: 'hsl(212 100% 45%)', type: 'default' },
   { color: 'hsl(245 82% 67%)', type: 'violet' },
@@ -50,6 +52,7 @@ const BUILTIN_THEME_PRESETS: BuiltinThemePreset[] = [
   { color: '', type: 'custom' },
 ];
 
+/** user-round-pen（自定义主题色；原 strokeWidth 1.5，收拢统一为 2 —— 已拍板） */
 const UserRoundPenIcon = () => (
   <AppIcon name="user-round-pen" className="size-5" />
 );
@@ -62,6 +65,13 @@ interface BuiltinThemeProps {
   isDark?: boolean;
 }
 
+/**
+ * BuiltinTheme — 1:1 port of preferences/blocks/theme/builtin.vue.
+ * 预设选择 / isDark 变化时，由预设的 primaryColor（暗色下 darkPrimaryColor）
+ * 同步 themeColorPrimary（等价 reference watch([modelValue, isDark])，
+ * builtin.vue:104-118）；自定义色输入为 <input type="color">，输出经
+ * convertToHsl 归一为 hsl() 字符串（等价 reference 的转换链）。
+ */
 export function BuiltinTheme({
   value,
   onChange,
@@ -74,6 +84,8 @@ export function BuiltinTheme({
 
   const isMountedRef = useRef(false);
 
+  // reference 的 watch 非 immediate —— 首次挂载不触发（保留已持久化的
+  // 自定义 colorPrimary），仅 modelValue / isDark 变化时派生
   useEffect(() => {
     if (!isMountedRef.current) {
       isMountedRef.current = true;
@@ -88,15 +100,24 @@ export function BuiltinTheme({
         onThemeColorPrimaryChange(primaryColor || theme.color);
       }
     }
+    // watch([modelValue, isDark]) —— 选中预设 / 暗色切换时同步主色
   }, [value, isDark, onThemeColorPrimaryChange]);
 
   function handleSelect(theme: BuiltinThemePreset) {
     if (theme.type === 'custom') return;
+    // reference handleSelect 仅写 modelValue（builtin.vue:85-87）—— 主色
+    // 派生完全由上面的 watch（effect）承担
     onChange(theme.type);
   }
 
+  // input[type=color] 产出 #hex —— convertToHsl 归一（builtin.vue:81 等价）。
+  // reference 经 useThrottleFn(fn, 300, true, true)（leading + trailing），
+  // trailing 定时器按窗口起点锚定（throttleFilter 的
+  // setTimeout(..., duration - elapsed)）—— 持续拖拽时每 ~300ms 落一次
+  // 实时更新，而非拖拽结束后才写
   function handleColorChange(e: React.ChangeEvent<HTMLInputElement>) {
     const value = convertToHsl(e.target.value);
+    // leading：窗口起点 —— 立即写入，并记录窗口起点
     if (throttleTimer.current === null) {
       onThemeColorPrimaryChange(value);
       windowStart.current = Date.now();
@@ -106,6 +127,8 @@ export function BuiltinTheme({
       return;
     }
 
+    // trailing：按剩余窗口时间调度（duration - elapsed），窗口内的后续
+    // 事件仅更新待写入值
     trailingValue.current = value;
     if (pendingTrailing.current) {
       return;
@@ -121,6 +144,7 @@ export function BuiltinTheme({
         onThemeColorPrimaryChange(trailingValue.current);
         trailingValue.current = null;
 
+        // trailing 写入即新窗口起点（throttleFilter 的 lastExec 更新）
         windowStart.current = Date.now();
       }
     }, remaining);
@@ -131,6 +155,7 @@ export function BuiltinTheme({
   const pendingTrailing = useRef(false);
   const trailingValue = useRef<string | null>(null);
 
+  // 卸载时清理未触发的节流定时器
   useEffect(
     () => () => {
       if (throttleTimer.current !== null) clearTimeout(throttleTimer.current);
@@ -138,6 +163,7 @@ export function BuiltinTheme({
     [],
   );
 
+  /** hsl()/任意格式 → #rrggbb（input[type=color] 要求，经 TinyColor 转换） */
   function toHexColor(color: string): string {
     const c = new TinyColor(color);
     return c.isValid ? c.toHexString() : '#000000';
@@ -199,6 +225,7 @@ export function BuiltinTheme({
   );
 }
 
+/** 主题标识 → 语言包 key 后缀（文案渲染期经 t 解析，未命中回退标识本身） */
 const LABEL_KEYS: Record<string, string> = {
   default: 'default',
   violet: 'violet',

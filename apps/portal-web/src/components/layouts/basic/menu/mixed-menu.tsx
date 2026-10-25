@@ -11,6 +11,10 @@ interface LayoutMixedMenuProps extends NormalMenuProps {
   onSelect?: (menu: MenuRecordRaw) => void;
 }
 
+/**
+ * LayoutMixedMenu — 1:1 port of basic/menu/mixed-menu.vue.
+ * 挂载时按当前路由触发 defaultSelect（onBeforeMount 等价）。
+ */
 export function LayoutMixedMenu({
   menus,
   onDefaultSelect,
@@ -20,6 +24,7 @@ export function LayoutMixedMenu({
 }: LayoutMixedMenuProps) {
   const location = useLocation();
 
+  // onBeforeMount：按当前路由发出默认选中菜单
   useEffect(() => {
     const menu = findMenuByPath(menus || [], location.pathname);
     if (menu) {

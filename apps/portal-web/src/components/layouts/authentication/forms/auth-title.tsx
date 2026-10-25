@@ -1,11 +1,17 @@
 import type { ReactNode } from 'react';
 
+/**
+ * AuthTitle — 1:1 port of common-ui/ui/authentication/auth-title.vue.
+ * 无脚本逻辑，纯展示：标题 + 描述（desc slot → slotDesc prop）。
+ */
 export function AuthTitle({
   children,
   slotDesc,
 }: {
+  /** 标题内容（default slot） */
   children?: ReactNode;
 
+  /** 描述内容（#desc slot） */
   slotDesc?: ReactNode;
 }) {
   return (

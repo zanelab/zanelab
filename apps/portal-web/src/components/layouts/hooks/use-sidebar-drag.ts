@@ -12,6 +12,11 @@ interface DragElements {
 
 type DragCallback = (newWidth: number) => void;
 
+/**
+ * useSidebarDrag — 1:1 port of layout-ui hooks/use-sidebar-drag.ts.
+ * 拖拽过程中仅移动指示条（越界显示 not-allowed / bg-primary/30），
+ * 松开鼠标后才应用宽度（clamp 到 min/max）。
+ */
 export function useSidebarDrag() {
   const isDragging = useRef(false);
   const cleanupRef = useRef<(() => void) | null>(null);

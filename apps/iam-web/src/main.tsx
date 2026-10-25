@@ -18,6 +18,20 @@ export interface PltProps {
     cb: (state: Record<string, unknown>, prev: Record<string, unknown>) => void,
     fireImmediately?: boolean,
   ) => () => void;
+  onLoginSuccess?: (params: {
+    token: string;
+    refreshToken?: string;
+    user?: {
+      id?: number | string;
+      username?: string;
+      nickname?: string;
+      [key: string]: unknown;
+    };
+  }) => Promise<void>;
+  http?: {
+    post: (...args: unknown[]) => Promise<unknown>;
+    [key: string]: unknown;
+  };
   [key: string]: unknown;
 }
 

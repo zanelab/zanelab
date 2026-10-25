@@ -61,7 +61,7 @@ Example `.trellis/config.yaml`:
 ```yaml
 packages:
   webapp:
-    path: apps/web
+    path: apps/portal
   api:
     path: apps/api
 default_package: webapp

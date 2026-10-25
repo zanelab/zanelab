@@ -21,6 +21,8 @@ export interface IContextMenuItem {
   shortcut?: string;
   handler?: (data: any) => void;
 
+  /** 图标注册名（BUILTIN_ICONS，经 AppIcon 渲染）；09-08-icon-consolidation
+   *  起语义由 path data 字符串改为注册名 */
   icon?: string;
   children?: IContextMenuItem[];
   divider?: boolean;

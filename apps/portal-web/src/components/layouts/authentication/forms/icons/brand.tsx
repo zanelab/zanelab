@@ -1,10 +1,17 @@
 import type { CSSProperties } from 'react';
 
+/**
+ * 品牌登录图标 — 等价参考实现 上游图标包 的
+ * SvgWeChatIcon / SvgQQChatIcon / SvgGithubIcon / SvgGoogleIcon / SvgDingDingIcon
+ * （lucide-icons 转换约定：内联 SVG）。颜色值来自各品牌 SVG 原始 fill。
+ */
+
 interface BrandIconProps {
   className?: string;
   style?: CSSProperties;
 }
 
+/** 微信（WeChat） */
 export function WeChatIcon({ className = 'size-5' }: BrandIconProps) {
   return (
     <svg
@@ -18,6 +25,7 @@ export function WeChatIcon({ className = 'size-5' }: BrandIconProps) {
   );
 }
 
+/** QQ */
 export function QQChatIcon({ className = 'size-5' }: BrandIconProps) {
   return (
     <svg
@@ -31,6 +39,7 @@ export function QQChatIcon({ className = 'size-5' }: BrandIconProps) {
   );
 }
 
+/** GitHub */
 export function GithubIcon({ className = 'size-5' }: BrandIconProps) {
   return (
     <svg
@@ -44,6 +53,7 @@ export function GithubIcon({ className = 'size-5' }: BrandIconProps) {
   );
 }
 
+/** Google */
 export function GoogleIcon({ className = 'size-5' }: BrandIconProps) {
   return (
     <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
@@ -67,6 +77,7 @@ export function GoogleIcon({ className = 'size-5' }: BrandIconProps) {
   );
 }
 
+/** 钉钉（DingTalk） */
 export function DingDingIcon({ className = 'size-5' }: BrandIconProps) {
   return (
     <svg

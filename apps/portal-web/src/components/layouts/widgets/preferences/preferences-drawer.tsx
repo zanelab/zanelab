@@ -40,9 +40,11 @@ import {
 interface PreferencesDrawerProps {
   onClose: () => void;
 
+  /** 清空偏好设置并退出登录（等价于 reference 的 clear-preferences-and-logout 事件） */
   onClearPreferencesAndLogout?: () => void;
 }
 
+/** 抽屉头部按钮（close / rotate-cw / pin-filled / pin-off-filled / copy —— BUILTIN_ICONS 注册名渲染） */
 const CloseIcon = () => <AppIcon name="close" className="size-4.5" />;
 
 const RotateCwIcon = () => <AppIcon name="rotate-cw" className="size-4" />;
@@ -85,6 +87,8 @@ export function PreferencesDrawer({
 
   const update = prefs.updatePreferences;
 
+  // BuiltinTheme 的 watch 等价 effect 以回调为 dep —— 必须 memo 化，
+  // 否则每次渲染的 inline 箭头会重触发派生（覆盖自定义主色）
   const handleBuiltinTypeChange = useCallback(
     (v: string) => update({ theme: { builtinType: v as BuiltinThemeType } }),
     [update],
@@ -94,6 +98,7 @@ export function PreferencesDrawer({
     [update],
   );
 
+  // 等价 usePreferences 的 diffPreference computed：diff(初始默认, 当前)
   const diffPreference = useMemo(() => {
     const {
       updatePreferences: _u,
@@ -109,13 +114,16 @@ export function PreferencesDrawer({
     );
   }, [prefs]);
 
+  // 等价 mergedDiffPreference（React port 无 customPreferences 扩展面）
   const mergedDiffPreference = diffPreference ?? undefined;
 
+  // handleReset —— 等价 resetPreferences()（整体重置到默认值并落缓存）
   const handleReset = () => {
     if (!mergedDiffPreference) return;
     prefs.resetPreferences();
   };
 
+  // handleCopy —— 等价 reference：复制 diffPreference（与默认值的差异），而非完整配置
   const handleCopy = () => {
     navigator.clipboard.writeText(
       JSON.stringify(mergedDiffPreference, null, 2),
@@ -124,8 +132,11 @@ export function PreferencesDrawer({
 
   return (
     <div className="fixed inset-0 z-9999 flex justify-end">
+      {/* Backdrop */}
       <div className="absolute inset-0 bg-black/30" onClick={onClose} />
+      {/* Drawer panel */}
       <div className="bg-base-100 relative flex h-full w-full flex-col overflow-y-auto shadow-2xl sm:max-w-sm">
+        {/* Header */}
         <div className="border-base-300 flex shrink-0 items-center justify-between border-b px-5 py-4">
           <div>
             <h3 className="text-base leading-none font-semibold">
@@ -147,6 +158,7 @@ export function PreferencesDrawer({
               )}
               <RotateCwIcon />
             </button>
+            {/* 固定标签页导航栏开关（等价参考实现 Pin/PinOff IconButton） */}
             <button
               className="btn btn-ghost btn-sm btn-square h-8 w-8"
               onClick={() =>
@@ -179,6 +191,7 @@ export function PreferencesDrawer({
           </div>
         </div>
 
+        {/* Segmented tabs */}
         <div
           className={`shrink-0 px-5 pt-3 ${prefs.app.enableStickyPreferencesNavigationBar ? 'bg-base-100 sticky top-0 z-[10000]' : ''}`}
         >
@@ -197,6 +210,7 @@ export function PreferencesDrawer({
           </div>
         </div>
 
+        {/* Tab Content */}
         <div className="flex-1 overflow-x-hidden overflow-y-auto px-3">
           {activeTab === 'appearance' && (
             <>
@@ -488,6 +502,7 @@ export function PreferencesDrawer({
                   onFooterFixedChange={(v) => update({ footer: { fixed: v } })}
                 />
               </Block>
+              {/* v-if="copyrightSettingShow"（reference preferences-drawer.vue:501） */}
               {prefs.copyright.settingShow && (
                 <Block title={t('preferences.blocks.copyright')}>
                   <Copyright
@@ -550,6 +565,10 @@ export function PreferencesDrawer({
           {activeTab === 'general' && (
             <>
               <Block title={t('preferences.blocks.general')}>
+                {/* 有意未移植运行时：watermark（上游 common-ui 包 Watermark 组件，
+                    SVG 平铺水印层）与 dynamicTitle（document.title 跟随路由标题）
+                    本 port 无对应运行时，此处仅保留偏好存储与开关；
+                    如需启用可在应用层订阅 preferences.app.watermark/dynamicTitle 实现 */}
                 <General
                   appLocale={prefs.app.locale}
                   onAppLocaleChange={(v) => switchLocale(v)}
@@ -601,6 +620,7 @@ export function PreferencesDrawer({
           )}
         </div>
 
+        {/* Footer */}
         <div className="border-base-300 shrink-0 space-y-2 border-t px-5 py-4">
           {prefs.app.enableCopyPreferences && (
             <button
@@ -616,6 +636,9 @@ export function PreferencesDrawer({
             className="btn btn-ghost btn-sm w-full"
             disabled={!mergedDiffPreference}
             onClick={() => {
+              // handleClearCache（reference preferences-drawer.vue:286-290）：
+              // resetPreferences + clearCache（persist 存储重置由 resetPreferences 覆盖）
+              // + emit clearPreferencesAndLogout
               prefs.resetPreferences();
               onClearPreferencesAndLogout?.();
             }}

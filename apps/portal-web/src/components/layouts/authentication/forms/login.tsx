@@ -7,6 +7,23 @@ import { z } from 'zod';
 import { AuthTitle } from './auth-title';
 import { ThirdPartyLogin } from './third-party-login';
 
+/**
+ * AuthenticationLogin — 1:1 port of common-ui/ui/authentication/login.vue.
+ *
+ * 上游 schema 表单引擎（schema 驱动表单引擎）的 React 等价：受控 input + zod
+ * validation（登录页 schema 由本组件内置 —— reference 的 formSchema prop
+ * 由 app 层传入，port 的 demo 无独立 app 层表单配置面，内置等价 schema：
+ * username z.string().min(1) / password z.string().min(1)，即 reference
+ * login.vue 中 username/password 两项的 rules）。上游按钮组件/上游复选框 →
+ * daisyUI btn/checkbox；VebarForm 的错误提示置于字段下方。
+ *
+ * 有意未移植（playground login.vue 的 app 层扩展）：selectAccount 快速
+ * 选择账号（authStore mock 账号列表）与 SliderCaptcha 滑块验证 —— 二者
+ * 为 playground 演示页附加能力，依赖 authStore/验证码组件，port demo
+ * 无对应后端会话概念。
+ */
+
+/** 等价参考实现 app login.vue 的 username/password rules（校验文案走语言包，提交时按当前语言构建） */
 const buildLoginSchema = (t: TFunction) =>
   z.object({
     username: z
@@ -23,9 +40,11 @@ export interface LoginFormValues {
 }
 
 interface AuthenticationLoginProps {
+  /** 等价参考实现 路径默认值 —— port 路由同样按 /auth/* 组织 */
   codeLoginPath?: string;
   forgetPasswordPath?: string;
 
+  /** 登录处理 loading（等价 :loading —— cursor-wait + spinner） */
   loading?: boolean;
   qrCodeLoginPath?: string;
   registerPath?: string;
@@ -39,19 +58,26 @@ interface AuthenticationLoginProps {
   subTitle?: string;
   title?: string;
 
+  /** 表单校验通过的提交回调（等价 emit('submit', values)） */
   onSubmit?: (values: LoginFormValues) => void;
 
+  /** #title slot 覆盖 */
   slotTitle?: ReactNode;
 
+  /** #subTitle slot 覆盖 */
   slotSubTitle?: ReactNode;
 
+  /** #third-party-login slot 覆盖 */
   slotThirdPartyLogin?: ReactNode;
 
+  /** #to-register slot 覆盖 */
   slotToRegister?: ReactNode;
 }
 
+/** 等价 REMEMBER_ME_USERNAME_${location.hostname}（login.vue:61） */
 const REMEMBER_ME_KEY = `REMEMBER_ME_USERNAME_${location.hostname}`;
 
+/** 记住密码（与用户名同生命周期：勾选记住我时写入，取消时清空） */
 const REMEMBER_ME_PASSWORD_KEY = `REMEMBER_ME_PASSWORD_${location.hostname}`;
 
 export function AuthenticationLogin({
@@ -87,6 +113,7 @@ export function AuthenticationLogin({
     username?: string;
   }>({});
 
+  // onMounted：恢复记住的用户名和密码（login.vue:83-87 扩展）
   useEffect(() => {
     if (localUsername) {
       setUsername(localUsername);
@@ -102,6 +129,7 @@ export function AuthenticationLogin({
     if (parsed.success) {
       setErrors({});
 
+      // 记住用户名和密码（勾选时写入，否则清空）
       localStorage.setItem(
         REMEMBER_ME_KEY,
         rememberMe ? parsed.data.username : '',
@@ -121,6 +149,7 @@ export function AuthenticationLogin({
   }
 
   return (
+    // @keydown.enter.prevent="handleSubmit"（login.vue:95）—— 显式 preventDefault
     <form
       className="space-y-4"
       onKeyDown={(e) => {
@@ -190,7 +219,7 @@ export function AuthenticationLogin({
             <span
               role="button"
               tabIndex={0}
-              className="vben-link text-sm font-normal"
+              className="auth-link text-sm font-normal"
               onClick={() => navigate(forgetPasswordPath)}
               onKeyDown={(e) =>
                 e.key === 'Enter' && navigate(forgetPasswordPath)
@@ -238,6 +267,7 @@ export function AuthenticationLogin({
         </div>
       ) : null}
 
+      {/* 第三方登录 */}
       {slotThirdPartyLogin ??
         (showThirdPartyLogin ? <ThirdPartyLogin /> : null)}
 
@@ -248,7 +278,7 @@ export function AuthenticationLogin({
             <span
               role="button"
               tabIndex={0}
-              className="vben-link text-sm font-normal"
+              className="auth-link text-sm font-normal"
               onClick={() => navigate(registerPath)}
               onKeyDown={(e) => e.key === 'Enter' && navigate(registerPath)}
             >

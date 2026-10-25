@@ -1,26 +1,118 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="统一管理平台">
-  <defs>
-    <linearGradient id="up-tile" x1="3.5" y1="1" x2="28.5" y2="31" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#5EA9FF"/>
-      <stop offset=".48" stop-color="#0F6BE8"/>
-      <stop offset="1" stop-color="#5B3BE8"/>
-    </linearGradient>
-    <linearGradient id="up-gloss" x1="16" y1="0" x2="16" y2="17" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#fff" stop-opacity=".24"/>
-      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
-    </linearGradient>
-    <linearGradient id="up-shade" x1="16" y1="31" x2="16" y2="17" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#001A4D" stop-opacity=".16"/>
-      <stop offset="1" stop-color="#001A4D" stop-opacity="0"/>
-    </linearGradient>
-    <linearGradient id="up-mark" x1="16" y1="8" x2="16" y2="25" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#FFFFFF"/>
-      <stop offset="1" stop-color="#E2EEFF"/>
-    </linearGradient>
-  </defs>
-  <rect width="32" height="32" rx="9" fill="url(#up-tile)"/>
-  <rect width="32" height="32" rx="9" fill="url(#up-gloss)"/>
-  <rect width="32" height="32" rx="9" fill="url(#up-shade)"/>
-  <rect x=".75" y=".75" width="30.5" height="30.5" rx="8.4" fill="none" stroke="#fff" stroke-opacity=".30" stroke-width="1.5"/>
-  <path d="M10 9.4v6.7a6 6 0 0 0 12 0V9.4" fill="none" stroke="url(#up-mark)" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/>
+
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="none" x="0px" y="0px" width="800px" height="800px" viewBox="0 0 800 800">
+<defs>
+<linearGradient id="Gradient_1" gradientUnits="userSpaceOnUse" x1="256.9625" y1="402.1625" x2="266.4375" y2="292.8375" spreadMethod="pad">
+<stop  offset="0%" stop-color="#FE8B78"/>
+
+<stop  offset="100%" stop-color="#FA2F36"/>
+</linearGradient>
+
+<linearGradient id="Gradient_2" gradientUnits="userSpaceOnUse" x1="159.0125" y1="394.7875" x2="536.5875000000001" y2="112.01249999999999" spreadMethod="pad">
+<stop  offset="0%" stop-color="#FF46AE"/>
+
+<stop  offset="100%" stop-color="#F9B39A"/>
+</linearGradient>
+
+<linearGradient id="Gradient_3" gradientUnits="userSpaceOnUse" x1="233.58749999999998" y1="632.6125" x2="522.2125" y2="273.9875" spreadMethod="pad">
+<stop  offset="0%" stop-color="#FF25F3"/>
+
+<stop  offset="100%" stop-color="#7900AF"/>
+</linearGradient>
+
+<linearGradient id="Gradient_4" gradientUnits="userSpaceOnUse" x1="333.6625" y1="651.7" x2="674.4375" y2="504.8" spreadMethod="pad">
+<stop  offset="0%" stop-color="#005F73"/>
+
+<stop  offset="100%" stop-color="#00EFD8"/>
+</linearGradient>
+
+<linearGradient id="Gradient_5" gradientUnits="userSpaceOnUse" x1="217.58750000000003" y1="383.4875" x2="304.6125" y2="280.0125" spreadMethod="pad">
+<stop  offset="0%" stop-color="#FF625F"/>
+
+<stop  offset="100%" stop-color="#E3000F"/>
+</linearGradient>
+
+<g id="Layer7_0_FILL">
+<path fill="url(#Gradient_1)" stroke="none" d="
+M 211.75 385
+Q 218.2 394.75 233.9 394.45 233.95 394.4 233.9 394.4 266.7 380.6 300.55 301.45 300.7 301.1 300.85 300.8 316.7 270.9 343.25 245.95 284.4 274.1 250.6 301.65 217.05 329.05 208.9 355.35 205.15 375 211.75 385 Z"/>
+</g>
+
+<g id="Layer6_0_FILL">
+<path fill="url(#Gradient_2)" stroke="none" d="
+M 552.35 120.45
+Q 552.15 120.3 552 120.2 471.4 84.8 330.85 130
+L 330.45 130
+Q 82.1 223.4 115.5 345.6 147.85 423.25 233.9 394.45 218.2 394.75 211.75 385 205.15 375 208.9 355.35 217.05 329.05 250.6 301.65 284.4 274.1 343.25 245.95 366.6 234.75 394.9 225.4 430.45 213.65 473.9 204.9 474.15 204.8 474.4 204.8 572 188.05 560.55 245
+L 561.1 244.2
+Q 611.05 159.6 552.35 120.45 Z"/>
+</g>
+
+<g id="Layer5_0_FILL">
+<path fill="url(#Gradient_3)" stroke="none" d="
+M 474.4 204.8
+Q 474.15 204.8 473.9 204.9 430.45 213.65 394.9 225.4 439.55 224.8 419.05 264 398.55 303.2 343.3 375.55 288.05 447.9 243.25 513.5 207.8 569.05 196.9 615.35 180.3 693.4 262.95 704 288.9 707.3 324.6 704 345.2 702.1 369.05 697.95 275.95 685.3 353.65 546.7 353.75 546.45 355.65 542.6 357.4 538.9 360.8 531.95 367.65 517.7 560.35 245.3
+L 560.55 245
+Q 572 188.05 474.4 204.8 Z"/>
+</g>
+
+<g id="Layer4_0_FILL">
+<path fill="url(#Gradient_4)" stroke="none" d="
+M 613.8 590.25
+Q 612.1 587.05 608.95 585.9 605.4 584.55 601.05 586.35 591.5 590.35 571.8 600.8 551.5 611.55 542.5 617.55 538.1 620.5 536.8 624.55 535.6 628.2 537.3 631.45 538.95 634.65 542.5 635.7 546.4 636.85 551 634.8 560.55 630.5 583.65 618 606.65 605.6 612 601.8 614.6 600 615 596.55 615.45 593.3 613.8 590.25
+M 612.15 475.5
+Q 614.65 472.75 614.9 469.05 615.2 465.55 613.35 462.75 611.45 459.8 608 458.9 604.2 457.9 599.5 459.9 579.65 468.25 565.4 481.4 561.55 484.95 561.15 489.15 560.75 492.95 563.15 496.05 565.5 499.05 569.3 499.95 573.45 500.9 577.6 498.8 584.9 495.1 595.9 487.9 608.3 479.75 612.15 475.5
+M 656.45 570.2
+Q 657.65 568.4 657.5 566 657.3 563.6 655.9 561.85 652.4 557.4 645.85 561.2 633.15 568.55 628.6 573.55 624.8 577.75 627.75 582.2 630.65 586.6 635.35 584.7 640.5 582.6 647 578.3 654.2 573.55 656.45 570.2
+M 687.75 476.45
+Q 684.95 471.35 679.6 470 673.05 468.35 664.75 473.3 654.95 478.45 602.6 507.25 552.45 534.85 552.4 534.85 544.45 538.2 540.55 534.3 536.1 529.85 543.1 520.45 543.25 520.25 547.95 514.3 551.2 510.25 551.9 507.65 553.45 501.75 550.15 497.7 546.9 493.65 540.7 493.6 533.9 493.5 526.5 498.35 508.1 510.35 466.6 529.25 419.3 550.75 382.6 561.8 346.8 572.15 355.65 542.6 353.75 546.45 353.65 546.7 275.95 685.3 369.05 697.95 401.4 692.75 442.65 679.3 485.75 665.2 510.85 650.9 514.75 648.6 516.05 645.05 518.55 637.95 505.3 631.6 499.7 627.55 501.8 622.85 503.55 619 511.15 614.1 515.75 611.1 527 605.25 538.4 599.3 543 596.35 586 568.9 622.05 544.25 670.95 510.7 679.55 501.75 688.15 492.75 689.55 486.35 690.6 481.65 687.75 476.45 Z"/>
+</g>
+
+<g id="Layer3_0_FILL">
+<path fill="url(#Gradient_5)" stroke="none" d="
+M 211.75 385
+Q 217.9 394.3 232.4 394.45 185.85 360.9 301.85 298.2
+L 300.55 301.45
+Q 300.7 301.1 300.85 300.8 316.7 270.9 343.25 245.95 284.4 274.1 250.6 301.65 217.05 329.05 208.9 355.35 205.15 375 211.75 385 Z"/>
+</g>
+
+<g id="Layer2_0_FILL">
+<path fill="#62009F" stroke="none" d="
+M 474.4 204.8
+Q 474.15 204.8 473.9 204.9 430.45 213.65 394.9 225.4 430.05 224.9 424.85 249.05 496.05 211.25 561.4 228.3 556 190.75 474.4 204.8 Z"/>
+</g>
+
+<g id="Layer1_0_FILL">
+<path fill="#00576C" stroke="none" d="
+M 383.65 561.45
+Q 383.15 561.6 382.6 561.8 346.8 572.15 355.65 542.6 353.75 546.45 353.65 546.7 276.3 684.7 368.25 697.85 305.4 665.7 383.65 561.45 Z"/>
+</g>
+</defs>
+
+<g transform="matrix( 1, 0, 0, 1, 0,0) ">
+<use xlink:href="#Layer7_0_FILL"/>
+</g>
+
+<g transform="matrix( 1, 0, 0, 1, 0,0) ">
+<use xlink:href="#Layer6_0_FILL"/>
+</g>
+
+<g transform="matrix( 1, 0, 0, 1, 0,0) ">
+<use xlink:href="#Layer5_0_FILL"/>
+</g>
+
+<g transform="matrix( 1, 0, 0, 1, 0,0) ">
+<use xlink:href="#Layer4_0_FILL"/>
+</g>
+
+<g transform="matrix( 1, 0, 0, 1, 0,0) ">
+<use xlink:href="#Layer3_0_FILL"/>
+</g>
+
+<g transform="matrix( 1, 0, 0, 1, 0,0) ">
+<use xlink:href="#Layer2_0_FILL"/>
+</g>
+
+<g transform="matrix( 1, 0, 0, 1, 0,0) ">
+<use xlink:href="#Layer1_0_FILL"/>
+</g>
 </svg>
