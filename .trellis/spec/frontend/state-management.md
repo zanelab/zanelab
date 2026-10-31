@@ -54,26 +54,28 @@ MVP 未把拉取做进 store action，拉取与副作用拆在两处（§6.2 的
 
 ## qiankun 全局状态同步
 
-主应用用 `initGlobalState` 建全局状态，并订阅 store 推送给子应用（§9.4，实现在 `src/micro/register.ts` 的 `setupGlobalState`，`main.tsx` 调用一次）。auth/menu 是两个独立 store，**双订阅共用同一 snapshot + 比对函数**：
+主应用建快照并订阅三个 store（auth/menu/preferences）推送给子应用（§9.4，实现在 `src/micro/register.ts` 的 `setupHostState`，`main.tsx` 调用一次，幂等）。**多订阅共用同一 snapshot + 比对函数**：
 
 ```ts
 const snapshot = () => ({
   token: useAuthStore.getState().token,
   user: useAuthStore.getState().user,
-  permissions: useMenuStore.getState().permissions, // { token, user, permissions }
+  permissions: useMenuStore.getState().permissions,
+  locale: usePreferencesStore.getState().app.locale,
+  preferences: subAppPreferences(usePreferencesStore.getState()), // 外观子集（见 microfrontend-guidelines）
 });
-const actions = initGlobalState(snapshot());
-let last = snapshot();
 const pushIfChanged = () => {
   const next = snapshot();
-  if (changed) { last = next; actions.setGlobalState(next); } // 快照比对，无变化不推
+  // 顶层字段引用比对 + preferences 外观子集**逐字段**比对，任一真变才派发
 };
 useAuthStore.subscribe(pushIfChanged);
 useMenuStore.subscribe(pushIfChanged);
+usePreferencesStore.subscribe(pushIfChanged);
 ```
 
 - zustand `subscribe` 无 selector 时每次 `setState` 都触发，由 `pushIfChanged` 的快照比对兜住（`permissions` 每次重算为新数组，引用比对即够）。
-- 子应用在 `mount` 里 `props.onGlobalStateChange?.(cb)` 订阅（§9.4）。
+- 子应用经 `props.getHostState()`（读快照）/ `props.onHostStateChange(cb)`（订阅）消费；偏好设置外观子集契约见 [微前端与子应用](./microfrontend-guidelines.md) 的「偏好设置下发契约」。
+- **preferences 子集不能整对象比对**：投影函数每次返回新对象，引用恒不等 → 无关偏好变更（sidebar collapsed 等）全部误推。必须逐字段比对外观子集（`pushIfChanged` 内实现）。
 - 推送内容**只**包含需要共享的跨应用数据，别把整个 store state 灌进去；订阅触发注意按需更新，避免子应用无谓重渲染（§12）。
 
 ## 反面模式

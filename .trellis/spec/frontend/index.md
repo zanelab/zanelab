@@ -33,6 +33,8 @@
 
 ## 核心不变式（改前必读）
 
+- **apps 下的应用相互之间不能引用**：`apps/<a>` ⇄ `apps/<b>` 无 import、package.json 无互相依赖（跨 app 共享下沉 `packages/*`；应用间唯一通道是 qiankun props/http 契约，见 [微前端与子应用](./microfrontend-guidelines.md)）。
+- **apps 下的应用是独立应用，独立运行性是硬性约定**：每个 app 必须可单独 `pnpm dev:<appName>` 跑通（props 缺省有义、props 消费收敛在 `src/http/compat.ts`、样式/mock 自持），业务层无 props 分支。
 - 子应用注册信息**只**存在于 `config.js` 的 `microApps`；菜单只通过 `appName` 与之关联（§4.1）。
 - 接口地址、登录/首页/403/404 路径等一律从运行时配置读取，不硬编码（§3）。
 - 数据流单向：登录 → 拉菜单 → 动态路由 + 注册子应用 → 渲染（§5.1）。

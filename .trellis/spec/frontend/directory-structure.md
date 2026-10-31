@@ -24,7 +24,7 @@ zanelab/                          # 仓库根 = workspace 根（编排脚本 + �
 │   │       ├── stores/           # zustand 全部状态：auth/menu/图标/layout/preferences/tabbar/timezone（design §2 边界）
 │   │       ├── components/       # 壳组件 + layouts/（BasicLayout 壳）+ RouteGuard、Permission…
 │   │       ├── pages/            # 本地页面，路径约定见下
-│   │       ├── micro/            # qiankun：register.ts 的 setupMicroApps / setupGlobalState / watchGlobalLogout
+│   │       ├── micro/            # qiankun：register.ts 的 setupMicroApps / setupHostState / watchGlobalLogout
 │   │       ├── mocks/            # MSW：handlers.ts、browser.ts、server.ts（dev/测试替身 /api/*）
 │   │       ├── locales/          # i18n：i18n.ts（init + menuTitle）+ zh-CN.json / en-US.json 语言包
 │   │       └── utils/            # 壳耦合模块（http/auth/session/crypto/theme-transition/menu-views/session-headers）
@@ -82,6 +82,7 @@ zanelab/                          # 仓库根 = workspace 根（编排脚本 + �
 - **壳内（apps/portal-web）仍用 `@/xxx` 别名**（alias 指向 `apps/portal-web/src`）：`@/stores/...`、`@/components/...`、`@/utils/http` 等壳内模块间引用不变。
 - `apps/portal-web/src/types/index.ts` 是 re-export shim（`export * from '@zanelab/types'`），存量 `@/types` 引用经 shim 兼容；新代码直接写 `@zanelab/types`。
 - 包只从 `@zanelab/*` 与自身 deps 导入；**禁止包内 import `apps/*` 的任何模块**（耦合壳的代码不进包，进包的代码必须保持零壳耦合）。
+- **禁止 apps 下的应用相互引用**（`@zanelab/portal-web` ⇄ `@zanelab/iam-web`、任意 `apps/<a>` ⇄ `apps/<b>`）：package.json deps 不出现其他 app 的包名，import 不出现其他 app 的源码路径。每个 app 是**独立部署单元**（独立 dev 端口、独立构建、可交付其他团队），相互引用会让两个应用焊死——宿主改一行迫使用离子应用重测，qiankun 的 props/http 契约（见 [微前端与子应用](./microfrontend-guidelines.md)）才是应用间唯一通道。跨 app 需要共享时下沉 `packages/*`（先过「零壳耦合」判断）。
 - 新增可复用模块：先判断是否纯逻辑/零耦合（无 stores/config/locales/api 依赖）——是则进对应 `packages/*` 包并记 changeset；否则留 `apps/portal-web`。
 
 ## 页面加载约定
@@ -127,5 +128,6 @@ zanelab/                          # 仓库根 = workspace 根（编排脚本 + �
 - 把页面组件塞进 `src/components/` 却不在 `src/pages/` 下，破坏约定式导入。
 - 在 `apps/portal-web/src/utils/` 混入 JSX/组件文件。
 - 包（packages/*）import `apps/*` 的模块，或包内出现 stores/config/locales/api 依赖——耦合壳的代码必须留 `apps/portal-web`。
+- **apps 下的应用相互 import 或在 package.json 里依赖另一个 app 的包名**（见 import 与包边界约定——应用间只经 qiankun props 契约通信）。
 - 用相对路径跨包引文件（`../../packages/...`）而非 `@zanelab/<name>` 包名导入。
 - 在包里加独立构建管道——共享包是源码直出（internal packages），不加 build 产物。

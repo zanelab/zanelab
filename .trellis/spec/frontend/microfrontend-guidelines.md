@@ -54,10 +54,48 @@ microApps: {
 
 **新增子应用接入要求**：除 config.js 注册 + 生命周期导出外，无需改路由——`SubAppLayer` 从 `appConfig.microApps` 自动展开容器；菜单里的子应用根路由自动渲染占位 + `*` 兜底（子应用内部路由接管）。注意容器 id 必须与 config 的 `container` 一致（SubAppLayer 与 register.ts 都以 config 为准，勿在路由里另造容器）。
 
+### qiankun wrapper 填满容器（10-25）
+
+qiankun mount 时在容器（`[data-subapp]`）内**运行时自动插入**一层 `<div id="__qiankun_microapp_wrapper_for_<snakeName>__">`（本仓 qiankun@2.x 源码 `es/loader.js`：wrapper 经 `rawAppendChild` **直接 append 到配置容器**），子应用渲染在 wrapper 内。该层无法在 JSX 声明 class，只能基座 `index.css` 集中约束：
+
+```css
+/* 集中约束、零硬编码完整 id —— 新增子应用无需改这里 */
+[data-subapp] > div[id^='__qiankun_microapp_wrapper'] {
+  width: 100%;
+  height: 100%;
+}
+```
+
+> **Warning（jsdom 无法验证真实 CSS）**：测试只能做契约断言——wrapper 必是 `[data-subapp]` 直接子 div（DOM 结构）+ `index.css` 规则文本含 width/height 100%（CSS 契约），二者缺一即回归。真实高度需浏览器 DOM 检查（wrapper `getBoundingClientRect` 高度 = 容器高度）。子应用自身 `height:100%` 布局依赖此层有高度，缺失则 0 高/塌陷，滚动与弹层定位异常。
+
 ## props / 全局状态契约（§4.4、§9.4）
 
-- 动态 props：`{ token, permissions, http, config, basename }`（+ 合并静态 props）。子应用在 `mount` 里接收。
-- 主应用用 `initGlobalState` + `store.subscribe` 推送全局状态（token/user/permissions），见 [状态管理](./state-management.md)；子应用 `mount` 里 `props.onGlobalStateChange?.(cb)` 订阅。
+- 动态 props：`{ token, permissions, http, config, basename, preferences, onLoginSuccess, getHostState, onHostStateChange }`（+ 合并静态 props）。子应用在 `mount` 里接收。
+- 动态 props 一律 **getter 语义**：single-spa 每次 mount 经 `getProps` 展开执行 getter，子应用每次挂载读 store 最新值——值快照会冻结在注册瞬间（首次注册可能未登录，拿到空 token/permissions）。
+- 主应用用 host-state 快照 + 订阅推送全局状态（token/user/permissions/locale/**preferences 外观子集**），见 [状态管理](./state-management.md)；子应用 `mount` 里 `props.onHostStateChange?.(cb)` 订阅。
+
+### 偏好设置下发契约（10-25）
+
+外观子集 `SubAppPreferences`（`register.ts` 导出，props 与快照**共用同一投影函数 `subAppPreferences()`**，字段清单不得两处复刻）：
+
+```ts
+interface SubAppPreferences {
+  mode: 'light' | 'dark' | 'auto';   // theme.mode，子应用派生自身 data-theme
+  colorPrimary: string;              // hsl 字符串（theme.colorPrimary）
+  colorDestructive: string;
+  colorSuccess: string;
+  colorWarning: string;
+  radius: string;                    // rem 数值字符串，如 '0.5'
+  fontSize: number;                  // px（theme.fontSize）
+  colorGrayMode: boolean;            // app.colorGrayMode
+  colorWeakMode: boolean;            // app.colorWeakMode
+  locale: string;                    // 与快照顶层 locale 同值
+}
+```
+
+- 快照顶层保持既有跨应用字段 `{ token, user, permissions, locale, preferences }`——外观只经 `preferences` 键下发（§9.4：不灌整个 store）。
+- **`pushIfChanged` 必须逐字段比对**（Wrong vs Correct 见下）。
+- 子应用消费方式自行决定（如写自身根节点 CSS 变量派生 data-theme）；`experimentalStyleIsolation` 隔离选择器作用域、不隔离变量值，两者不冲突。
 
 ## 子应用接入规范（§9）
 
@@ -68,6 +106,50 @@ microApps: {
 - 独立运行（`!qiankunWindow.__POWERED_BY_QIANKUN__`）时 `render({ basename: '/' })`，方便单独开发（根目录 `pnpm dev:iam`，即 `pnpm --filter @zanelab/iam-web dev`，:8081）。
 - 路由用 `BrowserRouter basename={props.basename ?? '/system'}`（history 模式，与 activeRule 一致），子页面挂在 basename 之下。
 - 内部请求直接用主应用传入的 `http`（或 `window.__http`），**不重复建 Axios 实例**（§9.3）。
+
+### 独立运行性是硬性约定（§9「子应用须支持独立运行」）
+
+**每个 app 是独立交付单元**——可能由其他团队开发、只跑本应用 dev server 测试。因此独立运行（`pnpm dev:<appName>` 直开 :端口，宿主不存在、props 为 undefined）必须是**一等公民场景**，不是兼容分支：
+
+- **props 全经兼容层消费，业务层无 props 分支**：新建 `src/http/compat.ts`（每 app 一份，勿放 packages——拦截器语义可按 app 联调需要微调），模块内判 `props.http` 是否存在：集成态透传宿主 http（只读共享实例），独立态本地兜底 axios + envelope 解包（语义对齐宿主拦截器：成功返 data、失败 reject `Error(msg)`）。业务组件只 import compat 的函数（如 `post` / `onLoginSuccess`），**不出现 `props.http ? ... : ...` 散落分支**（iam 参考实现：`apps/iam-web/src/http/compat.ts`）。
+- **独立态行为对齐集成态语义**：401 兜底、登录会话回传（`localStorage` 持会话 + pushState）、envelope 解包——能力对齐宿主同名拦截器/回调，保证两种形态下业务行为一致。
+- **独立态样式自持**：子应用须有自己的 CSS 入口（tailwind + daisyUI + 主题 token，iam 参考实现 `apps/iam-web/src/index.css`——集成态样式由宿主注入，该入口只服务独立 dev）。从 `packages/ui` 扫描的组件类名须显式 `@source`（见 [目录结构](./directory-structure.md) Warning）。
+- **mock 自持**：子应用自身接口的 MSW handler 放自己 `src/mocks/`（handler 是子应用的 mock 契约，**不跨应用共享、宿主不代持**）；独立态由本应用 worker 直拦，集成态经宿主配置代理转发回来后仍由本应用 worker 拦截（`vite-plugin-qiankun` 下 worker 与独立分支均可启动，同一进程只 start 一次）。
+- **props 派生值缺省有义**：从 `props.basename` 等派生的 API 前缀/路由前缀，独立态（props 为空）时缺省值必须让请求直落本 dev server、路由挂 `/`——不能独立态一跑就请求打到不存在的宿主路径上。
+
+#### Wrong vs Correct
+
+#### Wrong（业务层散落 props 分支，独立态不可跑）
+
+```tsx
+// LoginPage.tsx —— 独立运行（props.http undefined）时直接抛错
+const res = await getProps().http!.post('/api/v1/auth/otp/send', body);  // 非空断言裸用
+```
+
+```tsx
+// 每个组件各自判空 —— 分支散落，独立态行为漂移
+if (props.http) await props.http.post(url, body);
+else /* 各写各的兜底 */;
+```
+
+#### Correct（兼容层单点收敛，业务层零感知）
+
+```tsx
+// src/http/compat.ts（每 app 一份）
+export async function post(path: string, body?: unknown): Promise<unknown> {
+  const hostHttp = getProps().http as HostHttp | undefined;
+  if (typeof hostHttp?.post === 'function') return hostHttp.post(path, body);
+  return getLocalHttp().post(path, body);   // 独立态本地 axios + envelope 解包
+}
+```
+
+```tsx
+// LoginPage.tsx —— 只 import compat，两种形态同一代码路径
+import { post, onLoginSuccess } from '../http/compat';
+const res = await post(apiUrl('/auth/otp/send'), { email });
+```
+
+> **Warning（独立态 401 兜底只跳本应用路由）**：compat 的 401 分支 `window.location.replace('/login')` 在**集成态下不能触发**（集成态 401 由宿主拦截器 rejectSessionExpired 承担，compat 根本不在请求链路上——集成态透传 props.http）。若集成态误走本地 axios（`props.http` 判定失效），401 会整页跳到宿主 loginPath 之外的本应用 `/login`，表现为「集成态登录页无输出直跳 /login」。排查集成态 401 异常跳转时先确认请求确实经 compat 判定走了宿主 http。
 
 ## dev 直载已知噪音（判别清单）
 
@@ -103,3 +185,7 @@ qiankun 直接加载 vite dev server entry（useDevMode）时，控制台会出�
 - 主应用无条件注册所有 `microApps`（含无权子应用），而不是按菜单按需注册。
 - 子应用绕过只读共享实例去改拦截器（见 [HTTP 与数据请求](./http-api-guidelines.md)），或绕过沙箱改主应用全局变量。
 - 子应用用自己的 basename 之外的绝对路径路由，导致与主应用 URL 层级冲突。
+- 全局状态推送**整对象比对**投影子集：投影函数每次返回新对象，引用恒不等 → 无关偏好变更（sidebar collapsed 等）全部误判为推送。必须逐字段比对（`pushIfChanged`，外观字段清单比对与 token/user/permissions/locale 并列）。
+- props 与快照**两处复刻** `SubAppPreferences` 字段清单：契约漂移隐患，必须共用 `subAppPreferences()` 单一投影。
+- **子应用业务层散落 props 判空分支**（`props.http ? ... : ...`）：独立态行为漂移、判空遗漏即抛错。props 消费单点收敛在 `src/http/compat.ts`（见「独立运行性是硬性约定」）。
+- **宿主 worker 代子应用持有 mock 契约**（iam 的 handler 登记进 portal handlers.ts）：子应用接口的 mock 是子应用自身契约，放子应用 `src/mocks/`；宿主调子应用接口一律经配置代理转发（见 [目录结构](./directory-structure.md)——apps 间不共享代码）。
