@@ -12,3 +12,6 @@ coverage/
 
 # macOS
 .DS_Store
+
+# 密钥/本机环境（.env.development 等显式命名文件仍可入库）
+.env

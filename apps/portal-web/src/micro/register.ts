@@ -12,8 +12,8 @@ import { isAuthPath } from '../router/auth-path';
 import type { UserInfo } from '../types';
 
 // qiankun 接线（父 design §6、§9.4）：注册读 appConfig.microApps；
-// 全局状态 token/user/permissions/locale 由 auth/menu/preferences 三个 store
-// 的 subscribe 单向同步（只在 main.tsx 一处 init）。
+// 全局状态 token/user/permissions/locale/preferences(外观子集) 由 auth/menu/
+// preferences 三个 store 的 subscribe 单向同步（只在 main.tsx 一处 init）。
 
 /** 容器 id：config container（去 #）或缺省 subapp-<appName>。 */
 function containerId(appName: string, container?: string): string {
@@ -103,10 +103,15 @@ export async function loadPublicMenus(): Promise<void> {
 }
 
 let registered = false;
+let started = false;
+/** start 轮询代数：__resetMicroAppsForTest 递增，作废挂起的轮询（防跨用例污染） */
+let startPollGeneration = 0;
 
-/** 仅供测试：重置「已注册」标记 */
+/** 仅供测试：重置「已注册/已启动」标记 */
 export function __resetMicroAppsForTest() {
   registered = false;
+  started = false;
+  startPollGeneration++;
 }
 
 /**
@@ -124,10 +129,18 @@ const QIANKUN_STYLE_ISOLATION_SANDBOX = { experimentalStyleIsolation: true };
 /**
  * 启动 qiankun：注册 config.microApps 中的全部子应用并 start。幂等（守卫）。
  *
- * token/permissions/locale 用 getter 而非值快照：single-spa 每次 mount 经
- * getProps 用 Object.assign 展开 customProps（会执行 getter），子应用每次
- * 挂载都读到 store 最新值——值快照会冻结在注册瞬间，首次访问（未登录先注册）
+ * token/permissions/locale/preferences 用 getter 而非值快照：single-spa 每次
+ * mount 经 getProps 用 Object.assign 展开 customProps（会执行 getter），子应用
+ * 每次挂载都读到 store 最新值——值快照会冻结在注册瞬间，首次访问（未登录先注册）
  * 时子应用拿到空 token/permissions。
+ *
+ * props 契约（子应用 mount(props) 可消费的全部字段）：
+ * - http：共享 axios 实例（勿自建）
+ * - token / permissions / locale / preferences(外观子集，SubAppPreferences)：getter，取 store 最新值
+ * - getHostState / onHostStateChange：宿主全局状态读取/订阅（snapshot 同一契约）
+ * - onLoginSuccess：子应用登录页回传会话（public 路由）
+ * - base / basename：路由挂载前缀（= activeRule）
+ * - ...cfg.props：config.js 的静态 props
  */
 export function setupMicroApps() {
   if (registered) return;
@@ -155,6 +168,12 @@ export function setupMicroApps() {
       get locale() {
         return usePreferencesStore.getState().app.locale;
       },
+      // 外观子集（契约见 SubAppPreferences，与 snapshot().preferences 同一结构）：
+      // getter 语义与 token 一致——子应用每次 mount 读 store 最新值；运行期变更
+      // （基座偏好面板修改）经 onHostStateChange 推送的新快照携带同一子集
+      get preferences() {
+        return subAppPreferences(usePreferencesStore.getState());
+      },
 
       // 宿主状态读取 / 订阅 / 子应用登录回传（见下方 snapshot / onLoginSuccess）
       getHostState,
@@ -163,9 +182,6 @@ export function setupMicroApps() {
 
       // 路由挂载前缀显式传递（与 activeRule 对齐）：
       // - Vite 子应用（vite-plugin-qiankun）读 props.basename
-      // - umi 子应用（@umijs/plugins qiankun slave）读 props.base 作路由 basename
-      // 两个都传，子应用各取所需。
-      base: cfg.activeRule,
       basename: cfg.activeRule,
     },
   }));
@@ -181,27 +197,116 @@ export function setupMicroApps() {
       .filter(([, cfg]) => cfg.prefetch)
       .map(([key, cfg]) => cfg.name || key),
   );
-  start({
-    // 全局样式隔离（背景与影响面见 QIANKUN_STYLE_ISOLATION_SANDBOX 注释）
-    sandbox: QIANKUN_STYLE_ISOLATION_SANDBOX,
-    prefetch: (list) => ({
-      criticalAppNames: list
-        .filter((app) => prefetchNames.has(app.name))
-        .map((app) => app.name),
-      minorAppsName: [],
-    }),
+
+  // start() 延迟到全部注册容器进 DOM（SubAppLayer 常驻层随首帧 React 提交渲染，
+  // 而本函数可能在 renderApp() 之前被调——main.tsx bootstrap / restoreSession）。
+  // 提前 start 会因容器缺席立刻 mount 匹配当前路由的子应用 → died（实测踩坑：
+  // 此前 config 校验失败回退 DEFAULT（microApps 空）掩盖了该 race，校验修复后
+  // 首次暴露）。rAF 轮询等首帧提交；容器全集 = 本次注册的 container id。
+  // rAF 轮询等首帧提交；容器全集按注册配置用 containerId 推导（与上方
+  // container 字段同源；不读 RegistrableApp——其类型是 container|render 联合，
+  // 取 .container 编译不过）
+  const pendingContainers = Object.entries(appConfig.microApps).map(
+    ([appName, cfg]) => containerId(appName, cfg.container),
+  );
+  const gen = startPollGeneration;
+  void new Promise<void>((resolve) => {
+    const tick = () => {
+      if (gen !== startPollGeneration) return resolve(); // 已被 reset 作废
+      if (pendingContainers.every((id) => document.getElementById(id))) {
+        return resolve();
+      }
+      requestAnimationFrame(tick);
+    };
+    tick();
+  }).then(() => {
+    if (!started || gen !== startPollGeneration) {
+      if (gen !== startPollGeneration) return; // reset 过：等新一轮 start
+      started = true;
+      start({
+        // 全局样式隔离（背景与影响面见 QIANKUN_STYLE_ISOLATION_SANDBOX 注释）
+        sandbox: QIANKUN_STYLE_ISOLATION_SANDBOX,
+        prefetch: (list) => ({
+          criticalAppNames: list
+            .filter((app) => prefetchNames.has(app.name))
+            .map((app) => app.name),
+          minorAppsName: [],
+        }),
+      });
+    }
   });
 }
 
 // ── 宿主状态（host state）：子应用经 props 读取/订阅 ──────────────────
 
-/** 推送给子应用的全局状态快照（§9.4：只含跨应用共享数据，勿灌整个 store）。 */
+/**
+ * 推送给子应用的全局状态快照（§9.4：只含跨应用共享数据，勿灌整个 store）。
+ *
+ * 结构 = 跨应用会话字段 + 外观子集（SubAppPreferences）：
+ * - token / user / permissions：登录态与权限码
+ * - locale：顶层保留（历史契约，已有子应用消费）
+ * - preferences：外观子集（类型见 SubAppPreferences，与 setupMicroApps 的
+ *   props.preferences 共用同一契约——子应用 mount 经 getter 取值、运行期经
+ *   onHostStateChange 收增量，两处结构必须一致）
+ */
 function snapshot() {
+  const preferences = usePreferencesStore.getState();
   return {
     token: useAuthStore.getState().token,
     user: useAuthStore.getState().user,
     permissions: useMenuStore.getState().permissions,
-    locale: usePreferencesStore.getState().app.locale,
+    locale: preferences.app.locale,
+    preferences: subAppPreferences(preferences),
+  };
+}
+
+/**
+ * 子应用可见的外观子集（§9.4：只下发外观，不灌整个 preferences store）。
+ *
+ * 契约（props.preferences 与 snapshot().preferences 共用）：
+ * - mode：主题模式 'light' | 'dark' | 'auto'（子应用可派生自身 data-theme）
+ * - colorPrimary / colorDestructive / colorSuccess / colorWarning：hsl 字符串
+ * - radius：圆角（rem 数值字符串，如 '0.5'）；fontSize：基础字号（px 数值）
+ * - colorGrayMode / colorWeakMode：灰色/色弱模式开关
+ * - locale：与顶层 locale 同值（子应用取一次 preferences 即可拿全）
+ */
+export interface SubAppPreferences {
+  mode: 'light' | 'dark' | 'auto';
+  colorPrimary: string;
+  colorDestructive: string;
+  colorSuccess: string;
+  colorWarning: string;
+  radius: string;
+  fontSize: number;
+  colorGrayMode: boolean;
+  colorWeakMode: boolean;
+  locale: string;
+}
+
+/** 从 preferences store 投影出外观子集（唯一投影点，勿在别处复刻字段清单）。 */
+function subAppPreferences(s: {
+  theme: {
+    mode: 'light' | 'dark' | 'auto';
+    colorPrimary: string;
+    colorDestructive: string;
+    colorSuccess: string;
+    colorWarning: string;
+    radius: string;
+    fontSize: number;
+  };
+  app: { colorGrayMode: boolean; colorWeakMode: boolean; locale: string };
+}): SubAppPreferences {
+  return {
+    mode: s.theme.mode,
+    colorPrimary: s.theme.colorPrimary,
+    colorDestructive: s.theme.colorDestructive,
+    colorSuccess: s.theme.colorSuccess,
+    colorWarning: s.theme.colorWarning,
+    radius: s.theme.radius,
+    fontSize: s.theme.fontSize,
+    colorGrayMode: s.app.colorGrayMode,
+    colorWeakMode: s.app.colorWeakMode,
+    locale: s.app.locale,
   };
 }
 
@@ -249,6 +354,11 @@ export function __resetHostStateForTest() {
  * 宿主状态单向同步（只在 main.tsx 一处 init）：auth/menu/preferences 三个
  * store 的 subscribe → 快照对比 → 有变化才通知子应用（zustand subscribe 无
  * selector 时每次 setState 都触发，由引用比对兜住，避免无谓重渲染）。
+ *
+ * 外观字段（theme.mode/colorPrimary/... 与 app.colorGrayMode/colorWeakMode）
+ * 都收在 preferences 子集对象里：投影函数每次调用都返回新对象，子集引用比对
+ * 恒为不等——误推所有无关偏好变更（如 sidebar collapsed）。故这里不能比对
+ * preferences 对象引用，必须逐字段比对外观子集；只有任一字段真变才通知。
  */
 export function setupHostState() {
   if (hostStateSyncStarted) return;
@@ -256,11 +366,24 @@ export function setupHostState() {
   let prev = snapshot();
   const pushIfChanged = () => {
     const next = snapshot();
+    const p = next.preferences;
+    const q = prev.preferences;
     if (
       next.token !== prev.token ||
       next.user !== prev.user ||
       next.permissions !== prev.permissions || // permissions 每次重算为新数组，引用比对即够
-      next.locale !== prev.locale
+      next.locale !== prev.locale ||
+      // 外观子集逐字段比对（投影每次返回新对象，对象引用比对恒为不等）
+      p.mode !== q.mode ||
+      p.colorPrimary !== q.colorPrimary ||
+      p.colorDestructive !== q.colorDestructive ||
+      p.colorSuccess !== q.colorSuccess ||
+      p.colorWarning !== q.colorWarning ||
+      p.radius !== q.radius ||
+      p.fontSize !== q.fontSize ||
+      p.colorGrayMode !== q.colorGrayMode ||
+      p.colorWeakMode !== q.colorWeakMode
+      // p.locale 与顶层 next.locale 同源，无需重复比对
     ) {
       const changedFrom = prev;
       prev = next;

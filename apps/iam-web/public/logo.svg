@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="统一管理平台">
+  <defs>
+    <linearGradient id="up-tile" x1="3.5" y1="1" x2="28.5" y2="31" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#5EA9FF"/>
+      <stop offset=".48" stop-color="#0F6BE8"/>
+      <stop offset="1" stop-color="#5B3BE8"/>
+    </linearGradient>
+    <linearGradient id="up-gloss" x1="16" y1="0" x2="16" y2="17" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff" stop-opacity=".24"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="up-shade" x1="16" y1="31" x2="16" y2="17" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#001A4D" stop-opacity=".16"/>
+      <stop offset="1" stop-color="#001A4D" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="up-mark" x1="16" y1="8" x2="16" y2="25" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#E2EEFF"/>
+    </linearGradient>
+  </defs>
+  <rect width="32" height="32" rx="9" fill="url(#up-tile)"/>
+  <rect width="32" height="32" rx="9" fill="url(#up-gloss)"/>
+  <rect width="32" height="32" rx="9" fill="url(#up-shade)"/>
+  <rect x=".75" y=".75" width="30.5" height="30.5" rx="8.4" fill="none" stroke="#fff" stroke-opacity=".30" stroke-width="1.5"/>
+  <path d="M10 9.4v6.7a6 6 0 0 0 12 0V9.4" fill="none" stroke="url(#up-mark)" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

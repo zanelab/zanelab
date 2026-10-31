@@ -1,0 +1,45 @@
+# iam Edge Function — Supabase 配置
+# ====================================
+# 本文件仅供本地开发（supabase start / supabase functions serve）。
+# 云部署配置由 CLI 参数 + 控制台独立管理，config.toml 不影响云端。
+#
+# ══════════════════════════════════════
+# 本地开发
+# ══════════════════════════════════════
+#   supabase start                 # 启动本地 Supabase 容器
+#   supabase functions serve iam --no-verify-jwt  # 本地调试 Edge Function
+#
+# ══════════════════════════════════════
+# 云部署
+# ══════════════════════════════════════
+#   supabase link --project-ref <ref>           # 关联云项目（一次性）
+#   supabase functions deploy iam --no-verify-jwt --project-ref <ref>
+#
+#   部署后函数 URL: https://<ref>.supabase.co/functions/v1/iam
+#   控制台需确认：
+#     - Authentication → Email: provider 已启用
+#     - Edge Functions → iam → Settings: Verify JWT = 关闭
+#       （--no-verify-jwt 部署标志自动设置此项；也可在控制台手动切换）
+#
+# ══════════════════════════════════════
+# 部署验证
+# ══════════════════════════════════════
+#   # 发码
+#   curl -X POST https://<ref>.supabase.co/functions/v1/iam/auth/otp/send \
+#     -H 'content-type: application/json' \
+#     -H 'accept-language: zh-CN' \
+#     -d '{"email":"admin@example.com"}'
+#   # → {"code":0,"data":{"success":true},"msg":"ok"}
+#
+#   # 验码（用邮箱收到的 6 位码替换 <code>）
+#   curl -X POST https://<ref>.supabase.co/functions/v1/iam/auth/otp/verify \
+#     -H 'content-type: application/json' \
+#     -H 'accept-language: zh-CN' \
+#     -d '{"email":"admin@example.com","code":"123456"}'
+#   # → {"code":0,"data":{"token":"eyJ...","refreshToken":"...","user":{...}},"msg":"ok"}
+
+project_id = "zanelab-iam"
+
+[functions.iam]
+# OTP send/verify 是匿名端点，不需要 JWT 校验
+verify_jwt = false

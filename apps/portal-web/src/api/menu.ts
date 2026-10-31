@@ -187,9 +187,7 @@ function transformMenu(
  * 拼 /{component} 前缀（/agent_flow/app/list、/maip/model_manage/basic）。
  */
 export async function fetchMenus(): Promise<MenuItem[]> {
-  const rawMenus = (await http.get(
-    appConfig.api.menusEndpoint,
-  )) as unknown as RawMenuItem[];
+  const rawMenus = await http.get<RawMenuItem[]>(appConfig.api.menusEndpoint);
   if (!Array.isArray(rawMenus)) return [];
 
   // 先扫一遍全树收集应用路由基，供「uri 是否绝对路径」判定

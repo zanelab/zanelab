@@ -74,8 +74,8 @@ async function bootstrap() {
   // iconPackUrl JSON 在渲染前注册；异步注册不阻塞菜单渲染（store 驱动补渲染）
   void initIcons();
 
-  // MSW mock：仅当 config.api.useMock=true 时启用（dev 调真实后端时关闭）
-  if (import.meta.env.DEV && appConfig.api.useMock) {
+  // MSW mock：dev-only，由 .env 的 VITE_USE_MOCK 控制（生产构建 DEV=false 恒不启用）
+  if (import.meta.env.DEV && import.meta.env.VITE_USE_MOCK === 'true') {
     const { worker } = await import('./mocks/browser');
     await worker.start({ onUnhandledRequest: 'bypass' });
   }

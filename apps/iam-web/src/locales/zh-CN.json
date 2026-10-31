@@ -1,0 +1,32 @@
+{
+  "iam": {
+    "login": {
+      "backHome": "返回首页",
+      "title": "登录",
+      "subTitle": "请登录您的账号继续",
+      "google": "使用 Google 登录",
+      "github": "使用 GitHub 登录",
+      "comingSoon": "即将开放",
+      "divider": "或",
+      "emailPlaceholder": "name@example.com",
+      "getCode": "获取验证码",
+      "resendIn": "{n}s 后可重发",
+      "sendFailed": "验证码发送失败",
+      "verifyFailed": "验证失败",
+      "networkError": "网络错误，请稍后重试",
+      "error": "登录失败"
+    },
+    "otp": {
+      "title": "查看你的电子邮件",
+      "sentToPrefix": "我们已向 ",
+      "sentToSuffix": " 发送了验证码",
+      "hint": "输入您电子邮件中的6位数字代码",
+      "verify": "验证",
+      "noCode": "未收到验证码？",
+      "resend": "重新发送验证码",
+      "infoTitle": "遇到问题了吗？",
+      "infoBody": "请检查您的垃圾邮件文件夹，或尝试重新申请一个验证码。",
+      "close": "关闭"
+    }
+  }
+}

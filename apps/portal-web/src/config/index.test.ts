@@ -75,6 +75,21 @@ describe('loadConfig', () => {
     expect(loadConfig()).toEqual(DEFAULT_CONFIG);
     expect(errorSpy).toHaveBeenCalledTimes(1);
   });
+
+  // 部署兼容契约（design DD4 / F7），非普通字段删除：线上已部署的 config.js 可能仍带
+  // 已移除的 api.useMock 键。AppConfigSchema 是普通 z.object（非 strict），未知键被 strip
+  // 而非报错 —— 故旧配置仍能加载，不会触发「校验失败 → 回退 DEFAULT_CONFIG」的兜底路径，
+  // 也就不会让线上菜单/子应用注册凭空清空。本用例锁住该行为，防止将来有人把 schema 改成
+  // .strict() 时静默破坏已部署的配置。
+  it('残留已移除的 api.useMock 键 → 不报错、不回退，且返回值上无该键', () => {
+    window.__APP_CONFIG__ = { api: { useMock: true } };
+    const cfg = loadConfig();
+    expect(errorSpy).not.toHaveBeenCalled();
+    expect(cfg.api).not.toHaveProperty('useMock');
+    // 余下键仍是默认值（证明确实走了 strip 而非回退：回退也会得到 DEFAULT_CONFIG，
+    // 故上面 errorSpy 的断言才是这条契约的判别条件）
+    expect(cfg).toEqual(DEFAULT_CONFIG);
+  });
 });
 
 describe('mergeConfig', () => {

@@ -7,7 +7,7 @@ declare global {
 }
 
 // 与 public/config.js 保持一致的默认配置。运行时配置缺失时回退到这里。
-// api.baseURL 默认留空 = 同源（MVP 由 MSW mock /api/*），接真后端时改 config.js。
+// api.baseURL 默认留空 = 同源；接真后端时改 config.js。
 export const DEFAULT_CONFIG: AppConfig = {
   version: '20250907',
   system: {
@@ -38,7 +38,6 @@ export const DEFAULT_CONFIG: AppConfig = {
     loginEndpoint: '/sys/auth/login',
     logoutEndpoint: '/sys/auth/logout',
     refreshEndpoint: '/sys/auth/refresh',
-    useMock: false,
   },
   route: {
     homePath: '/home',

@@ -50,8 +50,6 @@ export const ApiConfigSchema = z.object({
   loginEndpoint: z.string(),
   logoutEndpoint: z.string().optional(),
   refreshEndpoint: z.string().optional(),
-  /** dev 环境是否启用 MSW mock（false=走真实后端经 Vite proxy） */
-  useMock: z.boolean().default(false),
 });
 
 export const RouteConfigSchema = z.object({

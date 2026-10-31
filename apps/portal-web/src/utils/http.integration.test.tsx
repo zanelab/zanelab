@@ -45,7 +45,8 @@ describe('http 拦截器 × MSW', () => {
     );
     render(<ToastRegion />);
     await act(async () => {
-      await expect(fetchMenus()).rejects.toBeTruthy();
+      // vben request() 语义：非 2xx 抛 error.response.data（此处 body 为 null）
+      await expect(fetchMenus()).rejects.toBeNull();
     });
     const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent('服务器错误，请稍后重试');
@@ -61,7 +62,8 @@ describe('MSW handler 契约（父 design §4）', () => {
 
     expect(result.token).toBe('mock-access-token');
 
-    expect(result.refreshToken).toBeUndefined();
+    // mock 侧补 refreshToken（与 /sys/auth/refresh 校验值一致）打通 401 单飞链路
+    expect(result.refreshToken).toBe('mock-refresh-token');
 
     expect(result.user).toEqual({
       id: 1,

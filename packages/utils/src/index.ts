@@ -1,6 +1,7 @@
 export * from './cache';
 export * from './color';
 export * from './diff';
+export * from './http';
 export * from './locale';
 export * from './notify';
 export * from './nprogress';

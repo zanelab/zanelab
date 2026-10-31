@@ -1,5 +1,8 @@
 import { flushSync } from 'react-dom';
-import { usePreferencesStore } from '../stores/preferences-store';
+import {
+  usePreferencesStore,
+  USER_THEME_KEY,
+} from '../stores/preferences-store';
 
 // View Transition API —— 尚未包含在当前 DOM lib 目标中（自 theme-button 迁入）
 type ViewTransition = {
@@ -37,6 +40,13 @@ export function switchThemeMode(
 ) {
   // 同值不重复切换（避免点击当前模式仍触发动画）
   if (usePreferencesStore.getState().theme.mode === mode) return;
+
+  // 打「用户显式选择过主题」标记：config.js 的 layout.theme 之后只作默认值，
+  // 不再覆盖用户选择（否则切语言整页刷新后主题被压回 config 的亮色，
+  // 见 applyConfigPreferences 的 theme 例外与 hasUserChosenTheme）
+  try {
+    window.localStorage.setItem(USER_THEME_KEY, mode);
+  } catch {}
 
   const update = () => {
     flushSync(() => {

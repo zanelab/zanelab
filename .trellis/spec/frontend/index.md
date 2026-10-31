@@ -26,6 +26,7 @@
 | [Hook 规范](./hook-guidelines.md) | 自定义 Hook、访问运行时配置、store 订阅、全局事件 |
 | [状态管理](./state-management.md) | zustand store、token/菜单加载、qiankun 全局状态同步 |
 | [类型安全](./type-safety.md) | zod schema 推导配置类型、共享类型、`window` 全局类型扩展 |
+| [环境变量与运行时配置](./env-config-guidelines.md) | 部署期 `config.js` vs 开发期 `.env` 的分层判据、env 生效矩阵、开关迁移 |
 | [HTTP 与数据请求](./http-api-guidelines.md) | Axios 封装、拦截器、401 单飞刷新、业务错误码、只读共享实例 |
 | [国际化 i18n](./i18n-guidelines.md) | 双语语言包组织、useTranslation/i18n.t 消费、菜单 i18nKey、切语言链路 |
 | [微前端与子应用](./microfrontend-guidelines.md) | 菜单驱动注册、props 契约、全局状态、子应用接入规范 |
@@ -33,8 +34,10 @@
 
 ## 核心不变式（改前必读）
 
+- **apps 下的应用相互之间不能引用**：`apps/<a>` ⇄ `apps/<b>` 无 import、package.json 无互相依赖（跨 app 共享下沉 `packages/*`；应用间唯一通道是 qiankun props/http 契约，见 [微前端与子应用](./microfrontend-guidelines.md)）。
+- **apps 下的应用是独立应用，独立运行性是硬性约定**：每个 app 必须可单独 `pnpm dev:<appName>` 跑通（props 缺省有义、props 消费收敛在 `src/http/compat.ts`、样式/mock 自持），业务层无 props 分支。
 - 子应用注册信息**只**存在于 `config.js` 的 `microApps`；菜单只通过 `appName` 与之关联（§4.1）。
-- 接口地址、登录/首页/403/404 路径等一律从运行时配置读取，不硬编码（§3）。
+- 接口地址、登录/首页/403/404 路径等一律从运行时配置读取，不硬编码（§3）。**反向同样成立**：只在开发期有意义的开关（mock、调试开关）不得写进 `config.js`——它随构建进生产、由运维修改，**唯一**去处是 `.env.development` + `import.meta.env.DEV` 守卫（见 [环境变量与运行时配置](./env-config-guidelines.md)）。
 - 数据流单向：登录 → 拉菜单 → 动态路由 + 注册子应用 → 渲染（§5.1）。
 - 前端权限只是体验优化，真正的接口鉴权在后端，按钮级控制不能替代（§11）。
 - 任何 JSX/HTML 只用 daisyUI + Tailwind 类名，写前先加载 `daisyui` 技能读对应组件指南（见 [组件规范](./component-guidelines.md)）。

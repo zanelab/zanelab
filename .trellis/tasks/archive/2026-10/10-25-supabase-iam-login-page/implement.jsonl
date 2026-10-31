@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/frontend/microfrontend-guidelines.md", "reason": "qiankun 子应用契约: props 消费(http/onLoginSuccess/preferences)/样式隔离/路由交还,LoginPage 重设计的骨架约束"}
+{"file": ".trellis/spec/frontend/http-api-guidelines.md", "reason": "envelope {code,data,msg} 解包与 token 头契约,OTP 两步请求走 props.http 共享 axios"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "daisyUI 组件优先/中文注释/品牌 SVG 内联,R3+R3b UI 落地规范"}
+{"file": ".trellis/spec/frontend/type-safety.md", "reason": "PltProps/preferences 本地形状类型(不跨应用 import),z.infer 双份维护禁令"}

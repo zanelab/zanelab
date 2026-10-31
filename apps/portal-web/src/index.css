@@ -1,11 +1,16 @@
 @import 'tailwindcss';
 
-@source not '../../iam';
 @source not '../../../docs';
 @source not '../../../tooling';
 @source not '../scripts';
 @source not '../public';
 @source '../../../packages/ui/src';
+
+/* iam 子应用无自有 CSS 入口（样式全靠宿主注入），其源码必须纳入扫描，
+   否则它独用的 daisyUI 组件类（.otp/.modal-backdrop 等）与 Tailwind utility
+   （shadow-xl/min-h-screen/focus:ring 等）不会生成——daisyUI 5 / Tailwind 4
+   按使用裁剪，:root 级主题 token 不受影响，宿主样式零冲突 */
+@source '../../iam-web/src';
 
 @plugin 'daisyui' {
   themes: light, dark;
@@ -435,6 +440,28 @@ html.grayscale-mode {
 [data-subapp] #root {
   height: 100% !important;
 }
+
+/*
+ * qiankun 挂载期自动生成的包装层填满容器。
+ *
+ * 背景：qiankun mount 时会在容器（subapp-layer.tsx 渲染的 [data-subapp]，
+ * absolute inset-0）内自动插入一层 <div id="__qiankun_microapp_wrapper_for_<appName>__">，
+ * 子应用渲染在该 wrapper 内。该层由 qiankun 运行时生成、无法在 JSX 里声明
+ * class，故只能用 CSS 属性选择器统一约束（禁止逐子应用硬编码完整 id，
+ * 新增子应用无需改这里）。子应用自身 height:100% 布局依赖此层有高度，
+ * 否则得到 0 高/塌陷，滚动与弹层定位随之异常。
+ */
+[data-subapp] > div[id^='__qiankun_microapp_wrapper'] {
+  width: 100%;
+  height: 100%;
+}
+
+/*
+ * 影响面确认：[data-subapp] 容器全集 = SubAppLayer 常驻层（subapp-layer.tsx，
+ * 唯一给容器加 data-subapp 属性的地方）。qiankun 挂载点若在布局外（登录页等
+ * 公开子应用宿主）也走 SubAppLayer，故选择器只命中 qiankun wrapper，不会
+ * 影响宿主自身的其他 div 子元素。
+ */
 
 #__admin_main_content {
   scrollbar-color: transparent transparent;

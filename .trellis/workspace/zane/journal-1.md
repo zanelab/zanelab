@@ -73,3 +73,71 @@ git mv apps/web→apps/portal（@zanelab/portal）、apps/plt→apps/iam（@zane
 ### Status
 
 [OK] **Completed**
+
+
+## Session 4: axios 重构为 vben request-client，并清理三股积压未提交流
+<!-- trellis-session: v=2 fp=40b48c1fe9236316 -->
+
+**Date**: 2026-10-31
+**Task**: axios 重构为 vben request-client，并清理三股积压未提交流
+**Branch**: `main`
+
+### Summary
+
+完成 10-29-vben-request-client 全阶段：packages/utils 落地 vben request-client 原语（RequestClient/InterceptorManager/三预置拦截器/uploader/downloader/SSE/helpers，含 qs paramsSerializer 与 axios-mock-adapter 测试），portal 切组装模式并强类型化 api 层、window.__http 改挂 RequestClient 只读 Proxy（双挡 interceptors+instance），iam-web 重写双态兼容层。实现与检查各派一个子代理：检查轮修复 6 处（补模块导出、resolveNetworkMessage null 语义、恢复断网提示、onSessionExpired 码表映射、SSE/uploader/downloader/helpers 测试、spec 改写）。随后发现工作树积压了 5 天三股未提交流（偏好/主题联调、vben 重构、iam OTP 端到端），按依赖顺序拆 4 个提交入库，并归档两个任务。
+
+### Main Changes
+
+- packages/utils/src/http/：RequestClient 类（Promise<T> 强类型）+ InterceptorManager + defaultResponse/authenticate/errorMessage 三预置拦截器（适配：tokenHeaderName 参数化、错误文案注入、非 envelope body 守卫放行）+ uploader/downloader/SSE；旧 createHttpClient 删除，BizCodeError/isSessionExpiredError 入 legacy.ts
+- portal-web：http.ts 组装链（解包→业务 rejected→认证单飞→错误提示），导出 requestClient/baseRequestClient，api/auth.ts、api/menu.ts 删除 as unknown as 强转
+- iam-web：utils/http.ts 双态兼容层（集成态透传 HostHttpClient、独立态 RequestClient 最小链）；PltProps.http 结构化；MSW handler 补独立态无前缀路径（此前独立运行发码 404）
+- 提交分组：ab26584 偏好/主题/语言联调、77eee68 vben 重构、303c502 微前端 spec 同步、9af5aa5 iam OTP 端到端
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `ab26584` | feat(@zanelab/portal-web): 偏好/主题/语言联调——qiankun props 契约与用户主题记忆 |
+| `77eee68` | refactor(@zanelab/utils): axios 封装重构为 vben request-client 架构 |
+| `303c502` | docs(project): 微前端 props 契约与独立运行性不变式随基座实现同步 |
+| `9af5aa5` | feat(@zanelab/iam-web): email+OTP 两步登录端到端（supabase 简化 + 双态兼容层） |
+
+### Testing
+
+- [OK] pnpm -w test 全绿：utils 14→72、portal 184→189、node-utils 16；pnpm -w build 3/3、pnpm -w lint 5/5、prettier check 通过
+- [OK] 用临时 git worktree 跑 HEAD 基线确认（184/14），用于判定哪些改动属积压未提交而非本次回归
+- [OK] iam-web/portal dev server 模块 transform 与 build 冒烟通过；交互式 OTP 登录冒烟需浏览器，留给人工
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- 云 Supabase 部署与浏览器交互冒烟（C3/C4）：按 docs/iam-supabase-otp-integration.md，需项目 ref
+- iam 独立态验码失败 401 会触发 window.location.replace('/login') 丢掉弹窗内 verifyError 展示，建议 Edge Fn 改 200+业务码
+- iam main.tsx 三条 [iam] 生命周期 console.log 为联调痕迹，可按需清理
+
+
+## Session 5: portal-web useMock 迁到 dev-only env + iam-web api 层规划
+<!-- trellis-session: v=2 fp=bfa69eb815908e57 -->
+
+**Date**: 2026-10-31
+**Task**: portal-web useMock 迁到 dev-only env + iam-web api 层规划
+**Branch**: `feat/use-mock-dev-env`
+
+### Summary
+
+use-mock-dev-env：api.useMock 从 public/config.js 与 AppConfigSchema 迁到 VITE_USE_MOCK（对齐 iam-web 既有形态），保留 import.meta.env.DEV 守卫；新增单测锁住「线上遗留 config.js 带旧键仍可加载、未知键被 strip 不回退」的部署兼容契约；清理四处已失效的 .env 注释。新增 spec frontend/env-config-guidelines.md 沉淀「部署期 config.js vs 开发期 .env」的分层判据与两条实测 gotcha（DEV 由 NODE_ENV 推导与 --mode 无关；.env 被 .env.[mode] 覆盖）。规划期发现的相邻缺陷留作后续：portal-web 的 MSW handler 登记 /api/user/menus 而 config.js 配 /menu/tree 且无代理。iam-web-api-layer：完成规划（PRD/design/implement + 上下文清单），完整收敛到 src/api 层，并查明 OTP mock 路径缺 iam 段、两种模式下都拦不住，方案为 mock 从 api 层常量派生。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `f17cffe` | refactor(@zanelab/portal-web): useMock 从运行时配置迁到 dev-only Vite 环境变量 |
+| `90cf84a` | docs(project): 环境变量与运行时配置分层契约入库 |
+| `ab90995` | chore(task): 登记 use-mock-dev-env 任务工件 |
+
+### Status
+
+[OK] **Completed**

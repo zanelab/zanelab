@@ -1,0 +1,3 @@
+{"file": ".trellis/spec/frontend/type-safety.md", "reason": "配置 schema 的单一来源与 zod 推导约定——本次要删 ApiConfigSchema 字段，须确认「配置类型不双份维护」的边界与改法"}
+{"file": ".trellis/spec/frontend/directory-structure.md", "reason": "public/config.js、src/mocks、.env 各自归属与构建约定；改动 .env.development 与本文件描述的目录职责需一致"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "loadConfig 的单元测试要求（含校验失败回退边界）与代码评审清单，直接约束 AC4/AC6 的测试写法"}
