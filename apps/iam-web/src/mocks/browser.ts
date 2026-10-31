@@ -4,7 +4,7 @@ import { iamOtpHandlers } from './otp-handlers';
 /*
  * iam-web MSW worker（iam 自身接口的 mock 承担者，两种形态都拦）：
  * - 独立 dev：本应用页面（:8081 origin）发出的请求被本 SW 直拦
- *   （handler 无 /iam 前缀，如 /functions/v1/auth/otp/*）
+ *   （handler 无 /iam 前缀，如 /functions/v1/iam/auth/otp/*，路径常量见 src/api/endpoints.ts）
  * - 集成态：请求发自 portal 页面（:5173 origin）经宿主 vite proxy 转发——
  *   **SW 注册在页面 origin 上**，qiankun 集成态下本应用代码跑在 5173 页面
  *   进程里，worker.start 注册的是 5173 的 /mockServiceWorker.js，拦截页面

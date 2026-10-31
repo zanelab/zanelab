@@ -51,7 +51,7 @@
 ## 代码评审清单
 
 - **有没有 apps 下的应用相互引用**（import 另一 app 的源码，或 package.json 依赖另一 app 的包名）？跨 app 共享必须下沉 `packages/*`。
-- **子应用改动是否保持独立运行性**（`pnpm dev:<appName>` 单独跑仍通）：props 消费是否收敛在 `src/http/compat.ts`、业务层无 props 判空分支、样式/mock 自持？
+- **子应用改动是否保持独立运行性**（`pnpm dev:<appName>` 单独跑仍通）：props 消费是否收敛在 `src/utils/http.ts`、业务层无 props 判空分支、样式/mock 自持？
 - JSX 是否只用 daisyUI 类名 + Tailwind 工具类、颜色用语义色（无自定义 CSS / 无 `dark:` / 无 antd 或第三方 UI 库）？
 - 请求是否走统一 http 实例、路径是否来自 `appConfig.api.*`、错误处理是否走拦截器？
 - 权限（页面/按钮）是否读 `state.menu.permissions`，而不是本地硬编码？
@@ -68,4 +68,4 @@
 - 双份维护配置类型（手写 interface + zod）。
 - 在组件里私自再触发 `registerMicroApps` / `setupMicroApps`。
 - 引入 antd 或另一套 UI 库——本仓库 UI 只允许 daisyUI + Tailwind。
-- 子应用业务层裸用 `props.http` / 散落 props 判空分支——独立运行即抛错（props 消费收敛在 `src/http/compat.ts`）。
+- 子应用业务层裸用 `props.http` / 散落 props 判空分支——独立运行即抛错（props 消费收敛在 `src/utils/http.ts`）。
