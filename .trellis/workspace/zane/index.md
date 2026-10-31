@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 4
+- **Total Sessions**: 5
 - **Last Active**: 2026-10-31
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~119 | Active |
+| `journal-1.md` | ~143 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 5 | 2026-10-31 | portal-web useMock 迁到 dev-only env + iam-web api 层规划 | `f17cffe`, `90cf84a`, `ab90995` | `feat/use-mock-dev-env` |
 | 4 | 2026-10-31 | axios 重构为 vben request-client，并清理三股积压未提交流 | `ab26584`, `77eee68`, `303c502`, `9af5aa5` | `main` |
 | 3 | 2026-10-15 | 将 apps/web 改名 portal、apps/plt 改名 iam | `f524840`, `f6d110a` | `main` |
 | 2 | 2026-10-15 | 将 commitlint/prettier/stylelint 三配置接入日常开发流程 | `6eaff73`, `e43085f` | `main` |

@@ -117,3 +117,27 @@ git mv apps/web→apps/portal（@zanelab/portal）、apps/plt→apps/iam（@zane
 - 云 Supabase 部署与浏览器交互冒烟（C3/C4）：按 docs/iam-supabase-otp-integration.md，需项目 ref
 - iam 独立态验码失败 401 会触发 window.location.replace('/login') 丢掉弹窗内 verifyError 展示，建议 Edge Fn 改 200+业务码
 - iam main.tsx 三条 [iam] 生命周期 console.log 为联调痕迹，可按需清理
+
+
+## Session 5: portal-web useMock 迁到 dev-only env + iam-web api 层规划
+<!-- trellis-session: v=2 fp=bfa69eb815908e57 -->
+
+**Date**: 2026-10-31
+**Task**: portal-web useMock 迁到 dev-only env + iam-web api 层规划
+**Branch**: `feat/use-mock-dev-env`
+
+### Summary
+
+use-mock-dev-env：api.useMock 从 public/config.js 与 AppConfigSchema 迁到 VITE_USE_MOCK（对齐 iam-web 既有形态），保留 import.meta.env.DEV 守卫；新增单测锁住「线上遗留 config.js 带旧键仍可加载、未知键被 strip 不回退」的部署兼容契约；清理四处已失效的 .env 注释。新增 spec frontend/env-config-guidelines.md 沉淀「部署期 config.js vs 开发期 .env」的分层判据与两条实测 gotcha（DEV 由 NODE_ENV 推导与 --mode 无关；.env 被 .env.[mode] 覆盖）。规划期发现的相邻缺陷留作后续：portal-web 的 MSW handler 登记 /api/user/menus 而 config.js 配 /menu/tree 且无代理。iam-web-api-layer：完成规划（PRD/design/implement + 上下文清单），完整收敛到 src/api 层，并查明 OTP mock 路径缺 iam 段、两种模式下都拦不住，方案为 mock 从 api 层常量派生。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `f17cffe` | refactor(@zanelab/portal-web): useMock 从运行时配置迁到 dev-only Vite 环境变量 |
+| `90cf84a` | docs(project): 环境变量与运行时配置分层契约入库 |
+| `ab90995` | chore(task): 登记 use-mock-dev-env 任务工件 |
+
+### Status
+
+[OK] **Completed**
