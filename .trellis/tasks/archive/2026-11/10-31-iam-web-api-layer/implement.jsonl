@@ -1,0 +1,3 @@
+{"file": ".trellis/spec/frontend/microfrontend-guidelines.md", "reason": "子应用 props 消费收敛、独立运行性硬约定、props 派生值缺省有义、mock 自持——本任务新建的 api 层必须整体符合这几条，且该文件本身含本次要修的兼容层路径漂移"}
+{"file": ".trellis/spec/frontend/directory-structure.md", "reason": "src 各目录归属与 import/包边界约定——决定 src/api/ 的落位、命名，以及为何不能把共享常量放进 packages/*"}
+{"file": ".trellis/spec/frontend/http-api-guidelines.md", "reason": "统一 http 实例与拦截器语义（解包、业务错误码、禁止自建 axios）——api 层的错误提取与归一化必须建立在这些既有语义之上"}

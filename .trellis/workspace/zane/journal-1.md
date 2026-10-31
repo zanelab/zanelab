@@ -141,3 +141,27 @@ use-mock-dev-env：api.useMock 从 public/config.js 与 AppConfigSchema 迁到 V
 ### Status
 
 [OK] **Completed**
+
+
+## Session 6: iam-web 接口层收敛 + OTP 401 契约修正
+<!-- trellis-session: v=2 fp=cf1d8610edf91057 -->
+
+**Date**: 2026-11-01
+**Task**: iam-web 接口层收敛 + OTP 401 契约修正
+**Branch**: `feat/iam-web-api-layer`
+
+### Summary
+
+iam-web-api-layer：/functions/v1 调用从 LoginPage 内联收敛到新建 src/api 层（endpoints.ts 零依赖常量 + auth.ts 命名空间对象），页面净减约 130 行、只消费领域对象；mock 路径改从常量派生，修掉既有缺陷——handler 登记路径缺 iam 函数名段、两种模式下 MSW 都拦不住 404；失败语义统一 throw Error(msg) 四级提取，后端文案可透出。实施期发现验证码错误返回 HTTP 401 会被前端会话失效链路截走（独立态整页跳 /login、集成态 handleLogout），错误提示从未展示——经批准改为 400（Edge Fn 与 mock 同改，401 只留会话失效；集成态宿主侧核实无登出/无重复 toast）。质检补缺失的 iam.otp.verifyFailed 语言包键；修 LoginPage 头部与 README/spec 的陈旧注释（api/v1、http/compat、幻变量 VITE_IAM_API_TARGET）；spec 沉淀「/functions/v1 必须走 src/api 层」约定。品牌资产 logo/favicon 一并入库。遗留：Edge Fn 须重新部署生效（supabase functions deploy iam）；AC4/AC5/AC8 的浏览器端到端待手测。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `0f763a0` | refactor(@zanelab/iam-web): /functions/v1 接口调用收敛到 src/api 层 |
+| `d464056` | fix(@zanelab/iam-web): OTP 验码失败从 401 改为 400（业务校验失败语义） |
+| `193a4cf` | chore(@zanelab/iam-web): 更新品牌资产 logo 与 favicon |
+
+### Status
+
+[OK] **Completed**

@@ -111,10 +111,11 @@ interface SubAppPreferences {
 
 **每个 app 是独立交付单元**——可能由其他团队开发、只跑本应用 dev server 测试。因此独立运行（`pnpm dev:<appName>` 直开 :端口，宿主不存在、props 为 undefined）必须是**一等公民场景**，不是兼容分支：
 
-- **props 全经兼容层消费，业务层无 props 分支**：新建 `src/http/compat.ts`（每 app 一份，勿放 packages——拦截器语义可按 app 联调需要微调），模块内判 `props.http` 是否存在：集成态透传宿主 http（只读共享实例），独立态本地兜底 axios + envelope 解包（语义对齐宿主拦截器：成功返 data、失败 reject `Error(msg)`）。业务组件只 import compat 的函数（如 `post` / `onLoginSuccess`），**不出现 `props.http ? ... : ...` 散落分支**（iam 参考实现：`apps/iam-web/src/http/compat.ts`）。
+- **props 全经兼容层消费，业务层无 props 分支**：新建 `src/utils/http.ts`（每 app 一份，勿放 packages——拦截器语义可按 app 联调需要微调；iam 参考实现：`apps/iam-web/src/utils/http.ts`，与 portal-web 同名同位置），模块内判 `props.http` 是否存在：集成态透传宿主 http（只读共享实例），独立态本地兜底 axios + envelope 解包（语义对齐宿主拦截器：成功返 data、失败 reject `Error(msg)`）。业务组件只 import 兼容层的函数（如 `post` / `onLoginSuccess`），**不出现 `props.http ? ... : ...` 散落分支**。
 - **独立态行为对齐集成态语义**：401 兜底、登录会话回传（`localStorage` 持会话 + pushState）、envelope 解包——能力对齐宿主同名拦截器/回调，保证两种形态下业务行为一致。
 - **独立态样式自持**：子应用须有自己的 CSS 入口（tailwind + daisyUI + 主题 token，iam 参考实现 `apps/iam-web/src/index.css`——集成态样式由宿主注入，该入口只服务独立 dev）。从 `packages/ui` 扫描的组件类名须显式 `@source`（见 [目录结构](./directory-structure.md) Warning）。
 - **mock 自持**：子应用自身接口的 MSW handler 放自己 `src/mocks/`（handler 是子应用的 mock 契约，**不跨应用共享、宿主不代持**）；独立态由本应用 worker 直拦，集成态经宿主配置代理转发回来后仍由本应用 worker 拦截（`vite-plugin-qiankun` 下 worker 与独立分支均可启动，同一进程只 start 一次）。
+- **`/functions/v1` 调用收敛在 `src/api/` 层**：子应用所有 `/functions/v1/...` 调用必须走自己的 `src/api/`（按域拆文件，形态参照 portal-web `src/api/auth.ts`：命名空间对象 + 层内完成路径拼装、双形态归一化、成功判定、错误语义），页面/组件不出现路径字面量、不写 envelope 成功判定。路径常量（含集成态代理前缀）集中在**零依赖**的 `src/api/endpoints.ts`（零依赖是硬要求：MSW worker 也会 import 它，引入应用入口会把整包拖进 worker bundle），**mock handler 从同一常量派生**（`pagePaths(p) = [p, INTEGRATION_PREFIX + p]`），不逐字复刻——路径漂移在结构上不可能发生。`INTEGRATION_PREFIX` 须与基座 `config.js` 的 activeRule 同步（改 activeRule 两处一起改）；运行时前缀仍从 `props.basename` 派生（独立运行性，见上「props 派生值缺省有义」）。
 - **props 派生值缺省有义**：从 `props.basename` 等派生的 API 前缀/路由前缀，独立态（props 为空）时缺省值必须让请求直落本 dev server、路由挂 `/`——不能独立态一跑就请求打到不存在的宿主路径上。
 
 #### Wrong vs Correct
@@ -135,7 +136,7 @@ else /* 各写各的兜底 */;
 #### Correct（兼容层单点收敛，业务层零感知）
 
 ```tsx
-// src/http/compat.ts（每 app 一份）
+// src/utils/http.ts（每 app 一份）
 export async function post(path: string, body?: unknown): Promise<unknown> {
   const hostHttp = getProps().http as HostHttp | undefined;
   if (typeof hostHttp?.post === 'function') return hostHttp.post(path, body);
@@ -144,12 +145,13 @@ export async function post(path: string, body?: unknown): Promise<unknown> {
 ```
 
 ```tsx
-// LoginPage.tsx —— 只 import compat，两种形态同一代码路径
-import { post, onLoginSuccess } from '../http/compat';
-const res = await post(apiUrl('/auth/otp/send'), { email });
+// src/api/auth.ts —— 路径常量 + 契约在 api 层，页面只拿领域对象
+import { post } from '../utils/http';
+import { OTP_SEND_PATH } from './endpoints';
+const res = await post(`${apiPrefix()}${OTP_SEND_PATH}`, { email });
 ```
 
-> **Warning（独立态 401 兜底只跳本应用路由）**：compat 的 401 分支 `window.location.replace('/login')` 在**集成态下不能触发**（集成态 401 由宿主拦截器 rejectSessionExpired 承担，compat 根本不在请求链路上——集成态透传 props.http）。若集成态误走本地 axios（`props.http` 判定失效），401 会整页跳到宿主 loginPath 之外的本应用 `/login`，表现为「集成态登录页无输出直跳 /login」。排查集成态 401 异常跳转时先确认请求确实经 compat 判定走了宿主 http。
+> **Warning（独立态 401 兜底只跳本应用路由）**：兼容层（`src/utils/http.ts`）的 401 分支 `window.location.replace('/login')` 在**集成态下不能触发**（集成态 401 由宿主拦截器 rejectSessionExpired 承担，独立态本地 RequestClient 根本不在集成态请求链路上——集成态透传 props.http）。若集成态误走本地 axios（`props.http` 判定失效），401 会整页跳到宿主 loginPath 之外的本应用 `/login`，表现为「集成态登录页无输出直跳 /login」。排查集成态 401 异常跳转时先确认请求确实经兼容层判定走了宿主 http。
 
 ## dev 直载已知噪音（判别清单）
 
@@ -187,5 +189,5 @@ qiankun 直接加载 vite dev server entry（useDevMode）时，控制台会出�
 - 子应用用自己的 basename 之外的绝对路径路由，导致与主应用 URL 层级冲突。
 - 全局状态推送**整对象比对**投影子集：投影函数每次返回新对象，引用恒不等 → 无关偏好变更（sidebar collapsed 等）全部误判为推送。必须逐字段比对（`pushIfChanged`，外观字段清单比对与 token/user/permissions/locale 并列）。
 - props 与快照**两处复刻** `SubAppPreferences` 字段清单：契约漂移隐患，必须共用 `subAppPreferences()` 单一投影。
-- **子应用业务层散落 props 判空分支**（`props.http ? ... : ...`）：独立态行为漂移、判空遗漏即抛错。props 消费单点收敛在 `src/http/compat.ts`（见「独立运行性是硬性约定」）。
+- **子应用业务层散落 props 判空分支**（`props.http ? ... : ...`）：独立态行为漂移、判空遗漏即抛错。props 消费单点收敛在 `src/utils/http.ts`（见「独立运行性是硬性约定」）；接口调用再上一层收敛在 `src/api/`（mock handler 与 api 层共用 `src/api/endpoints.ts` 常量）。
 - **宿主 worker 代子应用持有 mock 契约**（iam 的 handler 登记进 portal handlers.ts）：子应用接口的 mock 是子应用自身契约，放子应用 `src/mocks/`；宿主调子应用接口一律经配置代理转发（见 [目录结构](./directory-structure.md)——apps 间不共享代码）。

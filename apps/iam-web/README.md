@@ -6,9 +6,10 @@ qiankun 子应用：承载 portal 登录页（`/iam/login`）+ 系统管理页�
 src/
   pages/LoginPage.tsx        # 登录页（邮箱发码 → 验证弹窗）
   pages/OtpVerifyModal.tsx   # OTP 验证弹窗（6 位码 + 重发倒计时共享）
+  api/                       # 接口层：endpoints.ts 路径常量 + auth.ts 认证域 api
   locales/                   # 语言模块（zh-CN / en-US）
   utils/http.ts              # http 兼容封装（集成态/独立态；任务 10-29 后为 RequestClient 组装）
-  mocks/                     # MSW mock handlers
+  mocks/                     # MSW mock handlers（路径从 src/api/endpoints.ts 派生）
 supabase/
   config.toml                # CLI 配置（verify_jwt = false）
   functions/iam/index.ts     # Edge Function（OTP send + verify）
@@ -47,8 +48,17 @@ curl -X POST https://<ref>.supabase.co/functions/v1/iam/auth/otp/verify \
 
 ## 前端指向云
 
-- `apps/iam-web/.env.development`：`VITE_IAM_API_TARGET=https://<ref>.supabase.co/functions/v1/iam`
-- 集成态代理在 portal-web 的 vite.config.ts 中配置（`/iam/api` → 转发到 iam dev server 或云）
+- 本应用**无**「云目标」环境变量：请求路径 = `src/api/endpoints.ts` 常量 + `props.basename` 派生的前缀（集成态 `/iam`，独立态空）。
+- 集成态转发目标由**宿主**配置：`apps/portal-web/.env.development` 的 `VITE_PROXY_TARGET` （留空 → 回落到 `http://localhost:8081`，即本应用 dev server；指向云则填 `https://<ref>.supabase.co`）。本机临时覆盖用 shell 变量，宿主 vite.config 里 `process.env` 优先于 `.env` 文件：`VITE_PROXY_TARGET=https://<ref>.supabase.co pnpm dev`。
+- 代理规则在 `apps/portal-web/vite.config.ts`：`/iam/functions/v1` → 剥掉 `/iam` 前缀后转发（云直连时目标需指到 `https://<ref>.supabase.co`，路径里的 `functions/v1/iam` 由请求自带的函数名段承担）。
+
+## 接口层（src/api）
+
+所有 `/functions/v1/...` 调用收敛在 `src/api/`，页面不出现路径字面量：
+
+- `src/api/endpoints.ts` —— **零依赖**路径常量（`INTEGRATION_PREFIX` / `OTP_SEND_PATH` / `OTP_VERIFY_PATH`）。零依赖是硬要求：MSW worker 也 import 它，引入应用入口会把整个 bundle 拖进 worker。
+- `src/api/auth.ts` —— 认证域命名空间对象 `authApi`，层内完成 URL 拼装（前缀运行时从 `props.basename` 派生）、双形态归一化、成功判定与错误语义（失败一律 `throw Error(msg)`）；页面只拿领域对象（`LoginSession`）。
+- mock（`src/mocks/otp-handlers.ts`）从同一组常量派生 handler 路径——路径漂移在结构上不可能发生。
 
 ## mock 路线
 
@@ -61,13 +71,14 @@ mock 用 MSW，handler 在 `src/mocks/otp-handlers.ts`，契约与 Edge Fn 一�
 ### 集成态
 
 ```
-/iam/* → portal 代理 → iam dev server (:8081) → iam MSW worker 拦截
+/iam/functions/v1/* → portal 代理（剥 /iam）→ iam dev server (:8081) → iam MSW worker 拦截
 ```
 
 ### 独立态
 
 ```bash
-cd apps/iam-web && pnpm dev   # .env.development VITE_IAM_USE_MOCK=true
+cd apps/iam-web && VITE_IAM_USE_MOCK=true pnpm dev
+# .env.development 缺省 VITE_IAM_USE_MOCK=false，须显式置 true 才启 mock
 ```
 
 ## http 兼容封装

@@ -143,7 +143,10 @@ async function otpVerify(
     type: 'email',
   });
   if (vErr || !data?.session) {
-    return error(lang, 1003, 'codeInvalid', 401);
+    // 业务校验失败走 400（error() 默认态）：401 会命中前端 401 会话失效链路
+    // （独立态整页跳 /login；集成态宿主 refresh→handleLogout），把本应展示在
+    // 验证码弹窗里的 msg 吞掉。401 只留给真正的会话失效。
+    return error(lang, 1003, 'codeInvalid');
   }
 
   return json(lang, {

@@ -22,6 +22,7 @@
       "sentToSuffix": "",
       "hint": "Enter the 6-digit code from your email",
       "verify": "Verify",
+      "verifyFailed": "Verification failed",
       "noCode": "Didn't receive a code?",
       "resend": "Resend code",
       "infoTitle": "Having trouble?",

@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Logo } from '@zanelab/ui';
+import { authApi } from '../api/auth';
 import { getProps } from '../main';
-import { onLoginSuccess as emitLoginSuccess, post } from '../utils/http';
+import { onLoginSuccess as emitLoginSuccess } from '../utils/http';
 import { OtpVerifyModal } from './OtpVerifyModal';
 
 /*
@@ -12,17 +13,19 @@ import { OtpVerifyModal } from './OtpVerifyModal';
  * zh-CN/en-US）；语言来源 = 基座下发的 props（preferences.locale + 运行期
  * onHostStateChange 推送，接线见 main.tsx setupLocale），子应用不持本地偏好。
  *
- * 认证契约（本任务新定，中文注释见下）：
- * - 步骤 1 发码：POST {apiPrefix}/api/v1/auth/otp/send，body { email }
+ * 接口契约（路径、请求/响应类型、双态解包、成功判定、错误语义）全部收敛在
+ * src/api/auth.ts（路径常量 src/api/endpoints.ts）；本页只调 authApi 拿领域对象，
+ * 只保留错误展示位置与 i18n 兜底文案两件事。
+ * - 步骤 1 发码：authApi.sendOtp(email) → POST {prefix}{OTP_SEND_PATH}
  *   出参 envelope { code:0, data:{ success:true }, msg }（对齐 legacy /sys/auth/otp 先例）
- * - 步骤 2 验码：POST {apiPrefix}/api/v1/auth/otp/verify，body { email, code }
+ * - 步骤 2 验码：authApi.verifyOtp(email, code) → POST {prefix}{OTP_VERIFY_PATH}
  *   出参 envelope { code:0, data:{ token, refreshToken, user:{ id, username, email } }, msg }
- *   （data 形状沿用 M1 出参契约；envelope 解包沿用 res?.data ?? res 兼容写法）
- *   apiPrefix 集成态 = '/iam'（走宿主配置代理），独立态 = ''（见 apiUrl 注释）
+ *   （data 形状沿用 M1 出参契约；envelope 解包在 api 层兼容，页面不见形态差异）
+ *   路径常量即 Edge Fn 路径（含函数名段 iam）；集成态前缀 = '/iam'
+ *   （走宿主配置代理），独立态 = ''（前缀派生见 src/api/auth.ts，常量见 src/api/endpoints.ts）
  * - M1 stash 只有 password 登录路由（grep otp/verifyOtp 为空），以上两路由是
  *   本任务新定契约；Edge Fn 侧实现随 M1 恢复任务落地
- * - 云 curl 验证 blocked：VITE_IAM_API_TARGET 未配（云项目 ref 未提供）；
- *   请求失败时错误提示区正常展示（不静默降级）
+ * - 云 curl 验证 blocked：云项目 ref 未提供；请求失败时错误提示区正常展示（不静默降级）
  * - 无密码框：OTP 原生 password-free，设计提示词的密码补齐点取消；无 base64
  *   btoa（那是 legacy 密码端点需要）、无 supabase-js（认证全经 Edge Fn）
  *
@@ -32,52 +35,23 @@ import { OtpVerifyModal } from './OtpVerifyModal';
  * （宿主注入的 daisyUI/Tailwind 样式照常生效）。
  */
 
-interface OtpSendData {
-  success?: boolean;
-}
-
-interface OtpSendResponse {
-  code?: number | string;
-  msg?: string;
-  success?: boolean; // 拦截器已解包形态（宿主 http 成功时直接返回 body.data）
-  data?: OtpSendData; // 未解包 envelope 形态（独立运行/dev 直连等）
-}
-
-interface OtpVerifyData {
-  token: string;
-  refreshToken?: string;
-  user?: { id?: number | string; username?: string; email?: string };
-}
-
-interface OtpVerifyResponse {
-  code?: number | string;
-  msg?: string;
-  token?: string; // 拦截器已解包形态
-  refreshToken?: string;
-  user?: { id?: number | string; username?: string };
-  data?: OtpVerifyData; // 未解包 envelope 形态
-}
-
 const RESEND_SECONDS = 60;
 
 // iam 自定义登录页（public 路由，未登录可访问）。
-// http 经兼容封装（src/http/compat）：集成态透传宿主 props.http（拦截器承担
+// http 经兼容封装（src/utils/http.ts）：集成态透传宿主 props.http（拦截器承担
 // 解包/token 头/notify），独立运行（其他团队只跑本应用 dev server 测试）时
-// props.http 不存在 → 本地兜底 axios + envelope 解包，业务层零感知。
+// props.http 不存在 → 本地兜底 RequestClient + envelope 解包，业务层零感知。
 // 登录成功经兼容封装 emitLoginSuccess 把会话交还宿主（bootstrapSession + 跳转），
 // 独立态本地持会话 + 跳首页。
 //
 // API 寻址（调子应用接口经配置代理，宿主不代持有 mock/路由）：
-// - 集成态：请求带 /iam 代理前缀 → 宿主 vite proxy /iam/api/* 转发到本
-//   dev server（剥前缀）→ 本应用 worker（mock）或 Edge Fn（真实）拦截
+// - 前缀 + 路径常量在 api 层单点（src/api/endpoints.ts、src/api/auth.ts）：
+//   集成态请求带 /iam 代理前缀 → 宿主 vite proxy 剥前缀转发到本 dev server
+//   → 本应用 worker（mock）或 Edge Fn（真实）拦截
 // - 独立态：props.basename 缺省 → 无前缀，请求直落本 dev server
 // 前缀从 props.basename（= activeRule）派生，与路由 basename 同源，不另设配置。
 export function LoginPage() {
   const props = getProps();
-  // API 前缀：集成态 basename('/iam') → '/iam'；独立态 '/' → ''（不重复剥前缀）
-  const apiPrefix =
-    (props.basename as string | undefined)?.replace(/\/$/, '') ?? '';
-  const apiUrl = (path: string) => `${apiPrefix}${path}`;
   // i18n：文案键见 locales/zh-CN.json iam.*；语言切换由基座 props 驱动
   // （main.tsx setupLocale 接线），useTranslation 订阅后自动重渲染
   const { t } = useTranslation();
@@ -110,11 +84,10 @@ export function LoginPage() {
     };
   }, [countdown > 0]);
 
-  // envelope 解包兼容（沿用现有 LoginPage 的 res?.data ?? res 写法）：
-  // 宿主 http 拦截器可能已解包（返回 { token, ... }），也可能返回原 envelope
-  // { code, data, msg }——前者取 res.data，后者取 res 本体
-  const unwrap = <T,>(res: unknown): T | undefined =>
-    ((res as { data?: T })?.data ?? (res as T)) as T | undefined;
+  // 错误文案：api 层已把后端 msg 归一化进 Error.message（取不到则无 message），
+  // 取不到时落 i18n 兜底——展示位置（登录页 inline / 弹窗内）由此处决定
+  const errText = (e: unknown, fallback: string) =>
+    e instanceof Error && e.message ? e.message : fallback;
 
   const sendCode = async (resend: boolean) => {
     if (!email.trim() || countdown > 0) return;
@@ -125,26 +98,14 @@ export function LoginPage() {
     }
     setSending(true);
     try {
-      // OTP 两路由是本任务新定契约（M1 stash 无 OTP，grep 验证）；
-      // Edge Fn 侧随 M1 恢复任务落地；集成态经 /iam 前缀走宿主代理（见 apiUrl 注释），
-      // 独立态直落本 dev server；http 走兼容封装（集成态宿主 axios/独立态本地 axios）
-      const res = (await post(apiUrl('/functions/v1/iam/auth/otp/send'), {
-        email: email.trim(),
-      })) as OtpSendResponse | undefined;
-      const data = unwrap<OtpSendResponse>(res);
-      // 宿主拦截器成功时已解包 envelope 返回 data（{ success: true }）；
-      // 保留 code===0 / data.success 分支兼容未解包形态（见 unwrap 注释）
-      if (data?.code === 0 || data?.success || data?.data?.success) {
-        setCountdown(RESEND_SECONDS);
-        setVerifyError('');
-        setModalOpen(true);
-      } else {
-        const msg = data?.msg || t('iam.login.sendFailed');
-        if (resend) setVerifyError(msg);
-        else setError(msg);
-      }
+      // 发码契约（路径/成功判定/错误语义）全在 src/api/auth.ts，本页只展示结果；
+      // 路径寻址见文件头「API 寻址」注释（集成态经 /iam 前缀走宿主代理）
+      await authApi.sendOtp(email.trim());
+      setCountdown(RESEND_SECONDS);
+      setVerifyError('');
+      setModalOpen(true);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : t('iam.login.networkError');
+      const msg = errText(e, t('iam.login.sendFailed'));
       if (resend) setVerifyError(msg);
       else setError(msg);
     } finally {
@@ -156,34 +117,19 @@ export function LoginPage() {
     setVerifying(true);
     setVerifyError('');
     try {
-      const res = (await post(apiUrl('/functions/v1/iam/auth/otp/verify'), {
-        email: email.trim(),
-        code,
-      })) as OtpVerifyResponse | undefined;
-      const data = unwrap<OtpVerifyResponse>(res);
-      // 宿主拦截器成功时已解包 envelope 返回 data（{ token, refreshToken, user }）
-      // 成功判定取 token（data 或 data.data 双形态兼容，见 unwrap 注释）
-      const payload = data?.token ? data : (data?.data ?? undefined);
-      if (payload?.token) {
-        setModalOpen(false);
-        // 兼容封装：集成态交还宿主 onLoginSuccess（bootstrapSession + 跳转），
-        // 独立态本地持会话 + 跳首页（emitLoginSuccess 内部已 pushState 交还
-        // 路由控制权，无需子应用再跳转）
-        await emitLoginSuccess({
-          token: payload.token,
-          refreshToken: payload.refreshToken,
-          user: {
-            id: payload.user?.id,
-            username: payload.user?.username,
-          },
-        });
-        return;
-      }
-      setVerifyError(data?.msg || t('iam.otp.verifyFailed'));
+      // 成功即拿领域对象 LoginSession（token 非空判定与双形态取数在 api 层完成）
+      const session = await authApi.verifyOtp(email.trim(), code);
+      setModalOpen(false);
+      // 兼容封装：集成态交还宿主 onLoginSuccess（bootstrapSession + 跳转），
+      // 独立态本地持会话 + 跳首页（emitLoginSuccess 内部已 pushState 交还
+      // 路由控制权，无需子应用再跳转）
+      await emitLoginSuccess({
+        token: session.token,
+        refreshToken: session.refreshToken,
+        user: session.user,
+      });
     } catch (e) {
-      setVerifyError(
-        e instanceof Error ? e.message : t('iam.login.networkError'),
-      );
+      setVerifyError(errText(e, t('iam.otp.verifyFailed')));
     } finally {
       setVerifying(false);
     }
