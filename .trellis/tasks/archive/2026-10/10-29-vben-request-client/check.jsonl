@@ -1,0 +1,4 @@
+{"file": ".trellis/tasks/10-29-vben-request-client/research/vben-request-client-notes.md", "reason": "检查适配点是否落实：tokenHeaderName、非 envelope 守卫、Proxy 挡 instance、错误文案注入"}
+{"file": ".trellis/tasks/10-29-vben-request-client/prd.md", "reason": "AC1-AC5 验收清单与 Out of Scope 边界（不引 $t 体系、qs 不出 utils、fetch 刷新不变）"}
+{"file": ".trellis/spec/frontend/http-api-guidelines.md", "reason": "行为不回退判定基准：解包、biz 码 i18n、401 单飞、只读共享通道"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "质量检查标准与验证命令"}

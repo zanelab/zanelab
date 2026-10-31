@@ -1,0 +1,4 @@
+{"file": ".trellis/tasks/10-29-vben-request-client/research/vben-request-client-notes.md", "reason": "vben 机制分层结构、关键适配点表（tokenHeaderName 参数化/非 envelope 守卫/Proxy 双挡）与现状文件锚点，实现前必读"}
+{"file": ".trellis/tasks/10-29-vben-request-client/design.md", "reason": "目录结构、预置拦截器适配签名、portal 组装代码形态、微前端通道契约、迁移与回滚策略"}
+{"file": ".trellis/spec/frontend/http-api-guidelines.md", "reason": "现行 HTTP 规范约束（统一实例/notify/401 单飞/只读共享），重构后 D3 需更新此 spec，实现中不得违反其不变式"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "前端质量通用规范（测试/类型/构建要求），阶段 A-D 验证命令的依据"}

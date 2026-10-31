@@ -1,0 +1,2 @@
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "tsc/build 全绿/prettier/基线守恒,check 阶段守门清单"}
+{"file": ".trellis/spec/frontend/microfrontend-guidelines.md", "reason": "验收 props 契约消费正确性/不碰宿主主题/用户本地文件禁改"}

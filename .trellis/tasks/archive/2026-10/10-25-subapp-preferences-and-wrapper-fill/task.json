@@ -1,0 +1,28 @@
+{
+  "id": "subapp-preferences-and-wrapper-fill",
+  "name": "subapp-preferences-and-wrapper-fill",
+  "title": "subapp-preferences-and-container-fill",
+  "description": "1. qiankun 基座给子应用下发 props 时带上偏好设置（主题模式、主题色、圆角、字体大小、灰色模式、色弱模式等），让子应用感知基座外观设定；2. 子应用容器 subapp-xxx-container 下第一个容器 __qiankun_microapp_wrapper_for_xxx__ 需要填满父容器",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "zane",
+  "assignee": "zane",
+  "createdAt": "2026-10-25",
+  "completedAt": "2026-10-25",
+  "branch": "main",
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "title": "子应用偏好设置下发与 qiankun wrapper 填满容器"
+  }
+}

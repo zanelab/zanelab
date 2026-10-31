@@ -1,0 +1,28 @@
+{
+  "id": "supabase-iam-login-page",
+  "name": "supabase-iam-login-page",
+  "title": "supabase-iam-login-page",
+  "description": "用云端 Supabase 实现 iam-web LoginPage 登录页：GoTrue 认证（邮箱密码登录）+ 极简现代化 UI 重设计（daisyUI/Tailwind，设计提示词见 prd），颜色/圆角优先消费基座下发的 preferences props",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "zane",
+  "assignee": "zane",
+  "createdAt": "2026-10-25",
+  "completedAt": "2026-10-26",
+  "branch": "main",
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {
+    "title": "云端 Supabase 实现 iam 登录页（GoTrue 认证 + 极简 UI）"
+  }
+}
