@@ -1,0 +1,32 @@
+{
+  "iam": {
+    "login": {
+      "backHome": "Back to home",
+      "title": "Sign in",
+      "subTitle": "Sign in to your account to continue",
+      "google": "Sign in with Google",
+      "github": "Sign in with GitHub",
+      "comingSoon": "Coming soon",
+      "divider": "or",
+      "emailPlaceholder": "name@example.com",
+      "getCode": "Get code",
+      "resendIn": "Resend in {n}s",
+      "sendFailed": "Failed to send the code",
+      "verifyFailed": "Verification failed",
+      "networkError": "Network error, please try again later",
+      "error": "Sign-in failed"
+    },
+    "otp": {
+      "title": "Check your email",
+      "sentToPrefix": "We sent a code to ",
+      "sentToSuffix": "",
+      "hint": "Enter the 6-digit code from your email",
+      "verify": "Verify",
+      "noCode": "Didn't receive a code?",
+      "resend": "Resend code",
+      "infoTitle": "Having trouble?",
+      "infoBody": "Check your spam folder, or request a new code.",
+      "close": "Close"
+    }
+  }
+}

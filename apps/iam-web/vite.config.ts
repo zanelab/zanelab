@@ -1,5 +1,6 @@
 import { fileURLToPath, URL } from 'node:url';
 import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
 import { defineConfig, type Plugin } from 'vite';
 import qiankun from 'vite-plugin-qiankun';
 
@@ -26,6 +27,7 @@ function inlineModuleScriptsToDynamicImport(): Plugin {
 export default defineConfig({
   plugins: [
     react(),
+    tailwindcss(), // 独立运行态样式编译（src/index.css；集成态样式仍由宿主注入）
     qiankun('iam', { useDevMode: true }),
     inlineModuleScriptsToDynamicImport(),
   ],
