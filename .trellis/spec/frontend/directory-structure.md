@@ -11,7 +11,7 @@ zanelab/                          # 仓库根 = workspace 根（编排脚本 + �
 ├── apps/
 │   ├── portal-web/               # 基座 @zanelab/portal-web（原 tq-portal，业务逻辑不变）
 │   │   ├── public/config.js      # 运行时配置：window.__APP_CONFIG__（microApps 注册也在此）
-│   │   ├── scripts/env-switch.mjs
+│   │   ├── .env.development      # dev-only 开关（VITE_PROXY_TARGET / VITE_USE_MOCK）——不进运行时配置
 │   │   ├── vite.config.ts        # dev 代理 + rolldown 拆包 + vitest 配置三合一
 │   │   └── src/
 │   │       ├── main.tsx          # 入口：主题同步、MSW(dev)、会话恢复、qiankun 初始化、renderApp
@@ -71,6 +71,7 @@ zanelab/                          # 仓库根 = workspace 根（编排脚本 + �
 | qiankun 注册 | `apps/portal-web/src/micro/register.ts` | §4.4 |
 | 动态路由生成 | `apps/portal-web/src/router/generateRoutes.tsx` | §7.1 |
 | 运行时配置类型 | `@zanelab/types`（config.ts） | §3.1 |
+| 开发期开关（dev 代理目标、MSW 开关） | `apps/<app>/.env.development` | 只在 dev 有意义——绝不进 `config.js`，见 [环境变量与运行时配置](./env-config-guidelines.md) |
 | 壳内状态（zustand） | `apps/portal-web/src/stores/*-store.ts` | design §2（业务不进壳 store） |
 | MSW mock | `apps/portal-web/src/mocks/`（handlers/browser/server） | dev/测试替身 /api/* |
 | 子应用代码 | `apps/<appName>/`（workspace 成员，独立 dev 端口） | §4.1 |
@@ -125,6 +126,7 @@ zanelab/                          # 仓库根 = workspace 根（编排脚本 + �
 ## 反面模式
 
 - 把子应用入口/激活规则硬编码在组件里——应放在 `config.js` 的 `microApps`（§4.1）。
+- 把只在开发期有意义的开关（MSW mock、调试开关）写进 `config.js`——该文件随构建进生产、由运维修改，dev-only 开关一律放 `.env.development`（见 [环境变量与运行时配置](./env-config-guidelines.md)）。
 - 把页面组件塞进 `src/components/` 却不在 `src/pages/` 下，破坏约定式导入。
 - 在 `apps/portal-web/src/utils/` 混入 JSX/组件文件。
 - 包（packages/*）import `apps/*` 的模块，或包内出现 stores/config/locales/api 依赖——耦合壳的代码必须留 `apps/portal-web`。

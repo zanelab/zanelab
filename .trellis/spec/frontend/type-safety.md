@@ -6,7 +6,7 @@
 
 `public/config.js` 的运行时配置是「不可信运行时输入」，必须校验。做法（§3.1）：
 
-1. 在 `src/types/config.ts` 定义各级 schema（`System/Auth/Api/Route/Layout/MicroAppConfigSchema`），再组合出 `AppConfigSchema`。
+1. 在 `packages/types/src/config.ts`（`@zanelab/types`）定义各级 schema（`System/Auth/Api/Route/Layout/MicroAppConfigSchema`），再组合出 `AppConfigSchema`。壳内 `apps/portal-web/src/types/` 只是 re-export shim。
 2. 用 `z.infer<typeof AppConfigSchema>` 导出 `AppConfig` 类型——**不要**另写一份 interface，避免两处定义漂移。
 
 ```ts
@@ -15,6 +15,7 @@ export type AppConfig = z.infer<typeof AppConfigSchema>;
 
 3. `src/config/index.ts` 的 `loadConfig()`：合并默认配置 → `AppConfigSchema.safeParse` → 失败 `console.error` 并回退默认配置（§3.1）。校验失败不允许直接抛异常卡死应用。
 4. `layout.theme` 是 **daisyUI 主题名**（默认 `dark`/`light`，取决于 CSS 插件启用的主题集），运行时映射到 `<html data-theme="…">`，不是任意自定义对象。新增主题时先在 daisyUI 插件里启用，再同步 schema 的可取值。
+5. schema 是**普通 `z.object`（非 `.strict()`）**：未知键被 **strip** 而非报错。这是**部署兼容契约**——线上已部署的 `config.js` 可能仍带已移除的旧键（如 `api.useMock`），必须仍能加载，不能因此触发「校验失败 → 回退 `DEFAULT_CONFIG`」（那会让线上菜单与子应用注册一起清空）。改 schema 时**不要**顺手加 `.strict()`；该行为由 `apps/portal-web/src/config/index.test.ts` 锁住。字段归属（部署期 vs 开发期）见 [环境变量与运行时配置](./env-config-guidelines.md)。
 
 ## 菜单类型
 
