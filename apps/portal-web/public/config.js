@@ -30,7 +30,6 @@ window.__APP_CONFIG__ = {
     menusEndpoint: '/menu/tree',
     logoutEndpoint: '/auth/logout',
     refreshEndpoint: '/auth/refresh',
-    useMock: false,
   },
   route: {
     homePath: '/home',
