@@ -23,11 +23,13 @@ window.__APP_CONFIG__ = {
     },
   },
   api: {
-    baseURL: '/auth/api/v1',
-    menusEndpoint: '/user/menu/tree',
+    baseURL: '',
+    // loginEndpoint 是 schema 必填（@zanelab/types AppConfigSchema）——缺失会让
+    // 整块 api 配置 zod 校验失败回退 DEFAULT_CONFIG（含 microApps 全空）。
     loginEndpoint: '/sys/auth/login',
-    logoutEndpoint: '/sys/auth/logout',
-    refreshEndpoint: '/sys/auth/refresh',
+    menusEndpoint: '/menu/tree',
+    logoutEndpoint: '/auth/logout',
+    refreshEndpoint: '/auth/refresh',
     useMock: false,
   },
   route: {

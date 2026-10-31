@@ -348,6 +348,7 @@ const defaultPreferences: Omit<
 const PREFERENCES_STORAGE_KEY = 'zanelab-preferences';
 
 export const USER_LOCALE_KEY = 'zanelab_user_locale';
+export const USER_THEME_KEY = 'zanelab_user_theme';
 
 /**
  * 「用户显式切换过语言」的标记 key（值 = 用户选中的语言，下划线格式）。
@@ -359,6 +360,22 @@ export const USER_LOCALE_KEY = 'zanelab_user_locale';
 export function hasUserChosenLocale(): boolean {
   try {
     return Boolean(window.localStorage.getItem(USER_LOCALE_KEY));
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * 「用户显式切换过主题」标记（与 USER_LOCALE_KEY 同款问题与方案）。
+ *
+ * 不能拿偏好持久化里的 theme.mode 判断：启动时 applyConfigPreferences 会写入
+ * config 的 layout.theme，持久化里几乎总会有值，分不清「config 默认」还是
+ * 「用户选择」。由 switchThemeMode 显式打标；打标后 config 只作默认值——
+ * 否则切语言（整页刷新）后 bootstrap 又把用户主题压回 config 的 light。
+ */
+export function hasUserChosenTheme(): boolean {
+  try {
+    return Boolean(window.localStorage.getItem(USER_THEME_KEY));
   } catch {
     return false;
   }
@@ -484,6 +501,7 @@ export function applyConfigPreferences(prefs: Record<string, unknown>): void {
   if (Object.keys(prefs).length === 0) return;
 
   const keepUserLocale = hasUserChosenLocale();
+  const keepUserTheme = hasUserChosenTheme();
   usePreferencesStore.setState((s) => {
     const next = { ...s } as Record<string, unknown>;
     for (const [key, value] of Object.entries(prefs)) {
@@ -507,6 +525,14 @@ export function applyConfigPreferences(prefs: Record<string, unknown>): void {
           if (keepUserLocale) {
             group.locale = (existing as { locale?: unknown }).locale;
           }
+        }
+        if (key === 'theme' && keepUserTheme) {
+          // 主题（theme.mode）同款例外：切语言走整页刷新（switchLocale），
+          // 刷新后本函数把 config 的 layout.theme 写回 store 会把用户切换的
+          // 主题压回亮色（实测：设暗色 → 切语言 → 回亮色）。打标后 config
+          // 只作默认值，theme 整组以持久化值为准（其余 theme 字段同样别覆盖）。
+          next[key] = existing;
+          continue;
         }
         next[key] = group;
       } else {

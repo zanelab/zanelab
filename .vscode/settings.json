@@ -1,3 +1,7 @@
 {
-  "i18n-ally.localesPaths": ["apps/portal-web/src/locales"]
+  "i18n-ally.localesPaths": ["apps/portal-web/src/locales"],
+  // Tailwind CSS 4 at-rules（@source/@plugin/@theme/@apply/@custom-variant 等）
+  // 是 Tailwind 编译器语法，VS Code 内置 CSS 校验器不认识 → 全是 unknownAtRules
+  // 警告。让它忽略这些规则（官方推荐做法），构建不受影响。
+  "css.lint.unknownAtRules": "ignore"
 }

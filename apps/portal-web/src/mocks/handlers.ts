@@ -9,10 +9,18 @@ import { TOKEN_HEADER } from '../constants/auth';
 // 登录参数已迁移为旧项目契约 { loginChanel, email, password, code }，
 // 密码经 encryptPassword 加密（base64 或 SM4-ECB）。mock 侧 base64 解码
 // 校验明文；SM4 密文 atob 会抛错 → 放行（dev 模式仅验证 UI 流程）。
+//
+// 注意：本 worker 只登记**宿主自身**的 mock 路由。子应用（iam）接口的
+// mock 不在这里——宿主调子应用接口一律经配置代理转发到子应用自己的
+// dev server（集成态 iam OTP mock 由 iam-web 自建 worker 拦截，
+// 见 apps/iam-web/README.md mock 一节），宿主不代子应用持有 mock 契约。
 
-/** 旧项目登录响应体（LoginResponseVO） */
+/** 旧项目登录响应体（LoginResponseVO）+ mock 侧补的 refreshToken */
 const mockLoginResponse = {
   token: 'mock-access-token',
+  // 与 /sys/auth/refresh handler 的校验值一致——打通 401 单飞刷新链路
+  // （旧后端契约无此字段，mock 补上让刷新可演练；mapLoginResult 透传）
+  refreshToken: 'mock-refresh-token',
   userId: 1,
   name: '管理员',
   email: 'admin@example.com',
@@ -254,17 +262,9 @@ export const handlers = [
     return HttpResponse.json({ code: 10001, data: null, msg: '刷新令牌无效' });
   }),
 
-  // 按身份返回菜单：无 token → 公开子集（home）；有 token → 全量
-  http.get('/sys/user/menus', ({ request }) => {
-    const token = request.headers.get(TOKEN_HEADER);
-    return HttpResponse.json({
-      code: 0,
-      data: token ? mockRawMenus : mockPublicRawMenus,
-      msg: 'ok',
-    });
-  }),
-
-  // 旧格式菜单端点（DEFAULT_CONFIG 兼容测试）
+  // 菜单：按身份返回——无 token → 公开子集（home）；有 token → 全量。
+  // 登记路径 = DEFAULT_CONFIG.api.menusEndpoint（'/api/user/menus'），
+  // fetchMenus 经 appConfig 取端点，配置即契约。
   http.get('/api/user/menus', ({ request }) => {
     const token = request.headers.get(TOKEN_HEADER);
     return HttpResponse.json({
@@ -274,7 +274,8 @@ export const handlers = [
     });
   }),
 
-  // 需要登录态保护的示例端点：无令牌返回 401（用于 401 单飞集成用例）
+  // 需登录态的示例端点：无 token → 401。仅供手动 dev 演练（curl/控制台 fetch）；
+  // http.401.test 的用例全部 server.use 覆写自建行为，不依赖此基线 handler。
   http.get('/api/protected', ({ request }) => {
     const token = request.headers.get(TOKEN_HEADER);
     if (!token) {

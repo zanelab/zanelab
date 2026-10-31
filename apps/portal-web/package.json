@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "node scripts/env-switch.mjs && vite",
+    "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "lint": "oxlint src",
