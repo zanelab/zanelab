@@ -1,4 +1,3 @@
-import type { AxiosRequestConfig } from 'axios';
 import http from '../utils/http';
 import { appConfig } from '../config';
 import { encryptPassword } from '../utils/crypto';
@@ -6,13 +5,6 @@ import { useAuthStore } from '../stores/auth-store';
 import { TOKEN_HEADER } from '../constants/auth';
 import { cache } from '@zanelab/utils';
 import type { LoginResult, UserInfo } from '../types';
-
-// 类型辅助：拦截器已解包 { code, data, msg }，故请求函数直接返回 T（业务数据）。
-const post = <T>(url: string, data?: unknown, config?: AxiosRequestConfig) =>
-  http.post(url, data, config) as unknown as Promise<T>;
-
-const put = <T>(url: string, data?: unknown, config?: AxiosRequestConfig) =>
-  http.put(url, data, config) as unknown as Promise<T>;
 
 /**
  * 当前用户 id（改密接口路径需要）。
@@ -48,6 +40,8 @@ interface LegacyLoginParams {
  */
 interface LegacyLoginResponse {
   token: string;
+  /** 旧后端契约无此字段；mock/新后端可下发（401 单飞刷新用） */
+  refreshToken?: string;
   userId: number;
   name: string;
   email: string;
@@ -65,8 +59,8 @@ function mapLoginResult(data: LegacyLoginResponse): LoginResult {
     username: data.name,
     nickname: data.name,
   };
-  // 旧后端无 refreshToken，留空——401 刷新时会走 handleLogout（见 http.ts）
-  return { token: data.token, user };
+  // refreshToken 透传（旧后端无此字段时为 undefined——401 刷新会走 handleLogout，见 http.ts）
+  return { token: data.token, refreshToken: data.refreshToken, user };
 }
 
 export const authApi = {
@@ -89,7 +83,7 @@ export const authApi = {
       username: params.username,
       password: encryptPassword(params.password),
     };
-    const data = await post<LegacyLoginResponse>(
+    const data = await http.post<LegacyLoginResponse>(
       appConfig.api.loginEndpoint,
       body,
     );
@@ -108,7 +102,7 @@ export const authApi = {
     const tk = token ?? useAuthStore.getState().token;
     const headers: Record<string, string> = {};
     if (tk) headers[TOKEN_HEADER] = tk;
-    await post<null>(appConfig.api.logoutEndpoint, null, { headers });
+    await http.post<null>(appConfig.api.logoutEndpoint, null, { headers });
   },
 
   /**
@@ -129,6 +123,6 @@ export const authApi = {
     const userId = resolveCurrentUserId();
     if (userId === undefined)
       throw new Error('[changePassword] missing userId');
-    await put<null>(`/sys/auth/user/${userId}/change/pwd`, params);
+    await http.put<null>(`/sys/auth/user/${userId}/change/pwd`, params);
   },
 };
