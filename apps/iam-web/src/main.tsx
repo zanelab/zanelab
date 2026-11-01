@@ -145,7 +145,7 @@ renderWithQiankun({
     console.log('[iam] mount', props.basename);
     setupLocale(savedProps); // i18n 初始化/复挂载对齐 + 语言订阅（React 渲染前）
     // 集成态也要启动 worker：mock 拦截点在页面 origin 的 SW（见函数注释）
-    if (import.meta.env.DEV && import.meta.env.VITE_IAM_USE_MOCK === 'true') {
+    if (import.meta.env.DEV && import.meta.env.VITE_USE_MOCK === 'true') {
       void startMockWorker();
     }
     render(savedProps);
@@ -172,7 +172,7 @@ if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
   // mock 启动独立分支同样调用（幂等，见 startMockWorker 注释）。
   void (async () => {
     setupI18n();
-    if (import.meta.env.DEV && import.meta.env.VITE_IAM_USE_MOCK === 'true') {
+    if (import.meta.env.DEV && import.meta.env.VITE_USE_MOCK === 'true') {
       await startMockWorker();
     }
     render({ basename: '/' });

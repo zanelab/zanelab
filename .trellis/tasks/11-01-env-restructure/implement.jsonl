@@ -1,0 +1,3 @@
+{"file": ".trellis/spec/frontend/env-config-guidelines.md", "reason": "本任务的主改动对象——env 分层契约的 spec，需按模板模式重写参数表与覆盖规则 Warning，且不能违背自己沉淀的判据"}
+{"file": ".trellis/spec/frontend/microfrontend-guidelines.md", "reason": "含 iam mock 开关名与宿主代理目标的表述，改名后需同步；也是独立运行性约定的出处（apikey 注入不得破坏 props 缺省有义）"}
+{"file": ".trellis/spec/frontend/http-api-guidelines.md", "reason": "统一 http 实例与拦截器约定——iam utils/http.ts 加 apikey 注入须符合拦截器链既有语义"}

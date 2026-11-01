@@ -20,11 +20,11 @@
 
 | 会 | 不会 / 生产恒无意义 |
 |---|---|
-| 部署期配置：`public/config.js` 的 `window.__APP_CONFIG__` + `AppConfigSchema` | 开发期 Vite env：`.env.development` + `import.meta.env` |
+| 部署期配置：`public/config.js` 的 `window.__APP_CONFIG__` + `AppConfigSchema` | 开发期 Vite env：`.env` + `import.meta.env` |
 
 **为什么必须分层**：`public/config.js` 是**同一份文件**在 dev 与 prod 被加载（`index.html` 的 `<script src="/config.js">`，构建时原样复制进 `dist/`），它由运维在生产改。把 dev-only 开关放进去，等于在生产配置契约里登记一个恒为死值的字段，并向部署者宣称"这里可以切 mock"。
 
-**已修正的反例（2026-10-31）**：`api.useMock` 曾在 `config.js` 与 `DEFAULT_CONFIG` 两处维护，但它的唯一消费点是 `main.tsx` 的 `import.meta.env.DEV && appConfig.api.useMock` —— 生产恒为 `false`。现迁为 `VITE_USE_MOCK`（与 iam-web 既有形态一致）。
+**已修正的反例（2026-10-31）**：`api.useMock` 曾在 `config.js` 与 `DEFAULT_CONFIG` 两处维护，但它的唯一消费点是 `main.tsx` 的 `import.meta.env.DEV && appConfig.api.useMock` —— 生产恒为 `false`。现迁为 `VITE_USE_MOCK`（2026-11-01 起两 app 统一用同名变量，见 §3 参数表）。
 
 ## 3. Signatures
 
@@ -40,13 +40,13 @@ export const appConfig: AppConfig;
 export const DEFAULT_CONFIG: AppConfig;  // 与 public/config.js 保持一致的兜底
 ```
 
-**开发期**（键名必须 `VITE_` 前缀才会注入客户端；各 app 的 `.env` 相互独立、互不加载）：
+**开发期**（键名必须 `VITE_` 前缀才会注入客户端；各 app 的 `.env` 相互独立、互不加载；声明文件是 gitignored 的 `.env`，入库模板见各 app `.env.example`）：
 
 | 变量 | 声明文件 | 默认 | 生效范围 |
 |---|---|---|---|
-| `VITE_PROXY_TARGET` | `apps/portal-web/.env.development` | 空 | dev server 代理 `/iam/functions/v1` 的目标；留空回落到 `http://localhost:8081`（iam dev server）。生产不读此项 |
-| `VITE_USE_MOCK` | `apps/portal-web/.env.development` | `false` | dev 是否启动基座自身 MSW worker |
-| `VITE_IAM_USE_MOCK` | `apps/iam-web/.env.development` | `false` | dev 是否启动 iam 自身 MSW worker（集成态与独立态各判一次，见 [微前端与子应用](./microfrontend-guidelines.md)） |
+| `VITE_PROXY_TARGET` | 两 app 各自 `.env`（模板 `.env.example`） | 空 | **仅 dev 生效**的 Vite 反代目标，两 app 语义不同。portal（`:5173`）：`/iam/functions/v1` → 目标，**剥掉 `/iam` 前缀**转发；留空回落 `http://localhost:8081`（iam dev server）。iam（`:8081`）：`/functions/v1` → 目标，**路径原样转发不 rewrite**，故填 Supabase **基址**（`https://<ref>.supabase.co`，不含 `/functions/v1`）；留空 = 不代理，独立态只能靠 `VITE_USE_MOCK=true` 的 worker。生产均不读此项（部署侧网关接管） |
+| `VITE_USE_MOCK` | 两 app 各自 `.env`（模板 `.env.example`） | 不填 = 关 | dev 是否启动 MSW worker——portal 拦基座自身接口，iam 拦自身接口（集成态与独立态各判一次，见 [微前端与子应用](./microfrontend-guidelines.md)）。两 app 同名变量、各自独立生效 |
+| `VITE_API_KEY` | 两 app 各自 `.env`（模板 `.env.example`） | 空 = 不注入 | portal：dev proxy 转发 `/iam/functions/v1` 时附加 `apikey` 头；iam：独立态 http 拦截器附加 `apikey` 头。直连云 Supabase 必填，本地 `supabase start`（无鉴权）可不填 |
 
 **消费形态统一为**（`DEV` 守卫不可省，见 §4）：
 
@@ -73,20 +73,20 @@ if (import.meta.env.DEV && import.meta.env.VITE_USE_MOCK === 'true') {
 | 条件 | 行为 |
 |---|---|
 | 变量未声明 | `import.meta.env.X === undefined`，`=== 'true'` 为 false → 开关关 |
-| 变量误写进 `.env.production` | 仍不生效：`DEV` 构建期为 false，整个分支被消除 |
-| `.env` 与 `.env.[mode]` 声明同名键 | 后者胜（mode 文件后加载） |
+| 变量误写进生产构建 | 仍不生效：`DEV` 构建期为 false，整个分支被消除 |
+| `.env` 缺失（没 copy `.env.example`，或 copy 后没填值） | 解析值按未声明处理，缺省即关 |
 
 > **Warning：`import.meta.env.DEV` 是构建期常量，由 `NODE_ENV` 推导，与 `--mode` 无关。**
 > `vite build --mode development` 仍把 `DEV` 折成 `false`（2026-10-31 实测：即便 `VITE_USE_MOCK=true`，产物中无 MSW 代码，chunk 哈希与生产构建一致）。
 > 两个后果：(a) 不能用 `--mode` 区分 dev/prod 行为；(b) 这正是"生产永不启 mock"的**结构性**保证——不依赖任何配置项写对。
 
-> **Warning：`.env` 会被 `.env.[mode]` 覆盖，别把 dev 想用的值只写在 `.env` 里。**
-> 同名键在 dev 下被 `.env.development` 覆盖（后者后加载），`.env` 的值只在 production mode 才生效。
-> 临时指向真后端请用 shell 变量：`VITE_PROXY_TARGET=http://xxx pnpm dev`（`vite.config.ts` 中 `process.env` 优先于 env 文件）。
+> **Warning（模板模式）：env 只有一层——`.env`。**
+> 仓库只存 `.env.example` 模板（参数清单 + 作用注释，权威说明处）；真实值 `cp .env.example .env` 后填写，`.env` 不入库（`.gitignore` 忽略 `.env*`、保留 `!.env.example`）。不存在任何 mode 文件（`.env.[mode]`），优先级链是 `process.env`（shell 临时覆盖）> `.env`，不再有 mode 文件插队。
+> 历史踩坑（2026-10-31）：曾用入库的 dev mode 文件带默认值 + gitignored 的 `.env` 放本机覆盖，同名键被后加载的 mode 文件压掉——mode 文件里 `VITE_PROXY_TARGET=` 空值覆盖了 `.env` 的云地址，dev 实际解析为空。mode 文件已删，陷阱消失；**不要再引入 `.env.[mode]` 文件**，需要临时覆盖走 shell 变量：`VITE_PROXY_TARGET=http://xxx pnpm dev`（`vite.config.ts` 中 `process.env` 优先于 env 文件）。
 
 ## 5. Good / Base / Bad
 
-- **Good**：开关只在开发期有意义 → 声明在 `.env.development`，消费处带 `import.meta.env.DEV` 守卫，并在注释里写清"生产不读此项"。
+- **Good**：开关只在开发期有意义 → 声明在 `.env`（模板见 `.env.example`），消费处带 `import.meta.env.DEV` 守卫，并在注释里写清"生产不读此项"。
 - **Base**：接口端点、`microApps` 注册、`layout.theme`、登录页 UI 开关等**部署期可调**项 → 留在 `config.js`，并同步补进 `AppConfigSchema`。
 - **Bad**：把 dev-only 开关放进 `config.js`；或虽放在 `.env` 却省掉 `DEV` 守卫（等于把生产开关交给构建环境）。
 
@@ -126,7 +126,7 @@ if (import.meta.env.DEV && appConfig.api.useMock) { /* … */ }
 #### Correct
 
 ```bash
-# apps/portal-web/.env.development
+# apps/portal-web/.env.example（模板；真实值 copy 成 .env）
 # VITE_USE_MOCK：dev-only 的 MSW 开关。生产构建 DEV 为 false，本项在生产不会被读取。
 VITE_USE_MOCK=false
 ```
