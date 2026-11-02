@@ -54,12 +54,24 @@ export function OtpVerifyModal({
     if (open) setCode('');
   }, [open]);
 
+  // 点击遮罩关闭（外点关闭）：命中点在 .modal 容器上且不在 .modal-box 内才算空白区。
+  // 不用 modal-backdrop 的 form method=dialog 结构——daisyUI 5 的 .modal-backdrop 是
+  // z-index:-1，被 .modal 自身（z-index:999 + 半透明背景 + pointer-events:auto）盖住，
+  // 点击空白区域命中的是 .modal，永远到不了 backdrop 里的按钮（2026-11-02 探针实证：
+  // 直击 backdrop 按钮能触发 onClose，点 backdrop 层本身不触发）。
+  const handleModalClick = (e: React.MouseEvent<HTMLDialogElement>) => {
+    if (e.target === e.currentTarget) onClose();
+  };
+
   return (
     // 遮罩 blur：daisyUI 5 的 .modal 遮罩只有半透明底色（oklch(0 0 0/.4)），无
     // backdrop-filter——设计提示词要求深色半透明 + backdrop-blur，在此补挂
     // backdrop-blur-xs（宿主 Tailwind 按使用生成 utility，portal 源码已在用该档，
     // 产物 CSS 确认存在 .backdrop-blur-xs；作用于 .modal 自身身后的登录页内容）
-    <dialog className={`modal backdrop-blur-xs ${open ? 'modal-open' : ''}`}>
+    <dialog
+      className={`modal backdrop-blur-xs ${open ? 'modal-open' : ''}`}
+      onClick={handleModalClick}
+    >
       <div className="modal-box bg-base-100 max-w-[480px] rounded-3xl p-8 shadow-xl md:p-10">
         {/* 右上角关闭 */}
         <button
@@ -198,18 +210,10 @@ export function OtpVerifyModal({
         </div>
       </div>
 
-      {/* 点击遮罩关闭（daisyUI modal-backdrop 标准结构） */}
-      <form
-        method="dialog"
-        className="modal-backdrop"
-        onSubmit={(e) => {
-          e.preventDefault();
-          onClose();
-        }}
-      >
-        {/* 遮罩按钮不可见（daisyUI .modal-backdrop 全屏透明层），aria-label 取文案键 */}
-        <button aria-label={t('iam.otp.close')}>close</button>
-      </form>
+      {/* 点击遮罩关闭：外点关闭已上移到 dialog 的 onClick（e.target === e.currentTarget
+          判定，见 handleModalClick 注释）。此处保留 daisyUI 标准的 modal-backdrop 结构
+          以维持组件语义完整，但不再承载关闭职责。 */}
+      <div className="modal-backdrop" />
     </dialog>
   );
 }

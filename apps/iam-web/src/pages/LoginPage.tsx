@@ -275,18 +275,25 @@ export function LoginPage() {
           {t('iam.login.divider')}
         </div>
 
-        {/* OTP 步骤 1：邮箱输入 + 获取验证码 */}
+        {/* OTP 步骤 1：邮箱输入 + 获取验证码。
+            validator 校验走 daisyUI validator 组件（CSS-only：type=email+required
+            非法时输入框自动变红、.validator-hint 自动显示，无需 JS 分支）；
+            提交门槛仍由按钮 disabled 的 !email.trim() 把守——validator 只管视觉反馈 */}
         <div className="mt-2 flex flex-col gap-4">
-          <input
-            type="email"
-            placeholder={t('iam.login.emailPlaceholder')}
-            className="input border-base-content/25 bg-base-100 hover:border-base-content/40 w-full rounded-full border focus:border-(--page-primary) focus:ring-2 focus:ring-(--page-primary)/30"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') void sendCode(false);
-            }}
-          />
+          <div>
+            <input
+              type="email"
+              required
+              placeholder={t('iam.login.emailPlaceholder')}
+              className="input validator border-base-content/25 bg-base-100 hover:border-base-content/40 w-full rounded-full border focus:border-(--page-primary) focus:ring-2 focus:ring-(--page-primary)/30"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') void sendCode(false);
+              }}
+            />
+            <p className="validator-hint">{t('iam.login.emailInvalid')}</p>
+          </div>
           <button
             type="button"
             className="btn disabled:bg-base-300 disabled:text-base-content/50 w-full gap-3 rounded-full bg-(--page-primary) text-white hover:opacity-90"

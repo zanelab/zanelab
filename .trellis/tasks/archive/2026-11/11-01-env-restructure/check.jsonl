@@ -1,0 +1,3 @@
+{"file": ".trellis/spec/frontend/env-config-guidelines.md", "reason": "核对改写后的 spec 与现实一致：参数表、.gitignore 规则、覆盖规则 Warning 是否逐条可验证"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "评审清单——检查是否引入硬编码密钥（publishable key 只准经 env 注入、不入库）与文档漂移"}
+{"file": ".trellis/spec/frontend/index.md", "reason": "核心不变式——「接口路径从运行时配置读取」「dev-only 开关不进 config.js」两条在本任务改动后仍须成立"}

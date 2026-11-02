@@ -3,15 +3,15 @@
  *
  * 集成态：透传宿主 props.http（RequestClient 只读代理，拦截器含解包/token/notify）。
  * 独立态：用 @zanelab/utils RequestClient + 最小拦截器链自建（Accept-Language +
- * envelope 解包 + 401 跳登录页）。
+ * apikey(.env 配置时) + envelope 解包 + 401 跳登录页）。
  *
  * 业务层只 import 本模块的 post / onLoginSuccess，无 props 分支。
  */
 import { defaultResponseInterceptor, RequestClient } from '@zanelab/utils';
 import { getProps, type HostHttpClient } from '../main';
 
-const STANDALONE_TOKEN_KEY = 'portal_token';
-const STANDALONE_REFRESH_KEY = 'portal_refresh_token';
+const STANDALONE_TOKEN_KEY = 'iam_token';
+const STANDALONE_REFRESH_KEY = 'iam_refresh_token';
 
 let localHttp: HostHttpClient | null = null;
 
@@ -27,6 +27,12 @@ function getLocalHttp(): HostHttpClient {
       // 语言对齐宿主/独立态偏好（子应用无本地语言真相源）
       const locale = (props.preferences?.locale as string) ?? 'zh-CN';
       config.headers.set('Accept-Language', locale);
+      // 独立态直连云 Supabase 时需 publishable key（.env 配了才注入；本地
+      // supabase start 无鉴权可不填）。集成态由宿主 dev proxy 注入，不走此分支。
+      const apiKey = import.meta.env.VITE_API_KEY as string | undefined;
+      if (apiKey) {
+        config.headers.set('apikey', apiKey);
+      }
       // 独立态如有本地会话 token 一并注入（与 onLoginSuccess 持久化对齐）
       try {
         const token = localStorage.getItem(STANDALONE_TOKEN_KEY);

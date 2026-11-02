@@ -10,6 +10,7 @@ src/
   locales/                   # 语言模块（zh-CN / en-US）
   utils/http.ts              # http 兼容封装（集成态/独立态；任务 10-29 后为 RequestClient 组装）
   mocks/                     # MSW mock handlers（路径从 src/api/endpoints.ts 派生）
+.env.example                # env 模板（VITE_USE_MOCK / VITE_PROXY_TARGET / VITE_API_KEY；真实值 copy 成 .env）
 supabase/
   config.toml                # CLI 配置（verify_jwt = false）
   functions/iam/index.ts     # Edge Function（OTP send + verify）
@@ -30,16 +31,19 @@ supabase/
 # 部署 Edge Function（无需 db push，Auth 用 Supabase 内置表）
 pnpm exec supabase functions deploy iam --no-verify-jwt --project-ref <ref>
 
-# 部署验证
+# 部署验证（直连云 Supabase 网关须带 apikey —— publishable key；本地
+# supabase start 无鉴权、不需 apikey）
 curl -X POST https://<ref>.supabase.co/functions/v1/iam/auth/otp/send \
   -H 'content-type: application/json' \
   -H 'accept-language: zh-CN' \
+  -H "apikey: <publishable-key>" \
   -d '{"email":"admin@example.com"}'
 # → {"code":0,"data":{"success":true},"msg":"ok"}
 
 curl -X POST https://<ref>.supabase.co/functions/v1/iam/auth/otp/verify \
   -H 'content-type: application/json' \
   -H 'accept-language: zh-CN' \
+  -H "apikey: <publishable-key>" \
   -d '{"email":"admin@example.com","code":"123456"}'
 # → {"code":0,"data":{"token":"eyJ...","refreshToken":"...","user":{...}},"msg":"ok"}
 ```
@@ -49,8 +53,9 @@ curl -X POST https://<ref>.supabase.co/functions/v1/iam/auth/otp/verify \
 ## 前端指向云
 
 - 本应用**无**「云目标」环境变量：请求路径 = `src/api/endpoints.ts` 常量 + `props.basename` 派生的前缀（集成态 `/iam`，独立态空）。
-- 集成态转发目标由**宿主**配置：`apps/portal-web/.env.development` 的 `VITE_PROXY_TARGET` （留空 → 回落到 `http://localhost:8081`，即本应用 dev server；指向云则填 `https://<ref>.supabase.co`）。本机临时覆盖用 shell 变量，宿主 vite.config 里 `process.env` 优先于 `.env` 文件：`VITE_PROXY_TARGET=https://<ref>.supabase.co pnpm dev`。
+- 集成态转发目标由**宿主**配置：copy `apps/portal-web/.env.example` 为 `.env`，填 `VITE_PROXY_TARGET`（留空 → 回落到 `http://localhost:8081`，即本应用 dev server；指向云则填 `https://<ref>.supabase.co`）。同文件填 `VITE_API_KEY`（publishable key）后，dev proxy 转发 `/iam/functions/v1` 时自动附加 `apikey` 头（云直连必需；本地 `supabase start` 无鉴权可不填）。本机临时覆盖用 shell 变量，宿主 vite.config 里 `process.env` 优先于 `.env` 文件：`VITE_PROXY_TARGET=https://<ref>.supabase.co pnpm dev`。
 - 代理规则在 `apps/portal-web/vite.config.ts`：`/iam/functions/v1` → 剥掉 `/iam` 前缀后转发（云直连时目标需指到 `https://<ref>.supabase.co`，路径里的 `functions/v1/iam` 由请求自带的函数名段承担）。
+- **独立态直连云**：copy 本应用 `.env.example` 为 `.env` 填 `VITE_API_KEY`，请求拦截器自动附加 `apikey` 头。
 
 ## 接口层（src/api）
 
@@ -77,9 +82,16 @@ mock 用 MSW，handler 在 `src/mocks/otp-handlers.ts`，契约与 Edge Fn 一�
 ### 独立态
 
 ```bash
-cd apps/iam-web && VITE_IAM_USE_MOCK=true pnpm dev
-# .env.development 缺省 VITE_IAM_USE_MOCK=false，须显式置 true 才启 mock
+# 路线 A：走 mock（不发真实请求）
+cd apps/iam-web && VITE_USE_MOCK=true pnpm dev
+# 或 copy .env.example 为 .env 后把 VITE_USE_MOCK 填 true（缺省不填 = 关）
+
+# 路线 B：连云 Supabase（须关 mock，否则 worker 先拦截）
+#   .env 填 VITE_PROXY_TARGET=https://<ref>.supabase.co（基址）与 VITE_API_KEY=<publishable key>
+VITE_PROXY_TARGET=https://<ref>.supabase.co VITE_API_KEY=<key> pnpm dev
 ```
+
+> 独立态的 `/functions/v1/*` 是相对路径，落点就是本 dev server——**没有 `VITE_PROXY_TARGET` 时它直接 404**（2026-11-01 实测）。这是 iam 侧 dev proxy 存在的唯一理由；与 mock 正交： `VITE_USE_MOCK=true` 时 SW 在页面层先拦截，请求到不了代理。
 
 ## http 兼容封装
 
