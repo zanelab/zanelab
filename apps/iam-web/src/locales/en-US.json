@@ -11,7 +11,7 @@
       "emailPlaceholder": "name@example.com",
       "emailInvalid": "Enter a valid email address",
       "getCode": "Get code",
-      "resendIn": "Resend in {n}s",
+      "resendIn": "Resend in {{n}}s",
       "sendFailed": "Failed to send the code",
       "verifyFailed": "Verification failed",
       "networkError": "Network error, please try again later",
