@@ -10,8 +10,8 @@
 import { defaultResponseInterceptor, RequestClient } from '@zanelab/utils';
 import { getProps, type HostHttpClient } from '../main';
 
-const STANDALONE_TOKEN_KEY = 'portal_token';
-const STANDALONE_REFRESH_KEY = 'portal_refresh_token';
+const STANDALONE_TOKEN_KEY = 'iam_token';
+const STANDALONE_REFRESH_KEY = 'iam_refresh_token';
 
 let localHttp: HostHttpClient | null = null;
 
