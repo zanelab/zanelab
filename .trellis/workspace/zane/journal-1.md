@@ -165,3 +165,29 @@ iam-web-api-layer：/functions/v1 调用从 LoginPage 内联收敛到新建 src/
 ### Status
 
 [OK] **Completed**
+
+
+## Session 7: env 体系模板化 + apikey 注入 + iam 登录页三连修
+<!-- trellis-session: v=2 fp=91e283949f5af780 -->
+
+**Date**: 2026-11-02
+**Task**: env 体系模板化 + apikey 注入 + iam 登录页三连修
+**Branch**: `feat/env-restructure`
+
+### Summary
+
+env-restructure：删三份 .env.development/.env.production，改 .env.example 模板模式（.gitignore 改 .env* + !.env.example，实测确认真实 .env 仍被忽略）；两 app mock 开关统一为 VITE_USE_MOCK；新增 VITE_API_KEY 注入 apikey 头（iam 独立态 http 拦截器 + portal dev proxy）。质检发现 iam 独立态没有任何 proxy、连云必然 404、apikey 注入实为死代码——补 server.proxy（/functions/v1 → VITE_PROXY_TARGET 基址，不 rewrite），echo server 实测设 target 转发 200、未设仍 404。AGENTS.md 被 turbo 重写成混合行尾，统一 LF。收尾批三连修：OTP 弹窗外点关闭（根因是 daisyUI 5 .modal-backdrop z-index:-1 被 .modal 盖住，探针实证后改 dialog onClick 外点判定）；邮箱输入改 daisyUI validator（CSS-only 红框+hint，新增 emailInvalid i18n 键）；resendIn 倒计时恒显字面量（i18next v26 插值分隔符是 {{ }}，语言包单花括号 {n} 不被识别，zh/en 同改）。另：独立态 token 存储键改 iam_token 前缀（用户侧改动代提交）。遗留：AC7 直连云 200/401 手测待用户；Edge Function 401→400 修正（前任务）仍待重新部署。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `2e06079` | refactor(project): env 体系模板化 + 两 app mock 开关统一 + apikey 注入 |
+| `c764572` | chore(project): AGENTS.md 行尾统一为 LF（turbo 托管块重写所致） |
+| `d23250a` | fix(@zanelab/iam-web): OTP 弹窗外点关闭 + 邮箱输入 daisyUI validator 校验 |
+| `8105842` | fix(@zanelab/iam-web): resendIn 插值占位符改为 i18next v26 的双花括号 |
+| `4a91260` | chore(@zanelab/iam-web): 独立态 token 存储键改为 iam_token 前缀 |
+
+### Status
+
+[OK] **Completed**

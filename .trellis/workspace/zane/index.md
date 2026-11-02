@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 6
-- **Last Active**: 2026-11-01
+- **Total Sessions**: 7
+- **Last Active**: 2026-11-02
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~167 | Active |
+| `journal-1.md` | ~193 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 7 | 2026-11-02 | env 体系模板化 + apikey 注入 + iam 登录页三连修 | `2e06079`, `c764572`, `d23250a`, `8105842`, `4a91260` | `feat/env-restructure` |
 | 6 | 2026-11-01 | iam-web 接口层收敛 + OTP 401 契约修正 | `0f763a0`, `d464056`, `193a4cf` | `feat/iam-web-api-layer` |
 | 5 | 2026-10-31 | portal-web useMock 迁到 dev-only env + iam-web api 层规划 | `f17cffe`, `90cf84a`, `ab90995` | `feat/use-mock-dev-env` |
 | 4 | 2026-10-31 | axios 重构为 vben request-client，并清理三股积压未提交流 | `ab26584`, `77eee68`, `303c502`, `9af5aa5` | `main` |
