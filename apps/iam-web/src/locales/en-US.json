@@ -9,6 +9,7 @@
       "comingSoon": "Coming soon",
       "divider": "or",
       "emailPlaceholder": "name@example.com",
+      "emailInvalid": "Enter a valid email address",
       "getCode": "Get code",
       "resendIn": "Resend in {n}s",
       "sendFailed": "Failed to send the code",
