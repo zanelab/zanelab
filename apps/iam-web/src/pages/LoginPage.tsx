@@ -276,22 +276,48 @@ export function LoginPage() {
         </div>
 
         {/* OTP 步骤 1：邮箱输入 + 获取验证码。
-            validator 校验走 daisyUI validator 组件（CSS-only：type=email+required
-            非法时输入框自动变红、.validator-hint 自动显示，无需 JS 分支）；
-            提交门槛仍由按钮 disabled 的 !email.trim() 把守——validator 只管视觉反馈 */}
+            三个 daisyUI 组件组合（任务 11-03 用户指定形态）：
+            - floating-label：浮动文案（span），由 :has(input:placeholder-shown) +
+              focus-within 驱动上浮——input 在内层 label 里，:has 任意深度可探测
+            - label.input：inset 图标（svg + input 并排，label.md 的结构）+
+              Input colors（input-primary 深浅色随主题）
+            - validator：CSS-only 校验（type=email+required 非法自动红框 + hint）
+            提交门槛仍由按钮 disabled 的 !email.trim() 把守——validator 只管视觉 */}
         <div className="mt-2 flex flex-col gap-4">
           <div>
-            <input
-              type="email"
-              required
-              placeholder={t('iam.login.emailPlaceholder')}
-              className="input validator border-base-content/25 bg-base-100 hover:border-base-content/40 w-full rounded-full border focus:border-(--page-primary) focus:ring-2 focus:ring-(--page-primary)/30"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') void sendCode(false);
-              }}
-            />
+            <label className="floating-label w-full">
+              <span className="text-base-content/60">
+                {t('iam.login.email')}
+              </span>
+              <label className="input validator input-primary border-base-content/25 bg-base-100 hover:border-base-content/40 w-full rounded-full border focus-within:border-(--page-primary) focus-within:ring-2 focus-within:ring-(--page-primary)/30 focus:border-(--page-primary)">
+                <svg
+                  className="text-base-content/50 size-[1em]"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <g
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect width="20" height="16" x="2" y="4" rx="2" />
+                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                  </g>
+                </svg>
+                <input
+                  type="email"
+                  required
+                  placeholder={t('iam.login.emailPlaceholder')}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') void sendCode(false);
+                  }}
+                />
+              </label>
+            </label>
             <p className="validator-hint">{t('iam.login.emailInvalid')}</p>
           </div>
           <button

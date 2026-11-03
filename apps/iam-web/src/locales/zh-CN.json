@@ -9,6 +9,7 @@
       "comingSoon": "即将开放",
       "divider": "或",
       "emailPlaceholder": "name@example.com",
+      "email": "邮箱",
       "emailInvalid": "请输入有效的邮箱地址",
       "getCode": "获取验证码",
       "resendIn": "{{n}}s 后可重发",
