@@ -29,6 +29,36 @@
       "infoTitle": "Having trouble?",
       "infoBody": "Check your spam folder, or request a new code.",
       "close": "Close"
+    },
+    "menu": {
+      "title": "Menu Management",
+      "create": "Create",
+      "createTitle": "Create Menu",
+      "edit": "Edit",
+      "editTitle": "Edit Menu",
+      "delete": "Delete",
+      "deleteTitle": "Delete Menu",
+      "deleteConfirm": "Delete \"{name}\"? Its {n} child node(s) will also be removed.",
+      "addChild": "Add child",
+      "cancel": "Cancel",
+      "save": "Save",
+      "expand": "Expand",
+      "collapse": "Collapse",
+      "hidden": "Hidden",
+      "parent": "Parent",
+      "root": "Root",
+      "colName": "Name",
+      "colCode": "Code",
+      "colUri": "URI / Permission",
+      "colType": "Type",
+      "colSort": "Sort",
+      "colActions": "Actions",
+      "empty": "No menus yet",
+      "readOnly": "Read-only session (guest or anonymous) — modifications are disabled",
+      "loadFailed": "Failed to load menus",
+      "saveFailed": "Failed to save",
+      "deleteFailed": "Failed to delete",
+      "nameCodeRequired": "Name and code are required"
     }
   }
 }

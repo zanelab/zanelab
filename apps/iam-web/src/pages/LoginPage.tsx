@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Logo } from '@zanelab/ui';
 import { authApi } from '../api/auth';
-import { getProps } from '../main';
+import { getProps } from '../props';
 import { onLoginSuccess as emitLoginSuccess } from '../utils/http';
 import { OtpVerifyModal } from './OtpVerifyModal';
 

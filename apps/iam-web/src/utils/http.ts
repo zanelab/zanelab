@@ -8,7 +8,7 @@
  * 业务层只 import 本模块的 post / onLoginSuccess，无 props 分支。
  */
 import { defaultResponseInterceptor, RequestClient } from '@zanelab/utils';
-import { getProps, type HostHttpClient } from '../main';
+import { getProps, type HostHttpClient } from '../props';
 
 const STANDALONE_TOKEN_KEY = 'iam_token';
 const STANDALONE_REFRESH_KEY = 'iam_refresh_token';
@@ -65,6 +65,33 @@ export async function post(path: string, body?: unknown): Promise<unknown> {
     return hostHttp.post(path, body);
   }
   return getLocalHttp().post(path, body);
+}
+
+// ---- 以下 get/put/del 与 post 同形（双态分发 + 同一拦截器链），菜单管理域使用 ----
+
+export async function get(path: string): Promise<unknown> {
+  const hostHttp = getProps().http as HostHttpClient | undefined;
+  if (typeof hostHttp?.get === 'function') {
+    return hostHttp.get(path);
+  }
+  return getLocalHttp().get(path);
+}
+
+export async function put(path: string, body?: unknown): Promise<unknown> {
+  const hostHttp = getProps().http as HostHttpClient | undefined;
+  if (typeof hostHttp?.put === 'function') {
+    return hostHttp.put(path, body);
+  }
+  return getLocalHttp().put(path, body);
+}
+
+/** del（非 delete）：delete 是 JS 保留字，与 RequestClient 方法名解耦 */
+export async function del(path: string): Promise<unknown> {
+  const hostHttp = getProps().http as HostHttpClient | undefined;
+  if (typeof hostHttp?.delete === 'function') {
+    return hostHttp.delete(path);
+  }
+  return getLocalHttp().delete(path);
 }
 
 /** 会话回传兼容：集成态交还宿主 bootstrapSession；独立态本地跳转 */

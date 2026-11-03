@@ -1,0 +1,576 @@
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type CSSProperties,
+} from 'react';
+import { useTranslation } from 'react-i18next';
+import { getProps } from '../props';
+import { menusApi, type MenuItemRecord, type MenuInput } from '../api/menus';
+import { buildTree, countWithDescendants } from '../utils/menu-tree';
+
+/*
+ * 菜单管理页 —— iam 首个业务域（任务 11-03，design DD5）。
+ *
+ * - 数据流：mount 拉 menusApi.list() → buildTree → 树形表格；CRUD 成功后**重拉**
+ *   （树形 + 级联删除下乐观更新复杂度不值当，design 已定）。
+ * - 权限：写操作被 403/401 后置为只读（readOnly state），不再重试；游客/未登录
+ *   首屏只见可见子集（服务端 DD3 判定），操作列隐藏。
+ * - 树形渲染：手写缩进行（daisyUI 无 tree 组件）；展开/收起 state 按节点 id。
+ * - preferences 消费与 LoginPage 同模式：props 字段优先 → 内置中性缺省兜底，
+ *   根 div 内联 CSS 变量，不改宿主 daisyUI 主题。
+ * - 样式：daisyUI table / modal / select / toggle / validator，类名语义见
+ *   .claude/skills/daisyui 组件指南。
+ */
+
+/** 编辑表单的可写字段（表单受控 state 的形状）。 */
+interface MenuFormState {
+  id: number | null; // null = 新建
+  pid: number | null;
+  code: string;
+  name: string;
+  uri: string;
+  type: MenuItemRecord['type'];
+  sort: string; // input number 的字符串形态，提交时转数字
+  icon: string;
+  hidden: boolean;
+}
+
+const EMPTY_FORM: MenuFormState = {
+  id: null,
+  pid: null,
+  code: '',
+  name: '',
+  uri: '',
+  type: 'menu',
+  sort: '0',
+  icon: '',
+  hidden: false,
+};
+
+export function MenuManagementPage() {
+  const { t } = useTranslation();
+  const props = getProps();
+
+  // preferences 派生（与 LoginPage 同款：props 字段优先 + 中性缺省）
+  const prefs = {
+    mode: 'light',
+    colorPrimary: '#3b82f6',
+    radius: 0.5,
+    fontSize: 14,
+    ...(props.preferences as Record<string, unknown> | undefined),
+  } as {
+    mode?: string;
+    colorPrimary?: string;
+    radius?: number;
+    fontSize?: number;
+  };
+  const dark = prefs.mode === 'dark';
+
+  const [flat, setFlat] = useState<MenuItemRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [readOnly, setReadOnly] = useState(false); // 403/401 后置为只读
+  const [expanded, setExpanded] = useState<Set<number>>(new Set());
+
+  // 弹窗：'create' | 'edit' | 'delete:<id>' | null
+  const [form, setForm] = useState<MenuFormState | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<MenuItemRecord | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState('');
+  const [deleteError, setDeleteError] = useState('');
+
+  // 递归平铺：服务端返回 children 嵌套形状，管理页的 buildTree 消费平铺行
+  // （模块级纯函数——无 state 依赖，放组件外亦可，就近可读性优先）
+  const flattenRow = (node: MenuItemRecord): MenuItemRecord[] => [
+    node,
+    ...(node.children ?? []).flatMap(flattenRow),
+  ];
+
+  /** 重拉列表（CRUD 后的唯一刷新路径）。 */
+  const reload = useCallback(async () => {
+    setLoading(true);
+    setLoadError('');
+    try {
+      const rows = await menusApi.list();
+      setFlat(rows.flatMap((n) => flattenRow(n)));
+    } catch (e) {
+      setLoadError(
+        e instanceof Error && e.message ? e.message : t('iam.menu.loadFailed'),
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [t]);
+
+  useEffect(() => {
+    void reload();
+  }, [reload]);
+
+  const tree = useMemo(() => buildTree(flat), [flat]);
+
+  const toggleExpand = (id: number) =>
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  /** 打开新增弹窗（可带父级预选）。 */
+  const openCreate = (pid: number | null) => {
+    setFormError('');
+    setForm({ ...EMPTY_FORM, pid });
+  };
+
+  /** 打开编辑弹窗（表单回填行数据）。 */
+  const openEdit = (row: MenuItemRecord) => {
+    setFormError('');
+    setForm({
+      id: row.id,
+      pid: row.pid,
+      code: row.code,
+      name: row.name,
+      uri: row.uri ?? '',
+      type: row.type,
+      sort: String(row.sort),
+      icon: row.icon ?? '',
+      hidden: row.hidden,
+    });
+  };
+
+  /** 提交新增/编辑；成功关弹窗 + 重拉。 */
+  const submitForm = async () => {
+    if (!form || saving) return;
+    if (!form.name.trim() || !form.code.trim()) {
+      setFormError(t('iam.menu.nameCodeRequired'));
+      return;
+    }
+    setSaving(true);
+    setFormError('');
+    const input: MenuInput = {
+      pid: form.pid,
+      code: form.code.trim(),
+      name: form.name.trim(),
+      uri: form.uri.trim() || null,
+      type: form.type,
+      sort: Number(form.sort) || 0,
+      icon: form.icon.trim() || null,
+      hidden: form.hidden,
+    };
+    try {
+      if (form.id != null) {
+        await menusApi.update(form.id, input);
+      } else {
+        await menusApi.create(input);
+      }
+      setForm(null);
+      await reload();
+    } catch (e) {
+      // 401/403 → 后置只读（token 过期/无权限），其余错误留在弹窗内展示
+      const msg =
+        e instanceof Error && e.message ? e.message : t('iam.menu.saveFailed');
+      const unauthorized = /401|403|登录|权限/i.test(msg);
+      if (unauthorized) {
+        setReadOnly(true);
+        setForm(null);
+      }
+      setFormError(msg);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  /** 提交删除（级联警告在确认弹窗里展示数量）；成功关弹窗 + 重拉。 */
+  const submitDelete = async () => {
+    if (!deleteTarget || saving) return;
+    setSaving(true);
+    setDeleteError('');
+    try {
+      await menusApi.remove(deleteTarget.id);
+      setDeleteTarget(null);
+      await reload();
+    } catch (e) {
+      const msg =
+        e instanceof Error && e.message
+          ? e.message
+          : t('iam.menu.deleteFailed');
+      if (/401|403|登录|权限/i.test(msg)) setReadOnly(true);
+      setDeleteError(msg);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  /** 树行渲染（缩进 = 深度 * 1.5rem；children 非空才显示展开箭头）。 */
+  const renderRows = (
+    nodes: MenuItemRecord[],
+    depth: number,
+  ): React.ReactNode[] =>
+    nodes.flatMap((node) => {
+      const hasChildren = !!node.children?.length;
+      const isOpen = expanded.has(node.id);
+      const rows: React.ReactNode[] = [
+        <tr key={node.id}>
+          <td>
+            <div
+              className="flex items-center gap-2"
+              style={{ paddingLeft: `${depth * 1.5}rem` }}
+            >
+              {hasChildren ? (
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-xs px-1"
+                  aria-label={
+                    isOpen ? t('iam.menu.collapse') : t('iam.menu.expand')
+                  }
+                  onClick={() => toggleExpand(node.id)}
+                >
+                  <svg
+                    className={`size-3 transition-transform ${isOpen ? 'rotate-90' : ''}`}
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    aria-hidden="true"
+                  >
+                    <path d="m9 6 6 6-6 6" />
+                  </svg>
+                </button>
+              ) : (
+                <span className="inline-block size-3" />
+              )}
+              <span className="font-medium">{node.name}</span>
+              {node.hidden && (
+                <span className="badge badge-ghost badge-sm">
+                  {t('iam.menu.hidden')}
+                </span>
+              )}
+            </div>
+          </td>
+          <td className="font-mono text-xs">{node.code}</td>
+          <td className="text-xs">{node.uri ?? '—'}</td>
+          <td>
+            <span className="badge badge-outline badge-sm">{node.type}</span>
+          </td>
+          <td className="text-xs">{node.sort}</td>
+          {!readOnly && (
+            <td>
+              <div className="flex gap-1">
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-xs"
+                  onClick={() => openCreate(node.id)}
+                >
+                  {t('iam.menu.addChild')}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-xs"
+                  onClick={() => openEdit(node)}
+                >
+                  {t('iam.menu.edit')}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-xs text-error"
+                  onClick={() => {
+                    setDeleteError('');
+                    setDeleteTarget(node);
+                  }}
+                >
+                  {t('iam.menu.delete')}
+                </button>
+              </div>
+            </td>
+          )}
+        </tr>,
+      ];
+      if (hasChildren && isOpen)
+        rows.push(...renderRows(node.children!, depth + 1));
+      return rows;
+    });
+
+  // 弹窗父级候选：平铺行里除自身及后代外的全部节点（防把自己挂到自己子树）
+  const parentCandidates = form
+    ? form.id == null
+      ? flat
+      : flat.filter((row) => row.id !== form.id)
+    : [];
+
+  return (
+    // 页面根 div 内联 CSS 变量（与 LoginPage 同模式；独立态自持，集成态由宿主注入值）
+    <div
+      data-theme={dark ? 'dark' : undefined}
+      style={
+        {
+          '--page-primary': prefs.colorPrimary,
+          '--page-radius': `${prefs.radius}rem`,
+          '--page-font': `${prefs.fontSize}px`,
+        } as CSSProperties
+      }
+      className="text-base-content min-h-screen p-6"
+    >
+      {/* 工具栏：标题 + 新增根级 */}
+      <div className="mb-4 flex items-center justify-between">
+        <h1 className="text-xl font-semibold">{t('iam.menu.title')}</h1>
+        {!readOnly && (
+          <button
+            type="button"
+            className="btn btn-sm gap-2 rounded-(--page-radius) bg-(--page-primary) text-white hover:opacity-90"
+            onClick={() => openCreate(null)}
+          >
+            <svg
+              className="size-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              aria-hidden="true"
+            >
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            {t('iam.menu.create')}
+          </button>
+        )}
+      </div>
+
+      {readOnly && (
+        <div role="alert" className="alert alert-warning mb-4 text-sm">
+          <span>{t('iam.menu.readOnly')}</span>
+        </div>
+      )}
+
+      {loadError && (
+        <div role="alert" className="alert alert-error mb-4 text-sm">
+          <span>{loadError}</span>
+        </div>
+      )}
+
+      {/* 树形表格（daisyUI table；列随 readOnly 收缩） */}
+      <div className="bg-base-100 border-base-300 overflow-x-auto rounded-(--page-radius) border">
+        <table className="table-sm table">
+          <thead>
+            <tr>
+              <th>{t('iam.menu.colName')}</th>
+              <th>{t('iam.menu.colCode')}</th>
+              <th>{t('iam.menu.colUri')}</th>
+              <th>{t('iam.menu.colType')}</th>
+              <th>{t('iam.menu.colSort')}</th>
+              {!readOnly && <th>{t('iam.menu.colActions')}</th>}
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr>
+                <td colSpan={readOnly ? 5 : 6}>
+                  <div className="flex justify-center py-8">
+                    <span className="loading loading-spinner loading-lg" />
+                  </div>
+                </td>
+              </tr>
+            ) : tree.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={readOnly ? 5 : 6}
+                  className="text-base-content/50 py-8 text-center"
+                >
+                  {t('iam.menu.empty')}
+                </td>
+              </tr>
+            ) : (
+              renderRows(tree, 0)
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* 新增/编辑弹窗 */}
+      {form && (
+        <dialog
+          className="modal modal-open"
+          onClick={(e) => e.target === e.currentTarget && setForm(null)}
+        >
+          <div className="modal-box bg-base-100 max-w-120 rounded-(--page-radius)">
+            <h3 className="text-lg font-semibold">
+              {form.id != null
+                ? t('iam.menu.editTitle')
+                : t('iam.menu.createTitle')}
+            </h3>
+            <div className="mt-4 flex flex-col gap-3">
+              <label className="flex flex-col gap-1">
+                <span className="text-sm">{t('iam.menu.colName')}</span>
+                <input
+                  type="text"
+                  required
+                  className="input input-sm validator w-full"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                />
+                <p className="validator-hint">
+                  {t('iam.menu.nameCodeRequired')}
+                </p>
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="text-sm">{t('iam.menu.colCode')}</span>
+                <input
+                  type="text"
+                  required
+                  className="input input-sm validator w-full font-mono"
+                  value={form.code}
+                  onChange={(e) => setForm({ ...form, code: e.target.value })}
+                />
+                <p className="validator-hint">
+                  {t('iam.menu.nameCodeRequired')}
+                </p>
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="text-sm">{t('iam.menu.colUri')}</span>
+                <input
+                  type="text"
+                  className="input input-sm w-full font-mono"
+                  value={form.uri}
+                  onChange={(e) => setForm({ ...form, uri: e.target.value })}
+                />
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <label className="flex flex-col gap-1">
+                  <span className="text-sm">{t('iam.menu.colType')}</span>
+                  <select
+                    className="select select-sm w-full"
+                    value={form.type}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        type: e.target.value as MenuFormState['type'],
+                      })
+                    }
+                  >
+                    <option value="app">app</option>
+                    <option value="menu">menu</option>
+                    <option value="group">group</option>
+                    <option value="button">button</option>
+                  </select>
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className="text-sm">{t('iam.menu.colSort')}</span>
+                  <input
+                    type="number"
+                    className="input input-sm w-full"
+                    value={form.sort}
+                    onChange={(e) => setForm({ ...form, sort: e.target.value })}
+                  />
+                </label>
+              </div>
+              <label className="flex flex-col gap-1">
+                <span className="text-sm">{t('iam.menu.parent')}</span>
+                <select
+                  className="select select-sm w-full"
+                  value={form.pid ?? ''}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      pid:
+                        e.target.value === '' ? null : Number(e.target.value),
+                    })
+                  }
+                >
+                  <option value="">— {t('iam.menu.root')} —</option>
+                  {parentCandidates.map((row) => (
+                    <option key={row.id} value={row.id}>
+                      {row.name}（{row.code}）
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  className="toggle toggle-sm"
+                  checked={form.hidden}
+                  onChange={(e) =>
+                    setForm({ ...form, hidden: e.target.checked })
+                  }
+                />
+                <span className="text-sm">{t('iam.menu.hidden')}</span>
+              </label>
+            </div>
+
+            {formError && (
+              <div role="alert" className="alert alert-error mt-3 text-sm">
+                <span>{formError}</span>
+              </div>
+            )}
+
+            <div className="modal-action">
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => setForm(null)}
+              >
+                {t('iam.menu.cancel')}
+              </button>
+              <button
+                type="button"
+                className="btn btn-sm rounded-(--page-radius) bg-(--page-primary) text-white hover:opacity-90"
+                disabled={saving}
+                onClick={() => void submitForm()}
+              >
+                {saving && (
+                  <span className="loading loading-spinner loading-xs" />
+                )}
+                {t('iam.menu.save')}
+              </button>
+            </div>
+          </div>
+        </dialog>
+      )}
+
+      {/* 删除确认弹窗（级联数量警告） */}
+      {deleteTarget && (
+        <dialog
+          className="modal modal-open"
+          onClick={(e) => e.target === e.currentTarget && setDeleteTarget(null)}
+        >
+          <div className="modal-box bg-base-100 max-w-100 rounded-(--page-radius)">
+            <h3 className="text-lg font-semibold">
+              {t('iam.menu.deleteTitle')}
+            </h3>
+            <p className="text-base-content/70 mt-3 text-sm">
+              {t('iam.menu.deleteConfirm', {
+                name: deleteTarget.name,
+                n: countWithDescendants(flat, deleteTarget.id) - 1,
+              })}
+            </p>
+            {deleteError && (
+              <div role="alert" className="alert alert-error mt-3 text-sm">
+                <span>{deleteError}</span>
+              </div>
+            )}
+            <div className="modal-action">
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => setDeleteTarget(null)}
+              >
+                {t('iam.menu.cancel')}
+              </button>
+              <button
+                type="button"
+                className="btn btn-error btn-sm"
+                disabled={saving}
+                onClick={() => void submitDelete()}
+              >
+                {saving && (
+                  <span className="loading loading-spinner loading-xs" />
+                )}
+                {t('iam.menu.delete')}
+              </button>
+            </div>
+          </div>
+        </dialog>
+      )}
+    </div>
+  );
+}

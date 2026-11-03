@@ -32,3 +32,16 @@ export const OTP_SEND_PATH = '/functions/v1/iam/auth/otp/send';
 
 /** OTP 验码路径（同上：`iam` 段是 Edge Function 函数名，改名须同步部署名）。 */
 export const OTP_VERIFY_PATH = '/functions/v1/iam/auth/otp/verify';
+
+/**
+ * 菜单列表（GET，匿名可调：无 JWT 返回游客可见子集，design DD3）。
+ * 挂在 /auth 段下与 OTP 同级——两者都是「按身份返回不同数据」的读端点。
+ */
+export const MENUS_LIST_PATH = '/functions/v1/iam/auth/menus';
+
+/** 菜单集合写路径（POST 新建；仅 admin，Edge Fn requireAdmin 把关）。 */
+export const MENUS_COLLECTION_PATH = '/functions/v1/iam/menus';
+
+/** 菜单单项写路径（PUT 更新 / DELETE 删除——级联子树，仅 admin）。 */
+export const MENUS_ITEM_PATH = (id: number | string) =>
+  `/functions/v1/iam/menus/${id}`;

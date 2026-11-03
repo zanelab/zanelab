@@ -29,6 +29,36 @@
       "infoTitle": "遇到问题了吗？",
       "infoBody": "请检查您的垃圾邮件文件夹，或尝试重新申请一个验证码。",
       "close": "关闭"
+    },
+    "menu": {
+      "title": "菜单管理",
+      "create": "新增",
+      "createTitle": "新增菜单",
+      "edit": "编辑",
+      "editTitle": "编辑菜单",
+      "delete": "删除",
+      "deleteTitle": "删除菜单",
+      "deleteConfirm": "确定删除「{name}」吗？将同时删除其 {n} 个子节点。",
+      "addChild": "添加子级",
+      "cancel": "取消",
+      "save": "保存",
+      "expand": "展开",
+      "collapse": "收起",
+      "hidden": "隐藏",
+      "parent": "父级",
+      "root": "根级",
+      "colName": "名称",
+      "colCode": "编码",
+      "colUri": "路由/权限码",
+      "colType": "类型",
+      "colSort": "排序",
+      "colActions": "操作",
+      "empty": "暂无菜单",
+      "readOnly": "当前身份为只读（游客或未登录），无法进行修改操作",
+      "loadFailed": "菜单加载失败",
+      "saveFailed": "保存失败",
+      "deleteFailed": "删除失败",
+      "nameCodeRequired": "名称和编码不能为空"
     }
   }
 }

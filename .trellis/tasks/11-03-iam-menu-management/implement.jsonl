@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/frontend/microfrontend-guidelines.md", "reason": "子应用独立运行性、props 契约（token/permissions getter）、mock 自持——菜单页的鉴权分支与 mock 双身份必须符合这些既有约定"}
+{"file": ".trellis/spec/frontend/http-api-guidelines.md", "reason": "统一 http 实例、错误码与 notify 语义——api/menus.ts 的错误提取与页面 403 处理要沿用既有拦截器行为"}
+{"file": ".trellis/spec/frontend/directory-structure.md", "reason": "src/api、src/utils、src/pages 的落位与命名约定；测试文件位置；新建页面与纯函数模块的归属"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "daisyUI 组件使用规范与权限控制约定（隐藏/禁用）——菜单页的表格/弹窗/表单写前必读"}

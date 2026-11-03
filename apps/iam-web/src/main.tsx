@@ -8,6 +8,13 @@ import { App } from './App';
 // 独立运行态唯一样式来源（集成态样式由宿主注入，见 index.css 头注释）
 import './index.css';
 import { setupI18n, setLocale } from './locales/i18n';
+// props 契约与状态（类型 + getProps/setProps）——从本文件抽出（任务 11-03，
+// api 层的 import 链不再经过 qiankun 入口，见 props.ts 头注释）
+import { getProps, setProps, type PltProps } from './props';
+
+// 供本文件既有引用（setupLocale 签名等）：re-export 保持对外形状不变
+export type { PltProps, SubAppPreferences, HostHttpClient } from './props';
+export { getProps } from './props';
 
 let root: Root | null = null;
 
@@ -28,85 +35,6 @@ function setupLocale(props: PltProps) {
     const prefs = state.preferences as { locale?: string } | undefined;
     setLocale(prefs?.locale);
   });
-}
-
-/** 宿主下发的偏好外观子集（getter，每次 mount 取最新值）。
- * 跨应用契约按形状对齐宿主 SubAppPreferences（apps/portal-web/src/micro/register.ts），不 import。 */
-export interface SubAppPreferences {
-  mode: 'light' | 'dark' | 'auto';
-  colorPrimary: string;
-  colorDestructive: string;
-  colorSuccess: string;
-  colorWarning: string;
-  radius: string; // rem 数值字符串，如 '0.5'
-  fontSize: number;
-  colorGrayMode: boolean;
-  colorWeakMode: boolean;
-  locale: string;
-}
-
-/**
- * 宿主共享 http 通道的结构化子集（D2：window.__http = RequestClient 只读代理）。
- *
- * 宿主类型是 packages/utils 的 RequestClient（@zanelab/utils）；iam 不引其全量
- * （跨包类型依赖收敛），按消费面在此声明同形子集——方法签名与 RequestClient
- * 公开方法对齐（get/post/put/delete/upload/download/postSSE/requestSSE），
- * index signature 保留宿主后续扩展字段透传。
- */
-export interface HostHttpClient {
-  get: <T = unknown>(url: string, config?: unknown) => Promise<T>;
-  post: <T = unknown>(
-    url: string,
-    data?: unknown,
-    config?: unknown,
-  ) => Promise<T>;
-  put: <T = unknown>(
-    url: string,
-    data?: unknown,
-    config?: unknown,
-  ) => Promise<T>;
-  delete: <T = unknown>(url: string, config?: unknown) => Promise<T>;
-  upload: <T = unknown>(
-    url: string,
-    data: Record<string, unknown> & { file: Blob | File },
-    config?: unknown,
-  ) => Promise<T>;
-  download: <T = unknown>(url: string, config?: unknown) => Promise<T>;
-  [key: string]: unknown;
-}
-
-export interface PltProps {
-  container?: HTMLElement;
-  setHasRender?: (v: boolean) => void;
-
-  getHostState?: () => Record<string, unknown>;
-
-  /** 宿主下发的偏好外观子集（getter，每次 mount 取最新值） */
-  preferences?: SubAppPreferences;
-
-  onHostStateChange?: (
-    cb: (state: Record<string, unknown>, prev: Record<string, unknown>) => void,
-    fireImmediately?: boolean,
-  ) => () => void;
-  onLoginSuccess?: (params: {
-    token: string;
-    refreshToken?: string;
-    user?: {
-      id?: number | string;
-      username?: string;
-      nickname?: string;
-      [key: string]: unknown;
-    };
-  }) => Promise<void>;
-  /** 宿主共享 http 通道（RequestClient 只读代理，见 HostHttpClient） */
-  http?: HostHttpClient;
-  [key: string]: unknown;
-}
-
-let savedProps: PltProps = {};
-
-export function getProps(): PltProps {
-  return savedProps;
 }
 
 function render(props: PltProps) {
@@ -141,14 +69,14 @@ renderWithQiankun({
     console.log('[iam] bootstrap');
   },
   mount(props) {
-    savedProps = props as PltProps;
+    setProps(props as PltProps);
     console.log('[iam] mount', props.basename);
-    setupLocale(savedProps); // i18n 初始化/复挂载对齐 + 语言订阅（React 渲染前）
+    setupLocale(getProps()); // i18n 初始化/复挂载对齐 + 语言订阅（React 渲染前）
     // 集成态也要启动 worker：mock 拦截点在页面 origin 的 SW（见函数注释）
     if (import.meta.env.DEV && import.meta.env.VITE_USE_MOCK === 'true') {
       void startMockWorker();
     }
-    render(savedProps);
+    render(getProps());
   },
   update() {},
   unmount() {
@@ -157,7 +85,7 @@ renderWithQiankun({
     unsubscribeLocale = null;
     root?.unmount();
     root = null;
-    savedProps = {};
+    setProps({});
   },
 });
 

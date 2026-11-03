@@ -79,5 +79,15 @@ export default defineConfig(({ mode }) => {
         'Access-Control-Allow-Origin': '*',
       },
     },
+
+    // vitest（任务 11-03 引入测试栈，配置对齐 portal-web）：
+    // jsdom 环境 + MSW node server（src/test/setup.ts 起 stop）。
+    // 注意：只测页面组件与纯函数，不测 main.tsx（qiankun 入口在 jsdom 下
+    // 与 vite-plugin-qiankun 的 window 注入冲突）。
+    test: {
+      environment: 'jsdom',
+      setupFiles: ['./src/test/setup.ts'],
+      include: ['src/**/*.test.{ts,tsx}'],
+    },
   };
 });
