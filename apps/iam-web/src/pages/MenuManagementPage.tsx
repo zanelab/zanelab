@@ -24,17 +24,20 @@ import { buildTree, countWithDescendants } from '../utils/menu-tree';
  *   .claude/skills/daisyui 组件指南。
  */
 
-/** 编辑表单的可写字段（表单受控 state 的形状）。 */
+/** 编辑表单的可写字段（表单受控 state 的形状；任务 11-04 动态表单）。 */
 interface MenuFormState {
   id: number | null; // null = 新建
   pid: number | null;
   code: string;
   name: string;
+  component: string; // 组件名称（app/menu 类型动态显示）
   uri: string;
   type: MenuItemRecord['type'];
   sort: string; // input number 的字符串形态，提交时转数字
   icon: string;
+  activeIcon: string;
   hidden: boolean;
+  scopes: ('A' | 'C')[]; // 适用范围多选
 }
 
 const EMPTY_FORM: MenuFormState = {
@@ -42,11 +45,33 @@ const EMPTY_FORM: MenuFormState = {
   pid: null,
   code: '',
   name: '',
+  component: '',
   uri: '',
-  type: 'menu',
+  type: 'app', // 用户指定默认应用
   sort: '0',
   icon: '',
+  activeIcon: '',
   hidden: false,
+  scopes: ['C'],
+};
+
+/**
+ * 类型联动矩阵（与 Edge Fn TYPE_FIELD_MATRIX 同语义；用户提示词 F3）：
+ * uri 必填性、component/icon 可见性、是否必选父级。
+ */
+const TYPE_MATRIX: Record<
+  MenuItemRecord['type'],
+  {
+    uri: 'required' | 'hidden';
+    component: boolean;
+    icon: boolean;
+    needsPid: boolean;
+  }
+> = {
+  app: { uri: 'required', component: true, icon: true, needsPid: false },
+  group: { uri: 'hidden', component: false, icon: false, needsPid: true },
+  menu: { uri: 'required', component: true, icon: true, needsPid: true },
+  button: { uri: 'hidden', component: false, icon: false, needsPid: true },
 };
 
 export function MenuManagementPage() {
@@ -132,19 +157,59 @@ export function MenuManagementPage() {
       pid: row.pid,
       code: row.code,
       name: row.name,
+      component: row.component ?? '',
       uri: row.uri ?? '',
       type: row.type,
       sort: String(row.sort),
       icon: row.icon ?? '',
+      activeIcon: row.activeIcon ?? '',
       hidden: row.hidden,
+      scopes: row.scopes.length ? row.scopes : ['C'],
     });
   };
 
-  /** 提交新增/编辑；成功关弹窗 + 重拉。 */
+  /** 切换菜单类型：按矩阵清空失效字段（防脏数据提交，design 决策）。 */
+  const changeType = (type: MenuItemRecord['type']) => {
+    if (!form) return;
+    const matrix = TYPE_MATRIX[type];
+    setForm({
+      ...form,
+      type,
+      uri: matrix.uri === 'hidden' ? '' : form.uri,
+      component: matrix.component ? form.component : '',
+      icon: matrix.icon ? form.icon : '',
+      activeIcon: matrix.icon ? form.activeIcon : '',
+    });
+  };
+
+  /** 切换 scopes 多选（A/C chip，至少一项——提交时校验）。 */
+  const toggleScope = (scope: 'A' | 'C') => {
+    if (!form) return;
+    const has = form.scopes.includes(scope);
+    const next = has
+      ? form.scopes.filter((s) => s !== scope)
+      : [...form.scopes, scope];
+    setForm({ ...form, scopes: next });
+  };
+
+  /** 提交新增/编辑；先过类型矩阵即时校验，成功关弹窗 + 重拉。 */
   const submitForm = async () => {
     if (!form || saving) return;
+    const matrix = TYPE_MATRIX[form.type];
     if (!form.name.trim() || !form.code.trim()) {
       setFormError(t('iam.menu.nameCodeRequired'));
+      return;
+    }
+    if (form.scopes.length === 0) {
+      setFormError(t('iam.menu.scopesRequired'));
+      return;
+    }
+    if (matrix.uri === 'required' && !form.uri.trim()) {
+      setFormError(t('iam.menu.uriRequired'));
+      return;
+    }
+    if (matrix.needsPid && form.pid == null) {
+      setFormError(t('iam.menu.parentRequired'));
       return;
     }
     setSaving(true);
@@ -153,11 +218,14 @@ export function MenuManagementPage() {
       pid: form.pid,
       code: form.code.trim(),
       name: form.name.trim(),
-      uri: form.uri.trim() || null,
+      uri: matrix.uri === 'hidden' ? null : form.uri.trim() || null,
       type: form.type,
       sort: Number(form.sort) || 0,
-      icon: form.icon.trim() || null,
+      icon: matrix.icon ? form.icon.trim() || null : null,
+      activeIcon: matrix.icon ? form.activeIcon.trim() || null : null,
+      component: matrix.component ? form.component || null : null,
       hidden: form.hidden,
+      scopes: form.scopes,
     };
     try {
       if (form.id != null) {
@@ -399,12 +467,62 @@ export function MenuManagementPage() {
                 : t('iam.menu.createTitle')}
             </h3>
             <div className="mt-4 flex flex-col gap-3">
+              {/* 菜单类型（全局固定，默认应用；切换即清失效字段——changeType） */}
               <label className="flex flex-col gap-1">
-                <span className="text-sm">{t('iam.menu.colName')}</span>
+                <span className="text-sm">
+                  <span className="text-error">*</span> {t('iam.menu.colType')}
+                </span>
+                <select
+                  className="select select-sm bg-base-200 w-full"
+                  value={form.type}
+                  onChange={(e) =>
+                    changeType(e.target.value as MenuFormState['type'])
+                  }
+                >
+                  <option value="app">{t('iam.menu.typeApp')}</option>
+                  <option value="group">{t('iam.menu.typeGroup')}</option>
+                  <option value="menu">{t('iam.menu.typeMenu')}</option>
+                  <option value="button">{t('iam.menu.typeButton')}</option>
+                </select>
+              </label>
+
+              {/* 父级菜单（分组/菜单/按钮必填；应用可为根——矩阵 needsPid） */}
+              {TYPE_MATRIX[form.type].needsPid && (
+                <label className="flex flex-col gap-1">
+                  <span className="text-sm">
+                    <span className="text-error">*</span> {t('iam.menu.parent')}
+                  </span>
+                  <select
+                    className="select select-sm bg-base-200 w-full"
+                    value={form.pid ?? ''}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        pid:
+                          e.target.value === '' ? null : Number(e.target.value),
+                      })
+                    }
+                  >
+                    <option value="">{t('iam.menu.selectParent')}</option>
+                    {parentCandidates.map((row) => (
+                      <option key={row.id} value={row.id}>
+                        {row.name}（{row.code}）
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+
+              {/* 菜单名称（全局固定，必填） */}
+              <label className="flex flex-col gap-1">
+                <span className="text-sm">
+                  <span className="text-error">*</span> {t('iam.menu.colName')}
+                </span>
                 <input
                   type="text"
                   required
-                  className="input input-sm validator w-full"
+                  placeholder={t('iam.menu.namePlaceholder')}
+                  className="input input-sm validator bg-base-200 w-full"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                 />
@@ -412,12 +530,16 @@ export function MenuManagementPage() {
                   {t('iam.menu.nameCodeRequired')}
                 </p>
               </label>
+
+              {/* 资源编码（全局固定，必填；唯一键） */}
               <label className="flex flex-col gap-1">
-                <span className="text-sm">{t('iam.menu.colCode')}</span>
+                <span className="text-sm">
+                  <span className="text-error">*</span> {t('iam.menu.colCode')}
+                </span>
                 <input
                   type="text"
                   required
-                  className="input input-sm validator w-full font-mono"
+                  className="input input-sm validator bg-base-200 w-full font-mono"
                   value={form.code}
                   onChange={(e) => setForm({ ...form, code: e.target.value })}
                 />
@@ -425,65 +547,111 @@ export function MenuManagementPage() {
                   {t('iam.menu.nameCodeRequired')}
                 </p>
               </label>
+
+              {/* 适用范围（全局固定，多选必填 A/C；任务 11-04 新语义） */}
+              <div className="flex flex-col gap-1">
+                <span className="text-sm">
+                  <span className="text-error">*</span> {t('iam.menu.scopes')}
+                </span>
+                <div className="flex gap-2">
+                  {(['A', 'C'] as const).map((scope) => (
+                    <button
+                      key={scope}
+                      type="button"
+                      className={`btn btn-sm rounded-(--page-radius) ${
+                        form.scopes.includes(scope)
+                          ? 'bg-(--page-primary) text-white hover:opacity-90'
+                          : 'bg-base-200 text-base-content hover:bg-base-300'
+                      }`}
+                      aria-pressed={form.scopes.includes(scope)}
+                      onClick={() => toggleScope(scope)}
+                    >
+                      {scope === 'A'
+                        ? t('iam.menu.scopeAdmin')
+                        : t('iam.menu.scopeClient')}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 排序编号（全局固定，必填） */}
               <label className="flex flex-col gap-1">
-                <span className="text-sm">{t('iam.menu.colUri')}</span>
+                <span className="text-sm">
+                  <span className="text-error">*</span> {t('iam.menu.colSort')}
+                </span>
                 <input
-                  type="text"
-                  className="input input-sm w-full font-mono"
-                  value={form.uri}
-                  onChange={(e) => setForm({ ...form, uri: e.target.value })}
+                  type="number"
+                  placeholder={t('iam.menu.sortPlaceholder')}
+                  className="input input-sm bg-base-200 w-full"
+                  value={form.sort}
+                  onChange={(e) => setForm({ ...form, sort: e.target.value })}
                 />
               </label>
-              <div className="grid grid-cols-2 gap-3">
+
+              {/* 动态字段：应用/菜单才有组件名称与图标（矩阵 component/icon） */}
+              {TYPE_MATRIX[form.type].component && (
                 <label className="flex flex-col gap-1">
-                  <span className="text-sm">{t('iam.menu.colType')}</span>
-                  <select
-                    className="select select-sm w-full"
-                    value={form.type}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        type: e.target.value as MenuFormState['type'],
-                      })
-                    }
-                  >
-                    <option value="app">app</option>
-                    <option value="menu">menu</option>
-                    <option value="group">group</option>
-                    <option value="button">button</option>
-                  </select>
-                </label>
-                <label className="flex flex-col gap-1">
-                  <span className="text-sm">{t('iam.menu.colSort')}</span>
+                  <span className="text-sm">{t('iam.menu.colComponent')}</span>
                   <input
-                    type="number"
-                    className="input input-sm w-full"
-                    value={form.sort}
-                    onChange={(e) => setForm({ ...form, sort: e.target.value })}
+                    type="text"
+                    placeholder={t('iam.menu.componentPlaceholder')}
+                    className="input input-sm bg-base-200 w-full font-mono"
+                    value={form.component}
+                    onChange={(e) =>
+                      setForm({ ...form, component: e.target.value })
+                    }
                   />
                 </label>
-              </div>
-              <label className="flex flex-col gap-1">
-                <span className="text-sm">{t('iam.menu.parent')}</span>
-                <select
-                  className="select select-sm w-full"
-                  value={form.pid ?? ''}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      pid:
-                        e.target.value === '' ? null : Number(e.target.value),
-                    })
-                  }
-                >
-                  <option value="">— {t('iam.menu.root')} —</option>
-                  {parentCandidates.map((row) => (
-                    <option key={row.id} value={row.id}>
-                      {row.name}（{row.code}）
-                    </option>
-                  ))}
-                </select>
-              </label>
+              )}
+              {TYPE_MATRIX[form.type].uri !== 'hidden' && (
+                <label className="flex flex-col gap-1">
+                  <span className="text-sm">
+                    {TYPE_MATRIX[form.type].uri === 'required' && (
+                      <span className="text-error">*</span>
+                    )}{' '}
+                    {t('iam.menu.colUri')}
+                  </span>
+                  <input
+                    type="text"
+                    placeholder={t('iam.menu.uriPlaceholder')}
+                    className="input input-sm bg-base-200 w-full font-mono"
+                    value={form.uri}
+                    onChange={(e) => setForm({ ...form, uri: e.target.value })}
+                  />
+                </label>
+              )}
+              {TYPE_MATRIX[form.type].icon && (
+                <>
+                  <label className="flex flex-col gap-1">
+                    <span className="text-sm">{t('iam.menu.colIcon')}</span>
+                    <input
+                      type="text"
+                      placeholder={t('iam.menu.iconPlaceholder')}
+                      className="input input-sm bg-base-200 w-full font-mono"
+                      value={form.icon}
+                      onChange={(e) =>
+                        setForm({ ...form, icon: e.target.value })
+                      }
+                    />
+                  </label>
+                  <label className="flex flex-col gap-1">
+                    <span className="text-sm">
+                      {t('iam.menu.colActiveIcon')}
+                    </span>
+                    <input
+                      type="text"
+                      placeholder={t('iam.menu.activeIconPlaceholder')}
+                      className="input input-sm bg-base-200 w-full font-mono"
+                      value={form.activeIcon}
+                      onChange={(e) =>
+                        setForm({ ...form, activeIcon: e.target.value })
+                      }
+                    />
+                  </label>
+                </>
+              )}
+
+              {/* 隐藏开关（全局固定；任务 11-04 回归表单） */}
               <label className="flex items-center gap-2">
                 <input
                   type="checkbox"

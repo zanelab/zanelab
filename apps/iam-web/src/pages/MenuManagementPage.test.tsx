@@ -56,12 +56,19 @@ describe('MenuManagementPage', () => {
     await user.click(
       screen.getAllByRole('button', { name: 'iam.menu.create' })[0],
     );
-    // 弹窗（受控 modal-open 无 open 属性，jsdom 无 dialog role）→ 用表单标题定位容器
+    // 弹窗（受控 modal-open 无 open 属性，jsdom 无 dialog role）→ 用表单标题定位容器。
+    // 默认类型 app：字段顺序 = 名称、编码、组件名称、前端路由（父级下拉与图标仅
+    // 在 group/menu 类型出现，app 不渲染；placeholder 定位比位置序更抗重排）
     const dialogTitle = await screen.findByText('iam.menu.createTitle');
     const dialog = dialogTitle.closest('.modal-box')!;
-    const inputs = dialog.querySelectorAll('input[type="text"]');
-    await user.type(inputs[0], '角色管理');
-    await user.type(inputs[1], 'roles');
+    const byPlaceholder = (key: string) =>
+      dialog.querySelector(`input[placeholder="${key}"]`) as HTMLInputElement;
+    await user.type(byPlaceholder('iam.menu.namePlaceholder'), '角色管理');
+    const codeInput = [
+      ...dialog.querySelectorAll('input.font-mono'),
+    ][0] as HTMLInputElement;
+    await user.type(codeInput, 'roles');
+    await user.type(byPlaceholder('iam.menu.uriPlaceholder'), '/roles');
     // jSDOM 下该按钮的 accessible name 计算不稳定（daisyUI btn + 条件 spinner），
     // 用弹窗容器内文本定位（语义等价：弹窗内唯一的保存动作）
     await user.click(

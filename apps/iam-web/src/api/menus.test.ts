@@ -11,12 +11,13 @@ afterEach(() => {
 });
 
 const input: MenuInput = {
-  pid: null,
+  pid: 3, // 菜单类型必须挂父级（矩阵 needsPid；3 = 种子的"系统管理" app 节点）
   code: 'roles',
   name: '角色管理',
   uri: '/roles',
   type: 'menu',
   sort: 3,
+  scopes: ['C'] as ('A' | 'C')[],
 };
 
 const AUTH = (who: 'admin' | 'guest') => ({
@@ -34,7 +35,7 @@ describe('menusApi.list（经本地 http 客户端，无 token = 游客）', () 
   it('游客视角：返回游客可见子集（含首页与系统管理，树形结构）', async () => {
     const tree = await menusApi.list();
     expect(Array.isArray(tree)).toBe(true);
-    // 种子数据全部公开（scopes 含 O + hidden=false）→ 游客也看得到，但仍是树
+    // 种子数据全部公开（scopes 含 C + hidden=false）→ 游客也看得到，但仍是树
     const home = tree.find((n) => n.code === 'home');
     expect(home).toBeDefined();
     const iam = tree.find((n) => n.code === 'iam');
@@ -102,6 +103,26 @@ describe('menusApi CRUD（admin 身份，localStorage 注入 token）', () => {
 
   it('remove 不存在的 id → throw（404 msg 透出）', async () => {
     await expect(menusApi.remove(99999)).rejects.toThrow('菜单不存在');
+  });
+
+  // 任务 11-04：类型联动校验（mock 与 Edge Fn 同语义，1014）
+  it('menu 类型缺 uri → 1014 该类型必须填写路由', async () => {
+    await expect(menusApi.create({ ...input, uri: null })).rejects.toThrow(
+      '该类型必须填写路由',
+    );
+  });
+
+  it('group 类型缺 pid → 1014 该类型必须选择父级菜单', async () => {
+    const { pid: _omit, ...noPid } = input;
+    await expect(
+      menusApi.create({ ...noPid, type: 'group', uri: null }),
+    ).rejects.toThrow('该类型必须选择父级菜单');
+  });
+
+  it('scopes 空 → 1014 请至少选择一个适用范围', async () => {
+    await expect(menusApi.create({ ...input, scopes: [] })).rejects.toThrow(
+      '请至少选择一个适用范围',
+    );
   });
 });
 

@@ -18,21 +18,20 @@ import {
   MENUS_ITEM_PATH,
 } from './endpoints';
 
-/** 菜单节点（旧项目 RawMenuItem 契约，服务端 menus 表字段一一对应）。 */
+/** 菜单节点（任务 11-04 修订契约：迁移 0002 后的 menus 表列集）。 */
 export interface MenuItemRecord {
   id: number;
   pid: number | null;
   code: string;
-  parent: string;
   name: string;
-  component: string;
+  component: string | null;
   uri: string | null;
   type: 'app' | 'menu' | 'button' | 'group';
   sort: number;
   icon: string | null;
+  activeIcon: string | null; // snake_case active_icon 经归一化转 camelCase
   hidden: boolean;
-  scopes: string[];
-  menu_type: number; // 0=目录 1=菜单 2=按钮
+  scopes: ('A' | 'C')[]; // 适用范围：A=管理端 C=客户端（含 C 即游客可见）
   children?: MenuItemRecord[] | null;
 }
 
@@ -40,16 +39,15 @@ export interface MenuItemRecord {
 export interface MenuInput {
   pid?: number | null;
   code: string;
-  parent?: string;
   name: string;
-  component?: string;
+  component?: string | null;
   uri?: string | null;
   type: MenuItemRecord['type'];
   sort?: number;
   icon?: string | null;
+  activeIcon?: string | null;
   hidden?: boolean;
-  scopes?: string[];
-  menu_type?: number;
+  scopes?: ('A' | 'C')[];
 }
 
 /** 集成态 basename('/iam') → 代理前缀 '/iam'；独立态（缺省）→ ''（同 api/auth.ts）。 */
@@ -84,6 +82,21 @@ function toError(error: unknown): Error {
   return new Error(extractMsg(error));
 }
 
+/** 服务端 snake_case（active_icon）→ 前端 camelCase（activeIcon），递归子树。
+ *  入参用宽松形态（服务端原始行可能带 active_icon），出参收敛到 MenuItemRecord。 */
+type RawMenuNode = Omit<MenuItemRecord, 'activeIcon' | 'children'> & {
+  active_icon?: string | null;
+  children?: RawMenuNode[] | null;
+};
+
+function mapActiveIcon(nodes: RawMenuNode[]): MenuItemRecord[] {
+  return nodes.map(({ active_icon, children, ...rest }) => ({
+    ...rest,
+    activeIcon: active_icon ?? null,
+    children: children?.length ? mapActiveIcon(children) : null,
+  }));
+}
+
 export const menusApi = {
   /**
    * 菜单树：GET {prefix}{MENUS_LIST_PATH}。
@@ -100,7 +113,7 @@ export const menusApi = {
     }
     const data = normalize<MenuItemRecord[]>(res);
     // 成功时 data 是数组；非数组（异常 envelope 未解包等）按失败上抛
-    if (Array.isArray(data)) return data;
+    if (Array.isArray(data)) return mapActiveIcon(data);
     const envelope = res as { msg?: string } | undefined;
     throw new Error(envelope?.msg);
   },
@@ -114,7 +127,8 @@ export const menusApi = {
       throw toError(e);
     }
     const data = normalize<MenuItemRecord>(res);
-    if (data && typeof data === 'object' && 'id' in data) return data;
+    if (data && typeof data === 'object' && 'id' in data)
+      return mapActiveIcon([data])[0];
     throw new Error((data as { msg?: string } | undefined)?.msg);
   },
 
@@ -127,7 +141,8 @@ export const menusApi = {
       throw toError(e);
     }
     const data = normalize<MenuItemRecord>(res);
-    if (data && typeof data === 'object' && 'id' in data) return data;
+    if (data && typeof data === 'object' && 'id' in data)
+      return mapActiveIcon([data])[0];
     throw new Error((data as { msg?: string } | undefined)?.msg);
   },
 

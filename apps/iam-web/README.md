@@ -29,17 +29,28 @@ supabase/
 
 错误消息根据 `Accept-Language` 返回中文或英文；缺省 zh-CN。
 
-## 菜单契约（RBAC）
+## 菜单契约（RBAC；任务 11-04 修订后）
 
 | 端点 | 方法 | 鉴权 | 说明 |
 | --- | --- | --- | --- |
-| `/auth/menus` | GET | 匿名可调 | 无/无效 JWT → 游客可见子集（`hidden=false + scopes 含 O + 无权限要求` + 祖先链）；有效 JWT → 按用户角色权限过滤；admin（权限含 `*`）→ 全量 |
-| `/menus` | POST | 仅 admin | 无 JWT → 1010/401；非 admin → 1011/403；code 重复 → 1012/400 |
-| `/menus/:id` | PUT | 仅 admin | 更新（错误码同上） |
+| `/auth/menus` | GET | 匿名可调 | 无/无效 JWT → 游客可见子集（`hidden=false + scopes 含 C（客户端） + 非按钮` + 祖先链）；有效 JWT → 按用户角色权限过滤；admin（权限含 `*`）→ 全量 |
+| `/menus` | POST | 仅 admin | 无 JWT → 1010/401；非 admin → 1011/403；code 重复 → 1012/400；**类型联动校验违例 → 1014/400** |
+| `/menus/:id` | PUT | 仅 admin | 更新（缺省字段沿用行值后再校验；错误码同上） |
 | `/menus/:id` | DELETE | 仅 admin | 删除（FK 级联子树；id 不存在 → 1013/404） |
 
+**类型联动矩阵**（前端弹窗与 Edge Fn 同一语义，绕过前端直调 API 同样被拦）：
+
+| type | uri | component | icon/active_icon | pid（父级菜单） |
+| --- | --- | --- | --- | --- |
+| app（默认） | **必填**（应用路由） | 选填 | 选填 | 可为根 |
+| group | 不入库 | — | — | **必填** |
+| menu | **必填**（组件路由） | 选填 | 选填 | **必填** |
+| button | 不入库 | — | — | **必填** |
+
+`scopes` = 适用范围多选（**A=管理端 / C=客户端**，必填至少一项）；**含 C 即游客可见**。
+
 - **RBAC 初始化**（`supabase/migrations/0001_rbac_init.sql`）：首个注册用户自动成为 `admin`（`auth.users` INSERT 触发器，`user_roles` 空表判定），其余注册用户默认 `guest`；角色权限种子随迁移写入（admin: `*` + `system:menu:*`；guest: 无——只能看公开子集）。
-- 表结构沿用旧项目 `RawMenuItem` 契约字段（`menu_type`/`scopes`/`pid`），宿主 `fetchMenus` 将来切数据源时 `transformMenu` 零改动。
+- **表结构（11-04 修订，迁移 0002）**：删 `menu_type`（与 type 重复）与 `parent`（旧树冗余，宿主消费端零使用，pid 单源承载树形）；增 `active_icon`（激活态图标，app/menu 类型成对使用）；`scopes` 值域改 A/C。字段名与旧 `RawMenuItem` 契约已脱钩——宿主 `fetchMenus` 将来切数据源时 `transformMenu` 需做一层映射。
 - **不启用 RLS**：Edge Fn 是唯一写入口，前端不直连 Postgres；将来若引入 supabase-js 直查，必须先补 RLS。
 
 ## 部署
@@ -49,6 +60,8 @@ supabase/
 pnpm exec supabase functions deploy iam --no-verify-jwt --project-ref <ref>
 # 迁移（本地：supabase start 后 db reset 自动重放；云上：db push 或控制台执行 SQL）
 pnpm exec supabase db push --project-ref <ref>
+# ⚠️ 0002 为破坏性 schema 变更（drop menu_type/parent 列、scopes 值域 O→A/C）：
+# 云上若已执行 0001 且录入过数据，部署前确认可丢（或先手工搬运）；本地 db reset 安全
 
 # 部署验证（直连云 Supabase 网关须带 apikey —— publishable key；本地
 # supabase start 无鉴权、不需 apikey）

@@ -59,7 +59,28 @@
       "loadFailed": "Failed to load menus",
       "saveFailed": "Failed to save",
       "deleteFailed": "Failed to delete",
-      "nameCodeRequired": "Name and code are required"
+      "nameCodeRequired": "Name and code are required",
+      "typeApp": "Application",
+      "typeGroup": "Group",
+      "typeMenu": "Menu",
+      "typeButton": "Button",
+      "namePlaceholder": "Unique identifier of the menu resource",
+      "sortPlaceholder": "Lower value sorts first",
+      "uriPlaceholder": "e.g. /menu/index",
+      "componentPlaceholder": "e.g. home",
+      "iconPlaceholder": "e.g. icon-home",
+      "activeIconPlaceholder": "e.g. icon-home-active",
+      "colComponent": "Component",
+      "colIcon": "Icon",
+      "colActiveIcon": "Active Icon",
+      "scopes": "Scopes",
+      "scopeAdmin": "Admin",
+      "scopeClient": "Client",
+      "selectParent": "Select parent menu",
+      "scopesRequired": "Select at least one scope",
+      "uriRequired": "Route is required for this type",
+      "parentRequired": "Parent menu is required for this type",
+      "typeMismatch": "Fields do not match the selected menu type"
     }
   }
 }

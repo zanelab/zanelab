@@ -13,16 +13,15 @@ function row(
     id,
     pid,
     code: `code-${id}`,
-    parent: 'root',
     name: `n${id}`,
     component: '',
     uri: null,
     type: 'menu',
     sort,
     icon: null,
+    activeIcon: null,
     hidden: false,
-    scopes: ['O'],
-    menu_type: 1,
+    scopes: ['C'],
     ...extra,
   };
 }

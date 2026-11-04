@@ -27,70 +27,66 @@ import type { MenuItemRecord } from '../api/menus';
  */
 
 /** 种子数据：与 portal mock 的菜单树同款（apps/portal-web/src/mocks/handlers.ts mockRawMenus），
- *  字段取 RawMenuItem 契约；首页公开（scopes 含 O + hidden=false），iam 域同样公开但管理操作要 admin。 */
+ *  字段取任务 11-04 修订契约（scopes=A/C 适用范围，C=游客可见）；首页公开，iam 域同样公开但管理操作要 admin。 */
 let seedId = 1000;
 const seedMenus: MenuItemRecord[] = [
   {
     id: 1,
     pid: null,
     code: 'home',
-    parent: 'root',
     name: '首页',
-    component: '',
+    component: null,
     uri: '/home',
     type: 'menu',
     sort: 0,
     icon: 'home',
+    activeIcon: 'home-active',
     hidden: false,
-    scopes: ['O'],
-    menu_type: 1,
+    scopes: ['C'],
     children: null,
   },
   {
     id: 3,
     pid: null,
     code: 'iam',
-    parent: 'root',
     name: '系统管理',
     component: 'iam',
-    uri: 'iam',
+    uri: '/iam',
     type: 'app',
     sort: 3,
     icon: 'system',
+    activeIcon: 'system-active',
     hidden: false,
-    scopes: ['O'],
-    menu_type: 0,
+    scopes: ['C'],
     children: [
       {
         id: 31,
         pid: 3,
         code: 'users',
-        parent: 'iam',
         name: '用户管理',
-        component: '',
+        component: null,
         uri: '/users',
         type: 'menu',
         sort: 1,
         icon: null,
+        activeIcon: null,
         hidden: false,
-        scopes: ['O'],
-        menu_type: 1,
+        scopes: ['C'],
         children: null,
       },
       {
         id: 32,
         pid: 3,
         code: 'menus',
-        parent: 'iam',
         name: '菜单管理',
-        component: '',
+        component: null,
         uri: '/menus',
         type: 'menu',
         sort: 2,
         icon: null,
+        activeIcon: null,
         hidden: false,
-        scopes: ['O'],
-        menu_type: 1,
+        scopes: ['C'],
         children: null,
       },
     ],
@@ -111,12 +107,43 @@ function identity(request: Request): 'admin' | 'guest' {
   return auth === 'Bearer mock-admin' ? 'admin' : 'guest';
 }
 
+/** 类型联动矩阵（与页面 TYPE_MATRIX / Edge Fn TYPE_FIELD_MATRIX 同语义）。 */
+const TYPE_MATRIX: Record<
+  MenuItemRecord['type'],
+  {
+    uri: 'required' | 'hidden';
+    component: boolean;
+    icon: boolean;
+    needsPid: boolean;
+  }
+> = {
+  app: { uri: 'required', component: true, icon: true, needsPid: false },
+  group: { uri: 'hidden', component: false, icon: false, needsPid: true },
+  menu: { uri: 'required', component: true, icon: true, needsPid: true },
+  button: { uri: 'hidden', component: false, icon: false, needsPid: true },
+};
+
+/** 按矩阵校验写请求体；违例返回中文 msg（与 Edge Fn 1014 语义一致）。 */
+function validateType(body: Record<string, unknown>): string | null {
+  const type = (body.type as MenuItemRecord['type']) ?? 'app';
+  const matrix = TYPE_MATRIX[type] ?? TYPE_MATRIX.app;
+  const scopes = body.scopes as string[] | undefined;
+  if (!scopes || scopes.length === 0) return '请至少选择一个适用范围';
+  if (scopes.some((sc) => sc !== 'A' && sc !== 'C'))
+    return '适用范围值无效（仅 A/C）';
+  if (matrix.uri === 'required' && !String(body.uri ?? '').trim())
+    return '该类型必须填写路由';
+  if (matrix.needsPid && (body.pid == null || Number.isNaN(Number(body.pid))))
+    return '该类型必须选择父级菜单';
+  return null;
+}
+
 /** 树 → 平铺（引用共享，直接改内存里的对象）。 */
 function flatten(tree: MenuItemRecord[]): MenuItemRecord[] {
   return tree.flatMap((n) => [n, ...flatten(n.children ?? [])]);
 }
 
-/** 游客可见过滤（对齐 Edge Fn DD3 规则 1）：hidden=false + scopes 含 O + 非 button + 祖先链。 */
+/** 游客可见过滤（对齐 Edge Fn 11-04 规则）：hidden=false + scopes 含 C + 非 button + 祖先链。 */
 function guestView(tree: MenuItemRecord[]): MenuItemRecord[] {
   const flat = flatten(tree);
   const byId = new Map(flat.map((n) => [n.id, n]));
@@ -130,7 +157,7 @@ function guestView(tree: MenuItemRecord[]): MenuItemRecord[] {
     }
   };
   for (const n of flat) {
-    if (!n.hidden && n.scopes.includes('O') && n.type !== 'button') keep(n);
+    if (!n.hidden && n.scopes.includes('C') && n.type !== 'button') keep(n);
   }
   const prune = (nodes: MenuItemRecord[]): MenuItemRecord[] =>
     nodes
@@ -188,22 +215,32 @@ export const iamMenuHandlers = [
         unknown
       > | null;
       if (!body?.name || !body?.code) return fail(1001, '请求格式错误');
+      const typeErr = validateType(body);
+      if (typeErr) return fail(1014, typeErr);
       if (flatten(menus).some((n) => n.code === body.code))
         return fail(1012, '菜单编码已存在');
+      const type = (body.type as MenuItemRecord['type']) ?? 'app';
+      const matrix = TYPE_MATRIX[type];
       const node: MenuItemRecord = {
         id: ++seedId,
         pid: (body.pid as number | null) ?? null,
         code: String(body.code),
-        parent: 'root',
         name: String(body.name),
-        component: String(body.component ?? ''),
-        uri: (body.uri as string | null) ?? null,
-        type: (body.type as MenuItemRecord['type']) ?? 'menu',
+        component: matrix.component
+          ? ((body.component as string | null) ?? null)
+          : null,
+        uri:
+          matrix.uri === 'hidden'
+            ? null
+            : ((body.uri as string | null) ?? null),
+        type,
         sort: Number(body.sort) || 0,
-        icon: (body.icon as string | null) ?? null,
+        icon: matrix.icon ? ((body.icon as string | null) ?? null) : null,
+        activeIcon: matrix.icon
+          ? ((body.activeIcon as string | null) ?? null)
+          : null,
         hidden: !!body.hidden,
-        scopes: (body.scopes as string[]) ?? ['O'],
-        menu_type: Number(body.menu_type ?? 1),
+        scopes: (body.scopes as ('A' | 'C')[]) ?? ['C'],
         children: null,
       };
       attach(menus, node);
@@ -230,14 +267,44 @@ export const iamMenuHandlers = [
         flatten(menus).some((n) => n.code === body.code)
       )
         return fail(1012, '菜单编码已存在');
+      // 部分更新：body 缺省的字段沿用行上现值，再过矩阵校验（与 Edge Fn 语义一致）
+      const effective = {
+        uri: body.uri !== undefined ? body.uri : row.uri,
+        pid: body.pid !== undefined ? body.pid : row.pid,
+        scopes: body.scopes !== undefined ? body.scopes : row.scopes,
+        type: body.type !== undefined ? body.type : row.type,
+      };
+      const typeErr = validateType(effective);
+      if (typeErr) return fail(1014, typeErr);
+      const type = effective.type as MenuItemRecord['type'];
+      const matrix = TYPE_MATRIX[type] ?? TYPE_MATRIX.app;
       Object.assign(row, {
         name: body.name !== undefined ? String(body.name) : row.name,
         code: body.code !== undefined ? String(body.code) : row.code,
-        uri: body.uri !== undefined ? body.uri : row.uri,
-        type: body.type !== undefined ? body.type : row.type,
+        component:
+          body.component !== undefined
+            ? matrix.component
+              ? body.component
+              : null
+            : row.component,
+        uri:
+          body.uri !== undefined
+            ? matrix.uri === 'hidden'
+              ? null
+              : body.uri
+            : row.uri,
+        type,
         sort: body.sort !== undefined ? Number(body.sort) : row.sort,
-        icon: body.icon !== undefined ? body.icon : row.icon,
+        icon:
+          body.icon !== undefined ? (matrix.icon ? body.icon : null) : row.icon,
+        activeIcon:
+          body.activeIcon !== undefined
+            ? matrix.icon
+              ? body.activeIcon
+              : null
+            : row.activeIcon,
         hidden: body.hidden !== undefined ? !!body.hidden : row.hidden,
+        scopes: body.scopes !== undefined ? body.scopes : row.scopes,
       });
       return ok(row);
     }),

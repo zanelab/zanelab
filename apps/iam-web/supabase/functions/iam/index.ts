@@ -36,6 +36,7 @@ const t: Record<string, Record<string, string>> = {
     codeExists: '菜单编码已存在',
     menuNotFound: '菜单不存在',
     menuRequired: '菜单名称和编码不能为空',
+    typeMismatch: '字段与所选菜单类型不匹配（缺少必填项或值无效）',
   },
   'en-US': {
     ok: 'ok',
@@ -50,6 +51,8 @@ const t: Record<string, Record<string, string>> = {
     codeExists: 'Menu code already exists',
     menuNotFound: 'Menu not found',
     menuRequired: 'Menu name and code are required',
+    typeMismatch:
+      'Fields do not match the selected menu type (missing required or invalid)',
   },
 };
 
@@ -194,41 +197,86 @@ async function otpVerify(
 
 // ==================== 菜单管理（RBAC，见 migrations/0001） ====================
 
-/** 旧项目 RawMenuItem 契约的数据库行（menus 表字段一一对应） */
+/** menus 表行（任务 11-04 修订后的新契约，迁移 0002 后的列集） */
 interface MenuRow {
   id: number;
   pid: number | null;
   code: string;
-  parent: string;
   name: string;
   component: string;
   uri: string | null;
   type: 'app' | 'menu' | 'button' | 'group';
   sort: number;
   icon: string | null;
+  active_icon: string | null;
   hidden: boolean;
-  scopes: string[];
-  menu_type: number;
+  scopes: string[]; // 适用范围：A=管理端 C=客户端（含 C 即游客可见）
 }
 
-/** 菜单管理页可写的字段集合（id/pid/parent/created_at 由服务端管理） */
+/** 菜单管理页可写的字段集合（id/pid/created_at 由服务端管理） */
 interface MenuInput {
   pid?: number | null;
   code?: string;
-  parent?: string;
   name?: string;
-  component?: string;
+  component?: string | null;
   uri?: string | null;
   type?: MenuRow['type'];
   sort?: number;
   icon?: string | null;
+  active_icon?: string | null;
   hidden?: boolean;
   scopes?: string[];
-  menu_type?: number;
 }
 
 const MENU_COLUMNS =
-  'id,pid,code,parent,name,component,uri,type,sort,icon,hidden,scopes,menu_type';
+  'id,pid,code,name,component,uri,type,sort,icon,active_icon,hidden,scopes';
+
+/**
+ * 类型联动校验矩阵（任务 11-04，用户提示词 F3）：
+ * 前端页面与 mock 共用同语义（src/utils/menu-validate.ts），此处为 Deno 侧镜像实现。
+ * 违例清单为空数组 = 通过；否则返回违例字段名（前端按其 i18n 展示，服务端统一 1014）。
+ */
+const TYPE_FIELD_MATRIX: Record<
+  MenuRow['type'],
+  {
+    uri: 'required' | 'optional' | 'hidden';
+    component: boolean;
+    icon: boolean;
+    needsPid: boolean;
+  }
+> = {
+  app: { uri: 'required', component: true, icon: true, needsPid: false },
+  group: { uri: 'hidden', component: false, icon: false, needsPid: true },
+  menu: { uri: 'required', component: true, icon: true, needsPid: true },
+  button: { uri: 'hidden', component: false, icon: false, needsPid: true },
+};
+
+/**
+ * 按类型校验写请求体（create 全量 / update 部分更新两种模式）。
+ * 违例 → Error('VALIDATION:<field>')；调用方映射 1014。
+ * - scopes：多选必填，值域 A/C，至少一项（两模式都查——适用范围无默认值）。
+ * - uri：矩阵 required 时非空；hidden 类型即使传了也忽略（不写入）。
+ * - component/icon/active_icon：矩阵 false 的类型忽略（不入库）。
+ */
+function validateMenuFields(
+  input: MenuInput,
+  type: MenuRow['type'],
+  partial: boolean,
+): void {
+  const matrix = TYPE_FIELD_MATRIX[type];
+  const missing: string[] = [];
+  if (
+    matrix.uri === 'required' &&
+    (input.uri == null || !String(input.uri).trim())
+  ) {
+    missing.push('uri');
+  }
+  if (matrix.needsPid && input.pid == null) missing.push('pid');
+  if (!input.scopes || input.scopes.length === 0) missing.push('scopes');
+  if (input.scopes?.some((s) => s !== 'A' && s !== 'C')) missing.push('scopes');
+  if (missing.length) throw new Error(`VALIDATION:${missing.join(',')}`);
+  void partial;
+}
 
 /**
  * 从 Authorization 头解 JWT 用户；无/无效 token 返回 null（匿名）。
@@ -311,8 +359,8 @@ async function fetchAllRows(ctx: {
 /**
  * GET /auth/menus —— 匿名 → 游客可见子集；有效 JWT → 按权限过滤。
  *
- * 过滤规则（design DD3）：
- * - 匿名：hidden=false 且 scopes 含 'O' 且 type!=='button'（按钮无独立 uri，游客无意义）
+ * 过滤规则（任务 11-04 修订：scopes 语义 = 适用范围，含 C 即客户端可见 = 游客可见）：
+ * - 匿名：hidden=false 且 scopes 含 'C' 且 type!=='button'（按钮是权限粒度非导航）
  *   的节点 + 为保持树形完整的祖先链。
  * - 登录非 admin：节点可见 ⇔ hidden=false 且（type!=='button' 或其权限码 uri ∈ 用户权限集）。
  * - admin（权限含 '*'）：全量（含 hidden——管理员要能看到待发布的节点）。
@@ -338,7 +386,7 @@ async function menusList(
       }
     };
     for (const row of rows) {
-      if (!row.hidden && row.scopes.includes('O') && row.type !== 'button') {
+      if (!row.hidden && row.scopes.includes('C') && row.type !== 'button') {
         keep(row);
       }
     }
@@ -402,7 +450,7 @@ async function requireAdmin(
   return user;
 }
 
-/** 校验并归一化写请求体；非法 → 抛 Response（1011 之外的 4xx）。 */
+/** 归一化写请求体（新旧字段剥离 + 类型裁剪），再按矩阵校验；违例 → Error('VALIDATION:...')。 */
 function parseMenuInput(
   body: Record<string, unknown>,
   partial: boolean,
@@ -411,35 +459,49 @@ function parseMenuInput(
   if (body.pid !== undefined)
     input.pid = body.pid === null ? null : Number(body.pid);
   if (body.code !== undefined) input.code = String(body.code).trim();
-  if (body.parent !== undefined) input.parent = String(body.parent);
   if (body.name !== undefined) input.name = String(body.name).trim();
-  if (body.component !== undefined) input.component = String(body.component);
+  if (body.component !== undefined)
+    input.component = body.component === null ? null : String(body.component);
   if (body.uri !== undefined)
     input.uri = body.uri === null ? null : String(body.uri);
   if (body.type !== undefined) input.type = body.type as MenuRow['type'];
   if (body.sort !== undefined) input.sort = Number(body.sort) || 0;
   if (body.icon !== undefined)
     input.icon = body.icon === null ? null : String(body.icon);
+  if (body.active_icon !== undefined)
+    input.active_icon =
+      body.active_icon === null ? null : String(body.active_icon);
   if (body.hidden !== undefined) input.hidden = !!body.hidden;
   if (body.scopes !== undefined)
-    input.scopes = (body.scopes as string[]) ?? ['O'];
-  if (body.menu_type !== undefined)
-    input.menu_type = Number(body.menu_type) ?? 1;
+    input.scopes = Array.isArray(body.scopes)
+      ? (body.scopes as string[]).map((s) => String(s))
+      : [];
 
+  // 类型必填兜底（create）：type/name/code
+  const type = input.type ?? 'app';
+  if (!['app', 'menu', 'button', 'group'].includes(type)) {
+    throw new Error('VALIDATION:type');
+  }
   if (!partial && (!input.name || !input.code)) {
-    throw new Error('VALIDATION');
+    throw new Error('VALIDATION:name');
   }
-  if (input.type && !['app', 'menu', 'button', 'group'].includes(input.type)) {
-    throw new Error('VALIDATION');
+  // 按类型矩阵裁剪隐藏字段（group/button 不带 component/icon/uri——写了也不入库）
+  const matrix = TYPE_FIELD_MATRIX[type];
+  if (matrix.uri === 'hidden') input.uri = null;
+  if (!matrix.component) input.component = null;
+  if (!matrix.icon) {
+    input.icon = null;
+    input.active_icon = null;
   }
+  validateMenuFields(input, type, partial);
   return input;
 }
 
 /** 校验/冲突类失败 → 业务 error 响应（复用调用方的 lang）。 */
 function asErrorResponse(lang: string, e: unknown): Response | null {
   if (e instanceof Response) return e;
-  if (e instanceof Error && e.message === 'VALIDATION') {
-    return error(lang, 1001, 'invalidBody');
+  if (e instanceof Error && e.message.startsWith('VALIDATION')) {
+    return error(lang, 1014, 'typeMismatch');
   }
   return null;
 }
@@ -478,8 +540,7 @@ async function menusCreate(
 
   const insert = {
     ...input,
-    parent: input.parent ?? 'root',
-    component: input.component ?? '',
+    component: input.component ?? null,
   };
   const { data, error: dbErr } = await ctx.supabase
     .from('menus')
