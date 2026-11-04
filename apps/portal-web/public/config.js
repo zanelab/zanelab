@@ -30,6 +30,9 @@ window.__APP_CONFIG__ = {
     menusEndpoint: '/menu/tree',
     logoutEndpoint: '/auth/logout',
     refreshEndpoint: '/auth/refresh',
+    // Supabase publishable key：请求拦截器注入 apikey 头（留空 = 不注入）。
+    // 指向云 Supabase 时必填；经自建网关反代且网关已带鉴权头时可留空。
+    apiKey: '',
   },
   route: {
     homePath: '/home',

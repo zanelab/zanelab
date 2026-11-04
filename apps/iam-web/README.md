@@ -96,7 +96,7 @@ curl -X POST https://<ref>.supabase.co/functions/v1/iam/menus \
 - 本应用**无**「云目标」环境变量：请求路径 = `src/api/endpoints.ts` 常量 + `props.basename` 派生的前缀（集成态 `/iam`，独立态空）。
 - 集成态转发目标由**宿主**配置：copy `apps/portal-web/.env.example` 为 `.env`，填 `VITE_PROXY_TARGET`（留空 → 回落到 `http://localhost:8081`，即本应用 dev server；指向云则填 `https://<ref>.supabase.co`）。同文件填 `VITE_API_KEY`（publishable key）后，dev proxy 转发 `/iam/functions/v1` 时自动附加 `apikey` 头（云直连必需；本地 `supabase start` 无鉴权可不填）。本机临时覆盖用 shell 变量，宿主 vite.config 里 `process.env` 优先于 `.env` 文件：`VITE_PROXY_TARGET=https://<ref>.supabase.co pnpm dev`。
 - 代理规则在 `apps/portal-web/vite.config.ts`：`/iam/functions/v1` → 剥掉 `/iam` 前缀后转发（云直连时目标需指到 `https://<ref>.supabase.co`，路径里的 `functions/v1/iam` 由请求自带的函数名段承担）。
-- **独立态直连云**：copy 本应用 `.env.example` 为 `.env` 填 `VITE_API_KEY`，请求拦截器自动附加 `apikey` 头。
+- **独立态直连云**：copy 本应用 `.env.example` 为 `.env` 填 `VITE_API_KEY`，请求拦截器自动附加 `apikey` 头。集成态的 apikey 来自宿主（portal 请求拦截器读其 `config.js` 的 `api.apiKey` 注入，dev/prod 一致）。
 
 ## 接口层（src/api）
 

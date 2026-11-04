@@ -8,10 +8,6 @@ export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_');
   const proxyTarget =
     process.env.VITE_PROXY_TARGET || env.VITE_PROXY_TARGET || '';
-  // apikey 注入（仅 dev proxy 转发时）：/iam/functions/v1 指云 Supabase 时网关
-  // 要求 publishable key。shell 变量优先于 .env 文件，与 proxyTarget 同法。
-  const apiKey = process.env.VITE_API_KEY || env.VITE_API_KEY || '';
-
   if (command === 'serve' && mode === 'development' && !proxyTarget) {
     console.warn(
       '[vite.config.ts] 未配置 VITE_PROXY_TARGET：代理转发不会生效。\n' +
@@ -34,8 +30,8 @@ export default defineConfig(({ command, mode }) => {
         // 由子应用 MSW worker 拦截）或云 Supabase 网关（VITE_PROXY_TARGET）。
         '/iam/functions/v1': {
           target: proxyTarget || 'http://localhost:8081',
-          // http-proxy 转发时附加 apikey 头（设了 VITE_API_KEY 才带，缺省不加）
-          ...(apiKey ? { headers: { apikey: apiKey } } : {}),
+          // apikey 由请求拦截器注入（http.ts，读 config.js 的 api.apiKey）——
+          // proxy 不再注入：生产无 vite proxy，注入点必须在 http 层才覆盖生产
           changeOrigin: true,
           secure: false,
           rewrite: (p) => p.replace(/^\/iam/, ''),

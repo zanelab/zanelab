@@ -38,6 +38,8 @@ export const DEFAULT_CONFIG: AppConfig = {
     loginEndpoint: '/sys/auth/login',
     logoutEndpoint: '/sys/auth/logout',
     refreshEndpoint: '/sys/auth/refresh',
+    // apiKey 留空（默认）= 不注入 apikey 头；接云 Supabase 时在 config.js 配置
+    apiKey: undefined,
   },
   route: {
     homePath: '/home',

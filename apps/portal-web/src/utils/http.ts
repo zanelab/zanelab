@@ -223,11 +223,16 @@ function createRequestClient(
 
   // 请求拦截器：raw token 注入 TOKEN_HEADER（token 非空才 set——保持 auth.ts
   // logout fire-and-forget 特例可用）+ legacy headers（含 x-lang/端标识）
+  // + apikey（config.apiKey 非空才 set——云 Supabase 网关要求；iam 集成态经
+  // props.http 走本拦截器，故此处注入即覆盖子应用，vite proxy 不再重复注入）
   client.addRequestInterceptor({
     fulfilled: (config) => {
       const token = useAuthStore.getState().token;
       if (token) {
         config.headers.set(TOKEN_HEADER, token);
+      }
+      if (appConfig.api.apiKey) {
+        config.headers.set('apikey', appConfig.api.apiKey);
       }
       const extraHeaders = buildLegacyHeaders();
       for (const [key, value] of Object.entries(extraHeaders)) {

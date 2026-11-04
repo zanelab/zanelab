@@ -46,7 +46,7 @@ export const DEFAULT_CONFIG: AppConfig;  // 与 public/config.js 保持一致的
 |---|---|---|---|
 | `VITE_PROXY_TARGET` | 两 app 各自 `.env`（模板 `.env.example`） | 空 | **仅 dev 生效**的 Vite 反代目标，两 app 语义不同。portal（`:5173`）：`/iam/functions/v1` → 目标，**剥掉 `/iam` 前缀**转发；留空回落 `http://localhost:8081`（iam dev server）。iam（`:8081`）：`/functions/v1` → 目标，**路径原样转发不 rewrite**，故填 Supabase **基址**（`https://<ref>.supabase.co`，不含 `/functions/v1`）；留空 = 不代理，独立态只能靠 `VITE_USE_MOCK=true` 的 worker。生产均不读此项（部署侧网关接管） |
 | `VITE_USE_MOCK` | 两 app 各自 `.env`（模板 `.env.example`） | 不填 = 关 | dev 是否启动 MSW worker——portal 拦基座自身接口，iam 拦自身接口（集成态与独立态各判一次，见 [微前端与子应用](./microfrontend-guidelines.md)）。两 app 同名变量、各自独立生效 |
-| `VITE_API_KEY` | 两 app 各自 `.env`（模板 `.env.example`） | 空 = 不注入 | portal：dev proxy 转发 `/iam/functions/v1` 时附加 `apikey` 头；iam：独立态 http 拦截器附加 `apikey` 头。直连云 Supabase 必填，本地 `supabase start`（无鉴权）可不填 |
+| `VITE_API_KEY`（仅 iam） | `apps/iam-web/.env`（模板 `.env.example`） | 空 = 不注入 | **仅 iam 独立态**：http 拦截器附加 `apikey` 头。iam 集成态与 portal 全态的 apikey 来自**运行时配置**：`config.js` 的 `api.apiKey`（portal 请求拦截器注入，dev/prod 一致——vite proxy 注入已废弃：生产无 vite proxy）。直连云 Supabase 必填，本地 `supabase start`（无鉴权）可不填 |
 
 **消费形态统一为**（`DEV` 守卫不可省，见 §4）：
 

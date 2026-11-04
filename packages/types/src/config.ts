@@ -50,6 +50,8 @@ export const ApiConfigSchema = z.object({
   loginEndpoint: z.string(),
   logoutEndpoint: z.string().optional(),
   refreshEndpoint: z.string().optional(),
+  /** Supabase publishable key（请求拦截器注入 apikey 头；留空 = 不注入） */
+  apiKey: z.string().optional(),
 });
 
 export const RouteConfigSchema = z.object({
