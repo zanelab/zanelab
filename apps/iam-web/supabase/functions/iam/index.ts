@@ -15,9 +15,14 @@
 //
 // 语言：前端通过 Accept-Language header 传 locale（zh-CN / en-US），缺省 zh-CN。
 // envelope { code, data, msg } 对齐 portal http.ts 解包；code 0 = 成功。
+// jsr: 导入由 Deno 运行时解析；本地 tsc（校验用）解析不了 jsr 前缀，前置 expect-error。
+// 修改本文件后以 `tsc -p supabase/functions/tsconfig.json` 做类型检查（不含 jsr 模块内部）。
+// @ts-expect-error jsr module — resolved by Deno runtime
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
+// @ts-expect-error jsr module — resolved by Deno runtime
 import { withSupabase } from 'jsr:@supabase/server@^1';
 
+// @ts-expect-error jsr module — resolved by Deno runtime
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2';
 
 // ==================== i18n ====================
@@ -99,41 +104,45 @@ function error(
 // ==================== 入口 ====================
 
 export default {
-  fetch: withSupabase({ auth: ['publishable', 'secret'] }, async (req, ctx) => {
-    if (req.method === 'OPTIONS') {
-      return new Response('ok', { headers: corsHeaders });
-    }
-
-    const path = new URL(req.url).pathname;
-    const lang = detectLang(req);
-
-    try {
-      if (path.endsWith('/auth/otp/send')) {
-        return await otpSend(req, ctx, lang);
-      }
-      if (path.endsWith('/auth/otp/verify')) {
-        return await otpVerify(req, ctx, lang);
-      }
-      if (path.endsWith('/auth/menus')) {
-        return await menusList(req, ctx, lang);
-      }
-      if (path.endsWith('/menus')) {
-        return await menusCreate(req, ctx, lang);
-      }
-      const menuId = path.match(/\/menus\/(\d+)$/);
-      if (menuId) {
-        if (req.method === 'PUT')
-          return await menusUpdate(req, ctx, lang, Number(menuId[1]));
-        if (req.method === 'DELETE')
-          return await menusDelete(ctx, lang, Number(menuId[1]));
+  // jsr 模块的类型在本地不可用 → req/ctx 显式标注（运行时由 Deno 提供）
+  fetch: withSupabase(
+    { auth: ['publishable', 'secret'] },
+    async (req: Request, ctx: { supabase: SupabaseClient }) => {
+      if (req.method === 'OPTIONS') {
+        return new Response('ok', { headers: corsHeaders });
       }
 
-      return error(lang, 404, 'notFound', 404);
-    } catch (e) {
-      console.error('[iam] unhandled:', e);
-      return error(lang, 500, 'internalError', 500);
-    }
-  }),
+      const path = new URL(req.url).pathname;
+      const lang = detectLang(req);
+
+      try {
+        if (path.endsWith('/auth/otp/send')) {
+          return await otpSend(req, ctx, lang);
+        }
+        if (path.endsWith('/auth/otp/verify')) {
+          return await otpVerify(req, ctx, lang);
+        }
+        if (path.endsWith('/auth/menus')) {
+          return await menusList(req, ctx, lang);
+        }
+        if (path.endsWith('/menus')) {
+          return await menusCreate(req, ctx, lang);
+        }
+        const menuId = path.match(/\/menus\/(\d+)$/);
+        if (menuId) {
+          if (req.method === 'PUT')
+            return await menusUpdate(req, ctx, lang, Number(menuId[1]));
+          if (req.method === 'DELETE')
+            return await menusDelete(req, ctx, lang, Number(menuId[1]));
+        }
+
+        return error(lang, 404, 'notFound', 404);
+      } catch (e) {
+        console.error('[iam] unhandled:', e);
+        return error(lang, 500, 'internalError', 500);
+      }
+    },
+  ),
 };
 
 // ==================== OTP 两步流 ====================
@@ -324,10 +333,20 @@ async function userPermissions(
   );
 }
 
+/** 构建期节点：children 恒为数组（出口处终叶归 null，见 prune） */
+interface BuildNode extends MenuRow {
+  children: BuildNode[];
+}
+
+/** 出口节点：children 可空（旧契约语义） */
+interface MenuNode extends MenuRow {
+  children: MenuNode[] | null;
+}
+
 /** 平铺行 → children 嵌套树（pid 关联，sort 升序稳定排序，与旧后端返回形状一致）。 */
-function toTree(rows: MenuRow[]): (MenuRow & { children: MenuRow[] | null })[] {
-  const byId = new Map<number, MenuRow & { children: MenuRow[] }>();
-  const roots: (MenuRow & { children: MenuRow[] })[] = [];
+function toTree(rows: MenuRow[]): MenuNode[] {
+  const byId = new Map<number, BuildNode>();
+  const roots: BuildNode[] = [];
   for (const row of [...rows].sort((a, b) => a.sort - b.sort)) {
     byId.set(row.id, { ...row, children: [] });
   }
@@ -336,13 +355,12 @@ function toTree(rows: MenuRow[]): (MenuRow & { children: MenuRow[] | null })[] {
     if (parent) parent.children.push(node);
     else roots.push(node);
   }
-  // 无子的层级不返回空 children（旧契约 children 可为 null）
-  const prune = (nodes: (MenuRow & { children: MenuRow[] })[]): MenuRow[] =>
-    nodes.map(({ children, ...rest }) => ({
-      ...rest,
-      children: children.length ? (prune(children) as MenuRow[]) : null,
+  const prune = (nodes: BuildNode[]): MenuNode[] =>
+    nodes.map((node) => ({
+      ...node,
+      children: node.children.length ? prune(node.children) : null,
     }));
-  return prune(roots) as (MenuRow & { children: MenuRow[] | null })[];
+  return prune(roots);
 }
 
 /** 全量菜单树（登录用户基础数据）。 */
