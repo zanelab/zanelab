@@ -197,7 +197,7 @@ async function otpVerify(
 
 // ==================== 菜单管理（RBAC，见 migrations/0001） ====================
 
-/** menus 表行（任务 11-04 修订后的新契约，迁移 0002 后的列集） */
+/** menus 表行（任务 11-04 修订后的新契约，初始化迁移 0001 的列集） */
 interface MenuRow {
   id: number;
   pid: number | null;

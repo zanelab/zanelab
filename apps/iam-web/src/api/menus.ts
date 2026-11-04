@@ -18,7 +18,7 @@ import {
   MENUS_ITEM_PATH,
 } from './endpoints';
 
-/** 菜单节点（任务 11-04 修订契约：迁移 0002 后的 menus 表列集）。 */
+/** 菜单节点（任务 11-04 修订契约：初始化迁移 0001 的 menus 表列集）。 */
 export interface MenuItemRecord {
   id: number;
   pid: number | null;

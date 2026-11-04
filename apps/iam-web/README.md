@@ -50,7 +50,7 @@ supabase/
 `scopes` = 适用范围多选（**A=管理端 / C=客户端**，必填至少一项）；**含 C 即游客可见**。
 
 - **RBAC 初始化**（`supabase/migrations/0001_rbac_init.sql`）：首个注册用户自动成为 `admin`（`auth.users` INSERT 触发器，`user_roles` 空表判定），其余注册用户默认 `guest`；角色权限种子随迁移写入（admin: `*` + `system:menu:*`；guest: 无——只能看公开子集）。
-- **表结构（11-04 修订，迁移 0002）**：删 `menu_type`（与 type 重复）与 `parent`（旧树冗余，宿主消费端零使用，pid 单源承载树形）；增 `active_icon`（激活态图标，app/menu 类型成对使用）；`scopes` 值域改 A/C。字段名与旧 `RawMenuItem` 契约已脱钩——宿主 `fetchMenus` 将来切数据源时 `transformMenu` 需做一层映射。
+- **表结构（11-04 修订，已并入初始化迁移 0001）**：无 `menu_type`（与 type 重复）与 `parent`（旧树冗余，宿主消费端零使用，pid 单源承载树形）；有 `active_icon`（激活态图标，app/menu 类型成对使用）；`scopes` 值域 A/C。字段名与旧 `RawMenuItem` 契约已脱钩——宿主 `fetchMenus` 将来切数据源时 `transformMenu` 需做一层映射。
 - **不启用 RLS**：Edge Fn 是唯一写入口，前端不直连 Postgres；将来若引入 supabase-js 直查，必须先补 RLS。
 
 ## 部署
@@ -60,8 +60,6 @@ supabase/
 pnpm exec supabase functions deploy iam --no-verify-jwt --project-ref <ref>
 # 迁移（本地：supabase start 后 db reset 自动重放；云上：db push 或控制台执行 SQL）
 pnpm exec supabase db push --project-ref <ref>
-# ⚠️ 0002 为破坏性 schema 变更（drop menu_type/parent 列、scopes 值域 O→A/C）：
-# 云上若已执行 0001 且录入过数据，部署前确认可丢（或先手工搬运）；本地 db reset 安全
 
 # 部署验证（直连云 Supabase 网关须带 apikey —— publishable key；本地
 # supabase start 无鉴权、不需 apikey）
