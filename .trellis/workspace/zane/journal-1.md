@@ -191,3 +191,26 @@ env-restructure：删三份 .env.development/.env.production，改 .env.example 
 ### Status
 
 [OK] **Completed**
+
+
+## Session 8: iam 菜单管理全栈落地 + 登录页输入组件升级
+<!-- trellis-session: v=2 fp=ab1598386fa62a42 -->
+
+**Date**: 2026-11-04
+**Task**: iam 菜单管理全栈落地 + 登录页输入组件升级
+**Branch**: `feat/iam-menu-management`
+
+### Summary
+
+iam-menu-management：/iam/menus 从占位卡片全栈落地为菜单管理页——迁移 0001（menus/roles/user_roles/role_permissions 四表 + 注册触发器：首个用户 admin 余者 guest）、Edge Fn 菜单端点（游客子集/按权限/admin CRUD + 1010-1013 错误码）、api 层 menusApi 第二域、树形表格动态弹窗、props 契约抽到 src/props.ts（api 层 import 链脱离 qiankun 入口）、iam-web 首次引入 vitest（16 用例）。实施中修掉两个探针实证的真 bug：buildTree 输入行旧 children 混合导致节点重复渲染；extractMsg 缺 e.msg 级（RequestClient 4xx 重抛 envelope 本体，HTTP 层后端文案从未透出）。本机无 supabase CLI，迁移验证降级为静态审查 + 用户手测。1a0d4d5：登录页邮箱输入按用户指定形态改 floating-label + inset icon + validator 组合（:has 任意深度驱动浮动已验源 CSS）。收尾批：OTP 弹窗外点关闭（daisyUI backdrop z-index 被 .modal 盖住的层叠问题）、resendIn 插值改 i18next v26 双花括号、独立态 token 键改 iam_ 前缀（用户侧改动代提交）。遗留：迁移与 RBAC 分配的浏览器手测；Edge Function 云部署。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `5a1ac7a` | feat(@zanelab/iam-web): 菜单管理页面全栈落地（RBAC 底座 + Edge Fn CRUD + 页面） |
+| `1a0d4d5` | feat(@zanelab/iam-web): 登录页邮箱输入改 floating-label + icon + validator 组合 |
+
+### Status
+
+[OK] **Completed**
