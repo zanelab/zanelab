@@ -34,8 +34,8 @@ supabase/
 | 端点 | 方法 | 鉴权 | 说明 |
 | --- | --- | --- | --- |
 | `/auth/menus` | GET | 匿名可调 | 无/无效 JWT → 游客可见子集（`hidden=false + scopes 含 C（客户端） + 非按钮` + 祖先链）；有效 JWT → 按用户角色权限过滤；admin（权限含 `*`）→ 全量 |
-| `/menus` | POST | 仅 admin | 无 JWT → 1010/401；非 admin → 1011/403；code 重复 → 1012/400；**类型联动校验违例 → 1014/400** |
-| `/menus/:id` | PUT | 仅 admin | 更新（缺省字段沿用行值后再校验；错误码同上） |
+| `/menus` | POST | 仅 admin | 无 JWT → 1010/401；非 admin → 1011/403；**类型联动校验违例 → 1014/400**；编码（code）由服务端自动生成（`m_<id>`，请求不携带） |
+| `/menus/:id` | PUT | 仅 admin | 更新（缺省字段沿用行值后再校验；编码不可改——body.code 忽略） |
 | `/menus/:id` | DELETE | 仅 admin | 删除（FK 级联子树；id 不存在 → 1013/404） |
 
 **类型联动矩阵**（前端弹窗与 Edge Fn 同一语义，绕过前端直调 API 同样被拦）：

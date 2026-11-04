@@ -216,6 +216,7 @@ interface MenuRow {
 /** 菜单管理页可写的字段集合（id/pid/created_at 由服务端管理） */
 interface MenuInput {
   pid?: number | null;
+  /** 仅回填场景写入（create 后 m_<id>）；请求体里的 code 一律忽略（parseMenuInput 不读） */
   code?: string;
   name?: string;
   component?: string | null;
@@ -450,7 +451,10 @@ async function requireAdmin(
   return user;
 }
 
-/** 归一化写请求体（新旧字段剥离 + 类型裁剪），再按矩阵校验；违例 → Error('VALIDATION:...')。 */
+/**
+ * 归一化写请求体（类型裁剪 + 矩阵校验）；违例 → Error('VALIDATION:...')。
+ * code 由服务端自动生成（m_<id>，见 insertMenuRow）——请求体里的 code 一律忽略。
+ */
 function parseMenuInput(
   body: Record<string, unknown>,
   partial: boolean,
@@ -458,7 +462,6 @@ function parseMenuInput(
   const input: MenuInput = {};
   if (body.pid !== undefined)
     input.pid = body.pid === null ? null : Number(body.pid);
-  if (body.code !== undefined) input.code = String(body.code).trim();
   if (body.name !== undefined) input.name = String(body.name).trim();
   if (body.component !== undefined)
     input.component = body.component === null ? null : String(body.component);
@@ -477,12 +480,12 @@ function parseMenuInput(
       ? (body.scopes as string[]).map((s) => String(s))
       : [];
 
-  // 类型必填兜底（create）：type/name/code
+  // 类型必填兜底（create）：type/name（code 由服务端生成，见 insertMenuRow）
   const type = input.type ?? 'app';
   if (!['app', 'menu', 'button', 'group'].includes(type)) {
     throw new Error('VALIDATION:type');
   }
-  if (!partial && (!input.name || !input.code)) {
+  if (!partial && !input.name) {
     throw new Error('VALIDATION:name');
   }
   // 按类型矩阵裁剪隐藏字段（group/button 不带 component/icon/uri——写了也不入库）
@@ -530,14 +533,7 @@ async function menusCreate(
     return resp ?? error(lang, 500, 'internalError');
   }
 
-  // code 唯一冲突 → 1012
-  const { data: dup } = await ctx.supabase
-    .from('menus')
-    .select('id')
-    .eq('code', input.code!)
-    .limit(1);
-  if (dup && dup.length > 0) return error(lang, 1012, 'codeExists');
-
+  // code 服务端生成（m_<id>，identity 主键回填后 update）——请求体里的 code 忽略
   const insert = {
     ...input,
     component: input.component ?? null,
@@ -548,12 +544,22 @@ async function menusCreate(
     .select(MENU_COLUMNS)
     .single();
   if (dbErr) {
-    // Postgres unique_violation 兜底（并发插入同 code）
-    if (dbErr.code === '23505') return error(lang, 1012, 'codeExists');
     console.error('[iam] menu create failed:', dbErr.message);
     return error(lang, 500, 'internalError');
   }
-  return json(lang, data);
+  // 生成编码并回填（identity id 已知 → m_<id> 确定性唯一）
+  const generatedCode = `m_${data.id}`;
+  const { data: withCode, error: codeErr } = await ctx.supabase
+    .from('menus')
+    .update({ code: generatedCode })
+    .eq('id', data.id)
+    .select(MENU_COLUMNS)
+    .single();
+  if (codeErr) {
+    console.error('[iam] menu code backfill failed:', codeErr.message);
+    return error(lang, 500, 'internalError');
+  }
+  return json(lang, withCode);
 }
 
 async function menusUpdate(
@@ -581,26 +587,18 @@ async function menusUpdate(
     return resp ?? error(lang, 500, 'internalError');
   }
 
-  if (input.code) {
-    const { data: dup } = await ctx.supabase
-      .from('menus')
-      .select('id')
-      .eq('code', input.code)
-      .neq('id', id)
-      .limit(1);
-    if (dup && dup.length > 0) return error(lang, 1012, 'codeExists');
-  }
+  // code 服务端管理（生成于 create）——update 不接受改码，剔除后再更新
+  const { code: _ignored, ...updatable } = input;
 
   // pid 自环/成环不做图遍历校验——FK 存在，自环由触发器外的应用层约定（MVP 接受）；
   // 真成环会导致 toTree 孤儿分支，重拉列表即可发现。
   const { data, error: dbErr } = await ctx.supabase
     .from('menus')
-    .update(input)
+    .update(updatable)
     .eq('id', id)
     .select(MENU_COLUMNS)
     .single();
   if (dbErr) {
-    if (dbErr.code === '23505') return error(lang, 1012, 'codeExists');
     console.error('[iam] menu update failed:', dbErr.message);
     return error(lang, 1013, 'menuNotFound', 404);
   }

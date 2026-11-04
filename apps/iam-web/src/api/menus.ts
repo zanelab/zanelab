@@ -38,7 +38,7 @@ export interface MenuItemRecord {
 /** 菜单管理页可写的字段集合（id/pid/parent/created_at 由服务端管理）。 */
 export interface MenuInput {
   pid?: number | null;
-  code: string;
+  /** 服务端自动生成（m_<id>），请求不携带 */
   name: string;
   component?: string | null;
   uri?: string | null;

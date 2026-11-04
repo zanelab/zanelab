@@ -214,17 +214,16 @@ export const iamMenuHandlers = [
         string,
         unknown
       > | null;
-      if (!body?.name || !body?.code) return fail(1001, '请求格式错误');
+      if (!body?.name) return fail(1001, '请求格式错误');
       const typeErr = validateType(body);
       if (typeErr) return fail(1014, typeErr);
-      if (flatten(menus).some((n) => n.code === body.code))
-        return fail(1012, '菜单编码已存在');
       const type = (body.type as MenuItemRecord['type']) ?? 'app';
       const matrix = TYPE_MATRIX[type];
+      const newId = ++seedId;
       const node: MenuItemRecord = {
-        id: ++seedId,
+        id: newId,
         pid: (body.pid as number | null) ?? null,
-        code: String(body.code),
+        code: `m_${newId}`, // 编码服务端自动生成（与 Edge Fn m_<id> 同语义）
         name: String(body.name),
         component: matrix.component
           ? ((body.component as string | null) ?? null)
@@ -261,12 +260,7 @@ export const iamMenuHandlers = [
         string,
         unknown
       >;
-      if (
-        body.code &&
-        body.code !== row.code &&
-        flatten(menus).some((n) => n.code === body.code)
-      )
-        return fail(1012, '菜单编码已存在');
+      // 编码服务端管理（create 时 m_<id> 生成）——body.code 一律忽略
       // 部分更新：body 缺省的字段沿用行上现值，再过矩阵校验（与 Edge Fn 语义一致）
       const effective = {
         uri: body.uri !== undefined ? body.uri : row.uri,
@@ -280,7 +274,6 @@ export const iamMenuHandlers = [
       const matrix = TYPE_MATRIX[type] ?? TYPE_MATRIX.app;
       Object.assign(row, {
         name: body.name !== undefined ? String(body.name) : row.name,
-        code: body.code !== undefined ? String(body.code) : row.code,
         component:
           body.component !== undefined
             ? matrix.component

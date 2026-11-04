@@ -80,7 +80,8 @@
       "scopesRequired": "请至少选择一个适用范围",
       "uriRequired": "该类型必须填写路由",
       "parentRequired": "该类型必须选择父级菜单",
-      "typeMismatch": "字段与所选菜单类型不匹配"
+      "typeMismatch": "字段与所选菜单类型不匹配",
+      "nameRequired": "菜单名称不能为空"
     }
   }
 }

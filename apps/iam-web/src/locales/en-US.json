@@ -80,7 +80,8 @@
       "scopesRequired": "Select at least one scope",
       "uriRequired": "Route is required for this type",
       "parentRequired": "Parent menu is required for this type",
-      "typeMismatch": "Fields do not match the selected menu type"
+      "typeMismatch": "Fields do not match the selected menu type",
+      "nameRequired": "Menu name is required"
     }
   }
 }

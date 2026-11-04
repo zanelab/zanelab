@@ -12,7 +12,6 @@ afterEach(() => {
 
 const input: MenuInput = {
   pid: 3, // 菜单类型必须挂父级（矩阵 needsPid；3 = 种子的"系统管理" app 节点）
-  code: 'roles',
   name: '角色管理',
   uri: '/roles',
   type: 'menu',
@@ -64,21 +63,16 @@ describe('menusApi CRUD（admin 身份，localStorage 注入 token）', () => {
     localStorage.removeItem('iam_refresh_token');
   });
 
-  it('create → 返回带 id 的新节点；list 可见', async () => {
+  it('create → 编码自动生成（m_<id>）；list 可见', async () => {
     const created = await menusApi.create(input);
     expect(created.id).toBeGreaterThan(0);
+    expect(created.code).toBe(`m_${created.id}`);
     const tree = await menusApi.list();
     expect(
       tree
         .flatMap((n) => [n, ...(n.children ?? [])])
-        .some((n) => n.code === 'roles'),
+        .some((n) => n.code === created.code),
     ).toBe(true);
-  });
-
-  it('create 重复 code → throw Error(菜单编码已存在)', async () => {
-    await expect(menusApi.create({ ...input, code: 'home' })).rejects.toThrow(
-      '菜单编码已存在',
-    );
   });
 
   it('update → 字段落库；remove → 级联删除后 list 不再含该子树', async () => {
@@ -91,7 +85,7 @@ describe('menusApi CRUD（admin 身份，localStorage 注入 token）', () => {
     // 挂个子节点再删父，验证级联
     const child = await menusApi.create({
       ...input,
-      code: 'role-detail',
+      name: '角色详情',
       pid: created.id,
     });
     await menusApi.remove(created.id);

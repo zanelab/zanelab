@@ -28,7 +28,6 @@ import { buildTree, countWithDescendants } from '../utils/menu-tree';
 interface MenuFormState {
   id: number | null; // null = 新建
   pid: number | null;
-  code: string;
   name: string;
   component: string; // 组件名称（app/menu 类型动态显示）
   uri: string;
@@ -43,7 +42,6 @@ interface MenuFormState {
 const EMPTY_FORM: MenuFormState = {
   id: null,
   pid: null,
-  code: '',
   name: '',
   component: '',
   uri: '',
@@ -155,7 +153,6 @@ export function MenuManagementPage() {
     setForm({
       id: row.id,
       pid: row.pid,
-      code: row.code,
       name: row.name,
       component: row.component ?? '',
       uri: row.uri ?? '',
@@ -196,8 +193,8 @@ export function MenuManagementPage() {
   const submitForm = async () => {
     if (!form || saving) return;
     const matrix = TYPE_MATRIX[form.type];
-    if (!form.name.trim() || !form.code.trim()) {
-      setFormError(t('iam.menu.nameCodeRequired'));
+    if (!form.name.trim()) {
+      setFormError(t('iam.menu.nameRequired'));
       return;
     }
     if (form.scopes.length === 0) {
@@ -216,7 +213,6 @@ export function MenuManagementPage() {
     setFormError('');
     const input: MenuInput = {
       pid: form.pid,
-      code: form.code.trim(),
       name: form.name.trim(),
       uri: matrix.uri === 'hidden' ? null : form.uri.trim() || null,
       type: form.type,
@@ -506,7 +502,7 @@ export function MenuManagementPage() {
                     <option value="">{t('iam.menu.selectParent')}</option>
                     {parentCandidates.map((row) => (
                       <option key={row.id} value={row.id}>
-                        {row.name}（{row.code}）
+                        {row.name}
                       </option>
                     ))}
                   </select>
@@ -525,23 +521,6 @@ export function MenuManagementPage() {
                   className="input input-sm validator bg-base-200 w-full"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                />
-                <p className="validator-hint">
-                  {t('iam.menu.nameCodeRequired')}
-                </p>
-              </label>
-
-              {/* 资源编码（全局固定，必填；唯一键） */}
-              <label className="flex flex-col gap-1">
-                <span className="text-sm">
-                  <span className="text-error">*</span> {t('iam.menu.colCode')}
-                </span>
-                <input
-                  type="text"
-                  required
-                  className="input input-sm validator bg-base-200 w-full font-mono"
-                  value={form.code}
-                  onChange={(e) => setForm({ ...form, code: e.target.value })}
                 />
                 <p className="validator-hint">
                   {t('iam.menu.nameCodeRequired')}
