@@ -2,14 +2,11 @@
  * 认证相关常量（迁移自旧项目 Micro-public/src/constants/index.ts + session.ts + enum.ts）。
  *
  * 旧后端契约：
- * - TOKEN_HEADER：HTTP 请求头名，传输 raw token（无 Bearer 前缀）
+ * - 会话凭据经 Authorization: Bearer 传输（buildLegacyHeaders 注入）
  * - LEGACY_TOKEN_KEY：localStorage cache key（经 cache.ts 加 cache_ 前缀 → cache_AILab-Token）
- * - X_*：端标识 cache key，buildLegacyHeaders 读取并注入请求头
+ * - X_*：端标识 cache key（session-store 读值判定端别；不再注入请求头）
  * - SystemType：端标识值（-P 平台端 / -T 租户端 / -O 空间端）
  */
-
-/** 旧后端 token HTTP 请求头名 */
-export const TOKEN_HEADER = 'ailab-token';
 
 /** 旧项目兼容 localStorage cache key（存 token，子应用共享） */
 export const LEGACY_TOKEN_KEY = 'AILab-Token';

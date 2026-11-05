@@ -1,6 +1,5 @@
 import { delay, http, HttpResponse } from 'msw';
 import type { MenuItem } from '../types';
-import { TOKEN_HEADER } from '../constants/auth';
 
 // MSW mock 契约（docs/技术方案.md §4/§10，父级 design §4）。
 // MVP 无后端：这些 handler 让 host 的登录/菜单链路可独立运行。
@@ -266,7 +265,7 @@ export const handlers = [
   // 登记路径 = DEFAULT_CONFIG.api.menusEndpoint（'/api/user/menus'），
   // fetchMenus 经 appConfig 取端点，配置即契约。
   http.get('/api/user/menus', ({ request }) => {
-    const token = request.headers.get(TOKEN_HEADER);
+    const token = request.headers.get('authorization')?.replace(/^Bearer /, '');
     return HttpResponse.json({
       code: 0,
       data: token ? mockRawMenus : mockPublicRawMenus,
@@ -277,7 +276,7 @@ export const handlers = [
   // 需登录态的示例端点：无 token → 401。仅供手动 dev 演练（curl/控制台 fetch）；
   // http.401.test 的用例全部 server.use 覆写自建行为，不依赖此基线 handler。
   http.get('/api/protected', ({ request }) => {
-    const token = request.headers.get(TOKEN_HEADER);
+    const token = request.headers.get('authorization')?.replace(/^Bearer /, '');
     if (!token) {
       return new HttpResponse(null, { status: 401 });
     }

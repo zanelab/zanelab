@@ -2,7 +2,6 @@ import http from '../utils/http';
 import { appConfig } from '../config';
 import { encryptPassword } from '../utils/crypto';
 import { useAuthStore } from '../stores/auth-store';
-import { TOKEN_HEADER } from '../constants/auth';
 import { cache } from '@zanelab/utils';
 import type { LoginResult, UserInfo } from '../types';
 
@@ -94,14 +93,14 @@ export const authApi = {
    * 登出：POST logoutEndpoint。
    *
    * token 显式写入 config.headers——fire-and-forget 模式下 handleLogout 清空 store 后，
-   * 拦截器读到空 token 不会覆盖 config 中已有的 ailab-token 头（拦截器仅在 token 非空时
-   * set TOKEN_HEADER），其余 legacy headers 由拦截器自动补齐。
+   * 拦截器读到空 token 不会覆盖 config 中已有的 Authorization 头（buildLegacyHeaders
+   * 仅在 token 非空时 set），其余 legacy headers 由拦截器自动补齐。
    */
   async logout(token?: string): Promise<void> {
     if (!appConfig.api.logoutEndpoint) return;
     const tk = token ?? useAuthStore.getState().token;
     const headers: Record<string, string> = {};
-    if (tk) headers[TOKEN_HEADER] = tk;
+    if (tk) headers.Authorization = `Bearer ${tk}`;
     await http.post<null>(appConfig.api.logoutEndpoint, null, { headers });
   },
 
