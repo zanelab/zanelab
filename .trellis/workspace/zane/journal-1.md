@@ -214,3 +214,32 @@ iam-menu-management：/iam/menus 从占位卡片全栈落地为菜单管理页�
 ### Status
 
 [OK] **Completed**
+
+
+## Session 9: 菜单修订 + Edge Fn 类型检查 + 请求头集中化 + apiKey 拦截器化
+<!-- trellis-session: v=2 fp=3be399dff4e7c12d -->
+
+**Date**: 2026-11-05
+**Task**: 菜单修订 + Edge Fn 类型检查 + 请求头集中化 + apiKey 拦截器化
+**Branch**: `feat/apikey-interceptor`
+
+### Summary
+
+menu-revision（11-04）：按用户评审修订菜单管理——迁移 0002（后应用户要求合并为单文件初始化迁移 0001：删 menu_type/parent、增 active_icon、scopes 值域改 A/C 且 C=游客可见）、Edge Fn 类型联动校验矩阵（1014）、新建/编辑弹窗重构为类型驱动动态表单（切类型清失效字段、scopes chip 多选、hidden 回归）、菜单编码改服务端自动生成 m_<id>（请求不携带、update 不可改，role_permissions 的权限码即此编码列表）、初始化迁移注释精简为字段说明。40cc8cd：用户报 IDE 类型错——menusDelete 分派少传 req（esbuild 不查类型 + tsconfig 不含 supabase/functions 的双盲区）；新增 functions/tsconfig.json 纳入 tsc 覆盖，toTree 按 BuildNode/MenuNode 分型重构（最小复现验证）。b4500c1+a576eae+8f2e4e1（11-05）：用户评审 apiKey 只在 vite proxy 注入生产裸奔——迁移到 portal 请求拦截器（config.js 新增 api.apiKey 运行时配置，iam 集成态经 props.http 同链路覆盖，独立态保留 env）；请求头集中到 buildLegacyHeaders（X_* 注入删除、token 改 Authorization Bearer、TOKEN_HEADER 全仓清零）；loginPage/loginEndpoint 配置移除（登录走 iam，portal 登录页降级为兜底）。期间处置：config.js 不安全手改（删 schema 必填的 loginEndpoint）按用户决定还原。遗留：用户手改的端点切 iam 方向另任务（iam 需补 logout 端点）；*.supabase.co 在用户网络被 SNI 阻断（502 根因，代码无关）；四个分支未推送。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `e390e65` | feat(@zanelab/iam-web): 菜单表结构精简 + 类型联动动态表单（任务 11-04） |
+| `daf12e4` | chore(@zanelab/iam-web): 迁移合并为单文件初始化（0002 并入 0001） |
+| `5cf9438` | docs(@zanelab/iam-web): 初始化迁移注释精简为字段说明 |
+| `f9b29df` | feat(@zanelab/iam-web): 菜单编码改为服务端自动生成（m_<id>） |
+| `40cc8cd` | fix(@zanelab/iam-web): 修 menusDelete 少传 req 的调用错 + Edge Fn 类型检查落地 |
+| `b4500c1` | feat(project): apiKey 注入迁移到 http 拦截器（运行时配置），移除 vite proxy 注入 |
+| `a576eae` | refactor(@zanelab/portal-web): 请求头集中到 buildLegacyHeaders，token 改 Authorization Bearer |
+| `8f2e4e1` | refactor(project): 移除 loginPage 与 loginEndpoint 配置（登录走 iam 子应用） |
+
+### Status
+
+[OK] **Completed**

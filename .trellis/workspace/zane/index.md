@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 8
-- **Last Active**: 2026-11-04
+- **Total Sessions**: 9
+- **Last Active**: 2026-11-05
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~216 | Active |
+| `journal-1.md` | ~245 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 9 | 2026-11-05 | 菜单修订 + Edge Fn 类型检查 + 请求头集中化 + apiKey 拦截器化 | `e390e65`, `daf12e4`, `5cf9438`, `f9b29df`, `40cc8cd`, `b4500c1`, `a576eae`, `8f2e4e1` | `feat/apikey-interceptor` |
 | 8 | 2026-11-04 | iam 菜单管理全栈落地 + 登录页输入组件升级 | `5a1ac7a`, `1a0d4d5` | `feat/iam-menu-management` |
 | 7 | 2026-11-02 | env 体系模板化 + apikey 注入 + iam 登录页三连修 | `2e06079`, `c764572`, `d23250a`, `8105842`, `4a91260` | `feat/env-restructure` |
 | 6 | 2026-11-01 | iam-web 接口层收敛 + OTP 401 契约修正 | `0f763a0`, `d464056`, `193a4cf` | `feat/iam-web-api-layer` |
