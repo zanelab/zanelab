@@ -243,3 +243,28 @@ menu-revision（11-04）：按用户评审修订菜单管理——迁移 0002（
 ### Status
 
 [OK] **Completed**
+
+
+## Session 10: 请求头集中化 + loginPage/loginEndpoint 移除 + 旧会话链路退役 + toast 防双弹
+<!-- trellis-session: v=2 fp=404a7d75013b190d -->
+
+**Date**: 2026-11-05
+**Task**: 请求头集中化 + loginPage/loginEndpoint 移除 + 旧会话链路退役 + toast 防双弹
+**Branch**: `feat/apikey-interceptor`
+
+### Summary
+
+apikey-interceptor 任务的评审驱动续批：a576eae 按 X_* 评审——请求头集中到 buildLegacyHeaders（Authorization Bearer 取代 ailab-token，TOKEN_HEADER 全仓清零，401 单飞重放走 preset 缺省），X_* 注入删除（常量保留供登出清理/端别判定）；8f2e4e1 按 loginPage 评审——AuthConfigSchema 删 loginPage、ApiConfigSchema 删 loginEndpoint（登录走 iam，portal 登录页降级为兜底路由并标注），config.js/DEFAULT_CONFIG/main.tsx 同步；4ab5995 深度精简——session-store 整文件退役（端别纯函数零调用、setUserPer 零调用、tenantList 恒空致 UserDropdown 副标题从未显示）、constants/auth.ts 删除（LEGACY_TOKEN_KEY 写入退役——已验证 iam 不读）、clearStoredTokens 保留清理改字面量 key；b73d818 修复菜单页双 toast——集成态宿主拦截器已 notify（401/403/5xx/网络错/envelope 失败）而页面 showToast 再弹一份，按身份通道判定归属（showToast 增 doNotify，集成态默认吞、404/400 补弹；独立态恒弹）。期间处置：config.js 不安全手改（删 loginEndpoint）还原；502 根因诊断为 *.supabase.co SNI 阻断（代码无关）。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `a576eae` | refactor(@zanelab/portal-web): 请求头集中到 buildLegacyHeaders，token 改 Authorization Bearer |
+| `8f2e4e1` | refactor(project): 移除 loginPage 与 loginEndpoint 配置（登录走 iam 子应用） |
+| `4ab5995` | refactor(@zanelab/portal-web): 退役旧会话/端别链路（constants/auth.ts 与 session-store） |
+| `b73d818` | fix(@zanelab/iam-web): 菜单页错误 toast 防双弹（按身份通道判定归属） |
+
+### Status
+
+[OK] **Completed**
