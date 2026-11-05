@@ -120,11 +120,23 @@ export function MenuManagementPage() {
       const rows = await menusApi.list();
       setFlat(rows.flatMap((n) => flattenRow(n)));
     } catch (e) {
-      // toast 化（集成态上抛宿主 / 独立态本地渲染）；loadError 仍置位驱动空态文案
+      // toast 只提示一次（防双弹）：集成态走宿主 props.http，其拦截器链已对
+      // 401/403/5xx/网络错/envelope 业务失败统一 notify（spec「错误处理走拦截器」）
+      // ——这些本页不再弹；其余状态（404/400 等拦截器静默放行的）由本页补弹。
+      // 独立态走本地 client（无 notify 拦截器），本页弹即唯一一次。
       const msg =
         e instanceof Error && e.message ? e.message : t('iam.menu.loadFailed');
       setLoadError(msg);
-      showToast(msg);
+      const status = (e as { response?: { status?: number }; status?: number })
+        ?.response?.status;
+      const integration = typeof getProps().onNotify === 'function';
+      const handledByHostInterceptor =
+        status === 401 ||
+        status === 403 ||
+        (status !== undefined && status >= 500) ||
+        status === undefined; // 无 status = 网络错/envelope 业务失败（宿主链已 notify）
+      const shouldToast = integration ? !handledByHostInterceptor : true;
+      showToast(msg, 'error', shouldToast);
     } finally {
       setLoading(false);
     }
