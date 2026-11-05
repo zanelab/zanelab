@@ -54,7 +54,7 @@ async function bootstrap() {
     ...cfgPrefs,
     app: {
       layout: appConfig.layout.layout,
-      authPageLayout: appConfig.auth.loginPage.layout,
+      // authPageLayout 不再从 config 映射（loginPage 配置已移除）——store 缺省兜底
       ...cfgApp,
     },
     theme: { mode: appConfig.layout.theme, ...cfgTheme },

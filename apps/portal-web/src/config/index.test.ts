@@ -30,9 +30,7 @@ describe('loadConfig', () => {
     expect(cfg.system.logo).toBe(DEFAULT_CONFIG.system.logo);
     expect(cfg.layout.theme).toBe('light');
     expect(cfg.layout.layout).toBe(DEFAULT_CONFIG.layout.layout);
-    expect(cfg.auth.loginPage.layout).toBe(
-      DEFAULT_CONFIG.auth.loginPage.layout,
-    );
+    expect(cfg.auth.loginPath).toBe(DEFAULT_CONFIG.auth.loginPath);
     expect(cfg.api.baseURL).toBe('/api');
     expect(cfg.api.menusEndpoint).toBe(DEFAULT_CONFIG.api.menusEndpoint);
     expect(errorSpy).not.toHaveBeenCalled();

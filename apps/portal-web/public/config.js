@@ -10,29 +10,15 @@ window.__APP_CONFIG__ = {
     loginPath: '/iam/login',
     tokenKey: 'portal_token',
     refreshTokenKey: 'portal_refresh_token',
-    loginPage: {
-      layout: 'panel-center',
-      showCodeLogin: false,
-      showQrcodeLogin: false,
-      showThirdPartyLogin: false,
-      showRegister: false,
-      showForgetPassword: false,
-      showRememberMe: true,
-      showColorToggle: false,
-      showLayoutToggle: false,
-    },
   },
   api: {
     baseURL: '',
-    // loginEndpoint 是 schema 必填（@zanelab/types AppConfigSchema）——缺失会让
-    // 整块 api 配置 zod 校验失败回退 DEFAULT_CONFIG（含 microApps 全空）。
-    loginEndpoint: '/sys/auth/login',
     menusEndpoint: '/menu/tree',
     logoutEndpoint: '/auth/logout',
     refreshEndpoint: '/auth/refresh',
     // Supabase publishable key：请求拦截器注入 apikey 头（留空 = 不注入）。
     // 指向云 Supabase 时必填；经自建网关反代且网关已带鉴权头时可留空。
-    apiKey: '',
+    apiKey: 'sb_publishable_mLaIc7HxpEB3Ky6GMkkZRw_wm3-7uC8',
   },
   route: {
     homePath: '/home',

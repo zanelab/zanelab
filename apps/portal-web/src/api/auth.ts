@@ -82,10 +82,10 @@ export const authApi = {
       username: params.username,
       password: encryptPassword(params.password),
     };
-    const data = await http.post<LegacyLoginResponse>(
-      appConfig.api.loginEndpoint,
-      body,
-    );
+    // loginEndpoint 已随 schema 移除（登录走 iam 子应用）——本函数仅被
+    // pages/login 兜底路由消费，端点硬编码为旧后端契约路径（该路径下无实际后端，
+    // 调用即失败；保留函数体以便将来恢复本页时再定端点来源）
+    const data = await http.post<LegacyLoginResponse>('/sys/auth/login', body);
     return mapLoginResult(data);
   },
 
