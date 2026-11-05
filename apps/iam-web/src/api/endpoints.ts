@@ -45,3 +45,17 @@ export const MENUS_COLLECTION_PATH = '/functions/v1/iam/menus';
 /** 菜单单项写路径（PUT 更新 / DELETE 删除——级联子树，仅 admin）。 */
 export const MENUS_ITEM_PATH = (id: number | string) =>
   `/functions/v1/iam/menus/${id}`;
+
+/**
+ * 用户列表（GET，admin-only：service role 列 auth.users + 角色聚合）。
+ * 挂在 /auth 段下——读端点按身份返回数据（用户列表恒 admin，语义在服务端）。
+ */
+export const USERS_LIST_PATH = '/functions/v1/iam/auth/users';
+
+/** 用户角色分配（PUT，admin-only；body { roles: string[] } 全量替换）。 */
+export const USER_ROLES_PATH = (userId: string) =>
+  `/functions/v1/iam/users/${userId}/roles`;
+
+/** 用户禁用/恢复（PUT，admin-only；body { disabled: boolean }）。 */
+export const USER_BAN_PATH = (userId: string) =>
+  `/functions/v1/iam/users/${userId}/ban`;

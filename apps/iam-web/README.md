@@ -49,6 +49,16 @@ supabase/
 
 `scopes` = 适用范围多选（**A=管理端 / C=客户端**，必填至少一项）；**含 C 即游客可见**。
 
+### 用户契约（任务 11-05）
+
+| 端点 | 方法 | 鉴权 | 说明 |
+| --- | --- | --- | --- |
+| `/auth/users` | GET | 仅 admin | service role 列 `auth.users` + `user_roles`/`roles` 聚合（email/角色/`banned_until`/时间） |
+| `/users/:id/roles` | PUT | 仅 admin | 全量替换角色绑定（`{ roles: string[] }`，码须在 `roles` 表）；1016 = 角色码无效 |
+| `/users/:id/ban` | PUT | 仅 admin | 禁用/恢复（`{ disabled: boolean }`）→ `auth.admin.updateUserById` 置 GoTrue `banned_until`；**自禁 1015**；被禁用户下次 OTP 登录由 GoTrue 拒绝 |
+
+用户域的读与写均走 `ctx.supabaseAdmin`（`withSupabase` 提供的 secret-key client）—— `auth` schema 对 publishable key 不可见。页面路由 `/iam/users`（权限码 `system:user:list` 由 admin `*` 通配命中，未单独种子——用户确认）。
+
 - **RBAC 初始化**（`supabase/migrations/0001_rbac_init.sql`）：首个注册用户自动成为 `admin`（`auth.users` INSERT 触发器，`user_roles` 空表判定），其余注册用户默认 `guest`；角色权限种子随迁移写入（admin: `*` + `system:menu:*`；guest: 无——只能看公开子集）。
 - **表结构（11-04 修订，已并入初始化迁移 0001）**：无 `menu_type`（与 type 重复）与 `parent`（旧树冗余，宿主消费端零使用，pid 单源承载树形）；有 `active_icon`（激活态图标，app/menu 类型成对使用）；`scopes` 值域 A/C。字段名与旧 `RawMenuItem` 契约已脱钩——宿主 `fetchMenus` 将来切数据源时 `transformMenu` 需做一层映射。
 - **不启用 RLS**：Edge Fn 是唯一写入口，前端不直连 Postgres；将来若引入 supabase-js 直查，必须先补 RLS。

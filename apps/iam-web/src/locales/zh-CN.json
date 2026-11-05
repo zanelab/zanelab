@@ -82,6 +82,27 @@
       "parentRequired": "该类型必须选择父级菜单",
       "typeMismatch": "字段与所选菜单类型不匹配",
       "nameRequired": "菜单名称不能为空"
+    },
+    "user": {
+      "title": "用户管理",
+      "colEmail": "邮箱",
+      "colRoles": "角色",
+      "colStatus": "状态",
+      "colCreatedAt": "注册时间",
+      "colLastSignIn": "最近登录",
+      "colActions": "操作",
+      "empty": "暂无用户",
+      "banned": "已禁用",
+      "active": "正常",
+      "assignRoles": "分配角色",
+      "rolesTitle": "分配角色",
+      "rolesRequired": "请至少保留一个角色",
+      "enable": "启用",
+      "disable": "禁用",
+      "loadFailed": "用户加载失败",
+      "saveFailed": "保存失败",
+      "role_admin": "管理员",
+      "role_guest": "游客"
     }
   }
 }

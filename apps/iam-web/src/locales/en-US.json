@@ -82,6 +82,27 @@
       "parentRequired": "Parent menu is required for this type",
       "typeMismatch": "Fields do not match the selected menu type",
       "nameRequired": "Menu name is required"
+    },
+    "user": {
+      "title": "User Management",
+      "colEmail": "Email",
+      "colRoles": "Roles",
+      "colStatus": "Status",
+      "colCreatedAt": "Created",
+      "colLastSignIn": "Last Sign-in",
+      "colActions": "Actions",
+      "empty": "No users yet",
+      "banned": "Banned",
+      "active": "Active",
+      "assignRoles": "Assign roles",
+      "rolesTitle": "Assign roles",
+      "rolesRequired": "Keep at least one role",
+      "enable": "Enable",
+      "disable": "Disable",
+      "loadFailed": "Failed to load users",
+      "saveFailed": "Failed to save",
+      "role_admin": "Admin",
+      "role_guest": "Guest"
     }
   }
 }

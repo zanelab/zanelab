@@ -42,6 +42,8 @@ const t: Record<string, Record<string, string>> = {
     menuNotFound: '菜单不存在',
     menuRequired: '菜单名称和编码不能为空',
     typeMismatch: '字段与所选菜单类型不匹配（缺少必填项或值无效）',
+    selfBan: '不能禁用当前登录的账号',
+    invalidRoles: '角色编码无效',
   },
   'en-US': {
     ok: 'ok',
@@ -107,7 +109,10 @@ export default {
   // jsr 模块的类型在本地不可用 → req/ctx 显式标注（运行时由 Deno 提供）
   fetch: withSupabase(
     { auth: ['publishable', 'secret'] },
-    async (req: Request, ctx: { supabase: SupabaseClient }) => {
+    async (
+      req: Request,
+      ctx: { supabase: SupabaseClient; supabaseAdmin: SupabaseClient },
+    ) => {
       if (req.method === 'OPTIONS') {
         return new Response('ok', { headers: corsHeaders });
       }
@@ -134,6 +139,19 @@ export default {
             return await menusUpdate(req, ctx, lang, Number(menuId[1]));
           if (req.method === 'DELETE')
             return await menusDelete(req, ctx, lang, Number(menuId[1]));
+        }
+
+        // ── 用户管理（supabaseAdmin：列 auth.users / 改角色 / 禁用须 admin 客户端）──
+        if (path.endsWith('/auth/users')) {
+          return await usersList(req, ctx, lang);
+        }
+        const userRoles = path.match(/\/users\/([\w-]+)\/roles$/);
+        if (userRoles && req.method === 'PUT') {
+          return await usersAssignRoles(req, ctx, lang, userRoles[1]);
+        }
+        const userBan = path.match(/\/users\/([\w-]+)\/ban$/);
+        if (userBan && req.method === 'PUT') {
+          return await usersBan(req, ctx, lang, userBan[1]);
         }
 
         return error(lang, 404, 'notFound', 404);
@@ -642,4 +660,234 @@ async function menusDelete(
     .single();
   if (dbErr || !data) return error(lang, 1013, 'menuNotFound', 404);
   return json(lang, { id });
+}
+
+// ==================== 用户管理（supabaseAdmin：auth.users 只 admin 可达） ====================
+
+/** 用户行（列表出参）：auth.users 主档 + 角色聚合 */
+interface UserRow {
+  id: string;
+  email: string | null;
+  created_at: string;
+  last_sign_in_at: string | null;
+  banned_until: string | null;
+  roles: string[]; // 角色编码列表（'admin' / 'guest'）
+}
+
+/** 从 user_roles join roles 聚合全部用户-角色映射（一次查询，内存分组）。 */
+async function fetchAllUserRoles(ctx: {
+  supabaseAdmin: SupabaseClient;
+}): Promise<Map<string, string[]>> {
+  const { data, error } = await ctx.supabaseAdmin
+    .from('user_roles')
+    .select('user_id, roles(code)');
+  if (error) throw new Error(`[iam] user_roles query failed: ${error.message}`);
+  const map = new Map<string, string[]>();
+  for (const row of data ?? []) {
+    const list = map.get(row.user_id) ?? [];
+    list.push(row.roles.code);
+    map.set(row.user_id, list);
+  }
+  return map;
+}
+
+/** 触发器给每个用户至少一个角色（首个 admin 余者 guest）——空角色视为数据异常，返回空列表由前端兜底。 */
+async function usersList(
+  req: Request,
+  ctx: { supabaseAdmin: SupabaseClient },
+  lang: string,
+): Promise<Response> {
+  const auth = await requireAdminUsers(ctx, req, lang);
+  if (auth instanceof Response) return auth;
+
+  // service role 列 auth.users（auth schema 对 publishable 不可见）
+  const { data, error } = await ctx.supabaseAdmin.auth.admin.listUsers({
+    page: 1,
+    perPage: 200, // MVP 上限；分页 UI 另任务
+  });
+  if (error) {
+    console.error('[iam] listUsers failed:', error.message);
+    return error(lang, 500, 'internalError', 500);
+  }
+
+  const roleMap = await fetchAllUserRoles(ctx);
+  const users: UserRow[] = data.users.map(
+    (u: {
+      id: string;
+      email: string | null;
+      created_at: string;
+      last_sign_in_at: string | null;
+      banned_until: string | null;
+    }) => ({
+      id: u.id,
+      email: u.email ?? null,
+      created_at: u.created_at,
+      last_sign_in_at: u.last_sign_in_at,
+      banned_until: u.banned_until,
+      roles: roleMap.get(u.id) ?? [],
+    }),
+  );
+  return json(lang, users);
+}
+
+/** 校验角色编码列表（admin/guest 之外的码 → invalidRoles 400）。 */
+/** 校验角色编码列表（roles 表不存在的码 → invalidRoles 400）。 */
+function invalidRolesResponse(lang: string): Response {
+  return new Response(
+    JSON.stringify({ code: 1016, data: null, msg: msg(lang, 'invalidRoles') }),
+    {
+      status: 400,
+      headers: { ...corsHeaders, 'content-type': 'application/json' },
+    },
+  );
+}
+
+async function validateRoleCodes(
+  ctx: { supabaseAdmin: SupabaseClient },
+  roleCodes: string[],
+  lang: string,
+): Promise<Response | null> {
+  if (!roleCodes.length) return invalidRolesResponse(lang);
+  const { data, error } = await ctx.supabaseAdmin
+    .from('roles')
+    .select('code')
+    .in('code', roleCodes);
+  if (error || !data || data.length !== new Set(roleCodes).size) {
+    return invalidRolesResponse(lang);
+  }
+  return null;
+}
+
+/**
+ * requireAdmin 的 users 版：ctx 用 supabaseAdmin（isAdmin 查询与菜单共用同一实现，
+ * 此处单独包装是因为 requireAdmin 绑定的是 ctx.supabase——两者表权限等价（RLS 未启），
+ * 但语义上用户管理统一走 admin client）。
+ */
+async function requireAdminUsers(
+  ctx: { supabaseAdmin: SupabaseClient },
+  req: Request,
+  lang: string,
+): Promise<{ id: string } | Response> {
+  const user = await resolveUser(
+    { supabase: ctx.supabaseAdmin },
+    req.headers.get('authorization'),
+  );
+  if (!user) {
+    return new Response(
+      JSON.stringify({
+        code: 1010,
+        data: null,
+        msg: msg(lang, 'unauthorized'),
+      }),
+      {
+        status: 401,
+        headers: { ...corsHeaders, 'content-type': 'application/json' },
+      },
+    );
+  }
+  if (!(await isAdmin({ supabase: ctx.supabaseAdmin }, user.id))) {
+    return new Response(
+      JSON.stringify({ code: 1011, data: null, msg: msg(lang, 'forbidden') }),
+      {
+        status: 403,
+        headers: { ...corsHeaders, 'content-type': 'application/json' },
+      },
+    );
+  }
+  return user;
+}
+
+/** PUT /users/:id/roles —— 全量替换角色绑定（admin-only）。 */
+async function usersAssignRoles(
+  req: Request,
+  ctx: { supabase: SupabaseClient; supabaseAdmin: SupabaseClient },
+  lang: string,
+  userId: string,
+): Promise<Response> {
+  const auth = await requireAdminUsers(ctx, req, lang);
+  if (auth instanceof Response) return auth;
+
+  let body: { roles?: string[] };
+  try {
+    body = await req.json();
+  } catch {
+    return error(lang, 1001, 'invalidBody');
+  }
+  const roleCodes = body.roles ?? [];
+  const invalid = await validateRoleCodes(ctx, roleCodes, lang);
+  if (invalid) return invalid;
+
+  // 全量替换：先删后插（事务性靠 supabaseAdmin 的连续调用；MVP 接受非原子窗口）
+  const { error: delErr } = await ctx.supabaseAdmin
+    .from('user_roles')
+    .delete()
+    .eq('user_id', userId);
+  if (delErr) {
+    console.error('[iam] user roles delete failed:', delErr.message);
+    return error(lang, 500, 'internalError', 500);
+  }
+  const roleIds = await ctx.supabaseAdmin
+    .from('roles')
+    .select('id, code')
+    .in('code', roleCodes);
+  const { error: insErr } = await ctx.supabaseAdmin.from('user_roles').insert(
+    (roleIds.data ?? []).map((r: { id: number }) => ({
+      user_id: userId,
+      role_id: r.id,
+    })),
+  );
+  if (insErr) {
+    console.error('[iam] user roles insert failed:', insErr.message);
+    return error(lang, 500, 'internalError', 500);
+  }
+  return json(lang, { id: userId, roles: roleCodes });
+}
+
+/**
+ * PUT /users/:id/ban —— 禁用/恢复（admin-only）。
+ * 禁用走 GoTrue banned_until（auth.admin.updateUserById）：被禁用户下次登录
+ * 由 GoTrue 直接拒绝；自禁保护（管理员不能禁用自己）。
+ */
+async function usersBan(
+  req: Request,
+  ctx: { supabase: SupabaseClient; supabaseAdmin: SupabaseClient },
+  lang: string,
+  userId: string,
+): Promise<Response> {
+  const auth = await requireAdminUsers(ctx, req, lang);
+  if (auth instanceof Response) return auth;
+  const self = auth as { id: string };
+
+  let body: { disabled?: boolean };
+  try {
+    body = await req.json();
+  } catch {
+    return error(lang, 1001, 'invalidBody');
+  }
+  if (body.disabled === undefined) return error(lang, 1001, 'invalidBody');
+
+  // 自禁保护：禁用自己会让当前会话的后续操作全数失效（且 GoTrue 禁用即踢）
+  const caller = await ctx.supabase.auth.getUser();
+  if (caller.data?.user?.id === userId && body.disabled) {
+    return new Response(
+      JSON.stringify({ code: 1015, data: null, msg: msg(lang, 'selfBan') }),
+      {
+        status: 400,
+        headers: { ...corsHeaders, 'content-type': 'application/json' },
+      },
+    );
+  }
+
+  // 永久禁用 = 远未来时间戳；恢复 = null
+  const banned_until = body.disabled ? '2999-01-01T00:00:00Z' : null;
+  const { error: banErr } = await ctx.supabaseAdmin.auth.admin.updateUserById(
+    userId,
+    { ban_duration: body.disabled ? '876000h' : 'none' },
+  );
+  if (banErr) {
+    console.error('[iam] ban user failed:', banErr.message);
+    return error(lang, 500, 'internalError', 500);
+  }
+  void banned_until;
+  return json(lang, { id: userId, disabled: !!body.disabled });
 }
