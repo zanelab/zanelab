@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import {
   Navigate,
   useLocation,
@@ -60,8 +60,7 @@ function LayoutShell() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const { t, i18n } = useTranslation();
-  const language = i18n.language;
+  const { t } = useTranslation();
   const menus = useMenuStore((state) => state.menus);
   const user = useAuthStore((state) => state.user);
   const token = useAuthStore((state) => state.token);
@@ -127,22 +126,22 @@ function LayoutShell() {
     }));
 
   // 账号相关菜单（迁移自旧项目 layouts/PaLayout/Avatar.tsx + PassWordForm.tsx）：
-  // 「修改密码」打开改密弹窗。
-  // 文案在 useMemo 内取，需以 language 为依赖才会随语言重算。
-  const accountMenus = useMemo<UserDropdownMenu[]>(
-    () => [
-      {
-        text: t('widgets.userDropdown.changePassword'),
-        icon: <AppIcon name="key" className="size-4" />,
-        handler: () => setChangePasswordOpen(true),
-      },
-    ],
-    [t, language],
-  );
+  // 「修改密码」已注释——改密走旧后端端点（/sys/auth/user/{id}/change/pwd），
+  // 登录切 iam 子应用后该端点不在新链路（恢复需 iam 侧提供改密端点）。
+  // const accountMenus = useMemo<UserDropdownMenu[]>(
+  //   () => [
+  //     {
+  //       text: t('widgets.userDropdown.changePassword'),
+  //       icon: <AppIcon name="key" className="size-4" />,
+  //       handler: () => setChangePasswordOpen(true),
+  //     },
+  //   ],
+  //   [t, language],
+  // );
 
   const dropdownMenus = [
     ...toUserDropdownMenus(collectDropdownMenus(menus)),
-    ...accountMenus,
+    // ...accountMenus,
   ];
 
   return useRoutes([
