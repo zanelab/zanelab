@@ -46,8 +46,7 @@ on conflict (code) do nothing;
 insert into public.role_permissions (role_id, permission)
 select r.id, p.permission
 from public.roles r,
-     unnest(array['*', 'system:menu:list', 'system:menu:create', 'system:menu:update',
-                  'system:menu:delete']) as p(permission)
+     unnest(array['*']) as p(permission)
 where r.code = 'admin'
 on conflict do nothing;
 

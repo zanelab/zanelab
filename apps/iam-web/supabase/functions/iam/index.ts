@@ -19,6 +19,9 @@
 // 修改本文件后以 `tsc -p supabase/functions/tsconfig.json` 做类型检查（不含 jsr 模块内部）。
 // @ts-expect-error jsr module — resolved by Deno runtime
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
+
+// Deno 全局（edge-runtime.d.ts 在 Deno 运行时提供；本地 tsc 解析不了 jsr 导入，自补）
+declare const Deno: { env: { get(key: string): string | undefined } };
 // @ts-expect-error jsr module — resolved by Deno runtime
 import { withSupabase } from 'jsr:@supabase/server@^1';
 
@@ -44,6 +47,8 @@ const t: Record<string, Record<string, string>> = {
     typeMismatch: '字段与所选菜单类型不匹配（缺少必填项或值无效）',
     selfBan: '不能禁用当前登录的账号',
     invalidRoles: '角色编码无效',
+    refreshInvalid: '登录已过期，请重新登录',
+    refreshRequired: 'refreshToken 不能为空',
   },
   'en-US': {
     ok: 'ok',
@@ -126,6 +131,9 @@ export default {
         }
         if (path.endsWith('/auth/otp/verify')) {
           return await otpVerify(req, ctx, lang);
+        }
+        if (path.endsWith('/auth/refresh')) {
+          return await authRefresh(req, lang);
         }
         if (path.endsWith('/auth/menus')) {
           return await menusList(req, ctx, lang);
@@ -219,6 +227,72 @@ async function otpVerify(
       username: body.email.split('@')[0],
       email: body.email,
     },
+  });
+}
+
+// ==================== 会话刷新（独立态单飞刷新的数据源） ====================
+
+/**
+ * POST /auth/refresh { refreshToken } —— GoTrue 会话轮换（匿名端点，凭 refresh_token 本身）。
+ *
+ * 实现走 GoTrue HTTP API（POST /auth/v1/token?grant_type=refresh_token）而非
+ * supabase-js 的 setSession/refreshSession：服务端 SDK 的这些方法设计给「持有
+ * session 的客户端」，Edge Fn 侧无会话上下文，直接调 GoTrue grant 端点最稳定。
+ * 响应与登录端点同形状（token/refreshToken 双发——GoTrue 轮换会同时更新两者，
+ * 调用方须覆盖本地 refreshToken）。
+ *
+ * 安全：refresh_token 一次性（GoTrue rotate 语义）——旧值在响应后失效，前端必须
+ * 持久化响应里的新 refreshToken（iam 独立态的 STANDALONE_REFRESH_KEY）。
+ */
+async function authRefresh(req: Request, lang: string): Promise<Response> {
+  let body: { refreshToken?: string };
+  try {
+    body = await req.json();
+  } catch {
+    return error(lang, 1001, 'invalidBody');
+  }
+  if (!body.refreshToken) return error(lang, 1017, 'refreshRequired');
+
+  // GoTrue 端点与 anon key：Deno env 由平台注入（SUPABASE_URL / SUPABASE_ANON_KEY）
+  const url = Deno.env.get('SUPABASE_URL');
+  const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
+  if (!url || !anonKey) {
+    console.error('[iam] refresh env missing');
+    return error(lang, 500, 'internalError', 500);
+  }
+
+  const goTrueRes = await fetch(
+    `${url}/auth/v1/token?grant_type=refresh_token`,
+    {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        apikey: anonKey,
+      },
+      body: JSON.stringify({ refresh_token: body.refreshToken }),
+    },
+  );
+  if (!goTrueRes.ok) {
+    // refresh_token 失效/已轮换/用户被禁 → 401 语义（前端单飞失败 → 跳登录）
+    return new Response(
+      JSON.stringify({
+        code: 1004,
+        data: null,
+        msg: msg(lang, 'refreshInvalid'),
+      }),
+      {
+        status: 401,
+        headers: { ...corsHeaders, 'content-type': 'application/json' },
+      },
+    );
+  }
+  const session = (await goTrueRes.json()) as {
+    access_token: string;
+    refresh_token: string;
+  };
+  return json(lang, {
+    token: session.access_token,
+    refreshToken: session.refresh_token,
   });
 }
 
