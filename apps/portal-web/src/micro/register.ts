@@ -6,7 +6,6 @@ import { usePreferencesStore } from '../stores/preferences-store';
 import { clearStoredTokens, handleLogout } from '../utils/auth';
 import { isSessionExpiredError } from '../utils/http';
 import { cache } from '@zanelab/utils';
-import { LEGACY_TOKEN_KEY } from '../constants/auth';
 import { fetchMenus } from '../api/menu';
 import { isAuthPath } from '../router/auth-path';
 import type { UserInfo } from '../types';
@@ -28,7 +27,7 @@ function containerId(appName: string, container?: string): string {
  * appName 对齐）。
  *
  * 旧项目兼容存储（迁移自 Micro-public Login/handleRedirect 链路）：
- * - cache_AILab-Token / cache_UserInfo：子应用共享 token 与用户信息
+ * - cache_UserInfo：子应用共享用户信息（旧 token key 已退役——iam 不消费）
  */
 export async function bootstrapSession(
   token: string,
@@ -41,8 +40,8 @@ export async function bootstrapSession(
     localStorage.setItem(appConfig.auth.refreshTokenKey, refreshToken);
   useAuthStore.getState().setAuth({ token, refreshToken, user });
 
-  // 旧项目兼容存储（cache_ 前缀，子应用经 localStorage 共享）
-  cache.set(LEGACY_TOKEN_KEY, token);
+  // 用户信息共享存储（cache_ 前缀，子应用经 localStorage 共享）；
+  // 旧 token key（cache_AILab-Token）不再写入——iam 子应用不消费，链路已退役
   if (user) cache.set('UserInfo', user);
 
   // 登录后拉取用户权限和菜单（旧项目 handleRedirect → getUserPer 链路）
@@ -60,7 +59,6 @@ export async function bootstrapSession(
  */
 export async function restoreSession(token: string): Promise<void> {
   useAuthStore.getState().setToken(token);
-  cache.set(LEGACY_TOKEN_KEY, token);
   // 从 cache 恢复用户信息（刷新后 auth store 的 user 为 null）
   const cachedUser = cache.get<UserInfo>('UserInfo');
   if (cachedUser) useAuthStore.getState().setUser(cachedUser);

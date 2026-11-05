@@ -16,7 +16,6 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { useLayoutStore } from '@/stores/layout-store';
 import { useAuthStore } from '@/stores/auth-store';
 import { useMenuStore } from '@/stores/menu-store';
-import { useSessionStore, getCurrentTenant } from '@/stores/session-store';
 import { buildMenuRoutes, NotFoundPage } from '@/router/generateRoutes';
 import { registerRoutes } from '@/router/route-meta';
 import { appConfig } from '@/config';
@@ -66,7 +65,6 @@ function LayoutShell() {
   const menus = useMenuStore((state) => state.menus);
   const user = useAuthStore((state) => state.user);
   const token = useAuthStore((state) => state.token);
-  const { tenantList } = useSessionStore();
 
   // 修改密码弹窗开关（入口在用户下拉菜单，见 accountMenus）
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
@@ -77,10 +75,6 @@ function LayoutShell() {
     user?.username ||
     cache.get<{ username?: string }>('UserInfo')?.username ||
     '';
-
-  // 从 session store 获取当前租户名称（getCurrentTenant 有 cache fallback 逻辑）
-  const currentTenant = getCurrentTenant(tenantList);
-  const tenantDisplay = currentTenant?.tenantName || '';
 
   useEffect(() => {
     // 菜单就绪后把 path/title 注册进 route-meta（tabbar/面包屑消费）——
@@ -165,7 +159,6 @@ function LayoutShell() {
                 <UserDropdown
                   avatar=""
                   text={displayName || 'Admin'}
-                  description={tenantDisplay}
                   // 悬停展开，延迟 200ms 兼顾锚点→面板穿越与收起手感
                   trigger="hover"
                   hoverDelay={200}
