@@ -7,6 +7,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getProps } from '../props';
+import { showToast } from '../utils/notify';
 import { menusApi, type MenuItemRecord, type MenuInput } from '../api/menus';
 import { buildTree, countWithDescendants } from '../utils/menu-tree';
 
@@ -119,9 +120,11 @@ export function MenuManagementPage() {
       const rows = await menusApi.list();
       setFlat(rows.flatMap((n) => flattenRow(n)));
     } catch (e) {
-      setLoadError(
-        e instanceof Error && e.message ? e.message : t('iam.menu.loadFailed'),
-      );
+      // toast 化（集成态上抛宿主 / 独立态本地渲染）；loadError 仍置位驱动空态文案
+      const msg =
+        e instanceof Error && e.message ? e.message : t('iam.menu.loadFailed');
+      setLoadError(msg);
+      showToast(msg);
     } finally {
       setLoading(false);
     }
@@ -406,11 +409,8 @@ export function MenuManagementPage() {
         </div>
       )}
 
-      {loadError && (
-        <div role="alert" className="alert alert-error mb-4 text-sm">
-          <span>{loadError}</span>
-        </div>
-      )}
+      {/* 加载失败不再内联渲染——reload 的 catch 已 showToast（集成态上抛宿主）；
+          表格区以空态文案呈现失败结果（loadError 置位） */}
 
       {/* 树形表格（daisyUI table；列随 readOnly 收缩） */}
       <div className="bg-base-100 border-base-300 overflow-x-auto rounded-(--page-radius) border">
@@ -440,7 +440,7 @@ export function MenuManagementPage() {
                   colSpan={readOnly ? 5 : 6}
                   className="text-base-content/50 py-8 text-center"
                 >
-                  {t('iam.menu.empty')}
+                  {loadError || t('iam.menu.empty')}
                 </td>
               </tr>
             ) : (

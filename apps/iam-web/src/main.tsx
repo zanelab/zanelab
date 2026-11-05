@@ -5,6 +5,7 @@ import {
   qiankunWindow,
 } from 'vite-plugin-qiankun/dist/helper';
 import { App } from './App';
+import { ToastRegion } from '@zanelab/ui';
 // 独立运行态唯一样式来源（集成态样式由宿主注入，见 index.css 头注释）
 import './index.css';
 import { setupI18n, setLocale } from './locales/i18n';
@@ -44,6 +45,8 @@ function render(props: PltProps) {
   root.render(
     <BrowserRouter basename={basename}>
       <App />
+      {/* 独立态 toast 渲染（集成态经 props.onNotify 上抛宿主，见 utils/notify.ts） */}
+      <ToastRegion />
     </BrowserRouter>,
   );
   props.setHasRender?.(true);

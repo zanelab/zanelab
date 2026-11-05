@@ -5,7 +5,7 @@ import { useMenuStore } from '../stores/menu-store';
 import { usePreferencesStore } from '../stores/preferences-store';
 import { clearStoredTokens, handleLogout } from '../utils/auth';
 import { isSessionExpiredError } from '../utils/http';
-import { cache } from '@zanelab/utils';
+import { cache, notify } from '@zanelab/utils';
 import { fetchMenus } from '../api/menu';
 import { isAuthPath } from '../router/auth-path';
 import type { UserInfo } from '../types';
@@ -177,6 +177,17 @@ export function setupMicroApps() {
       getHostState,
       onHostStateChange,
       onLoginSuccess,
+      // 子应用 toast 上抛通道：错误/警告统一进宿主 ToastRegion（notify 模块级
+      // 暂存队列天然兜住 ToastRegion 未挂载的 boot 阶段）
+      onNotify: (
+        message: string,
+        level?: 'error' | 'warning' | 'success' | 'info',
+      ) => {
+        if (level === 'warning') notify.warning(message);
+        else if (level === 'success') notify.success(message);
+        else if (level === 'info') notify.info(message);
+        else notify.error(message);
+      },
 
       // 路由挂载前缀显式传递（与 activeRule 对齐）：
       // - Vite 子应用（vite-plugin-qiankun）读 props.basename

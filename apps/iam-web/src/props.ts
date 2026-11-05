@@ -78,6 +78,11 @@ export interface PltProps {
   }) => Promise<void>;
   /** 宿主共享 http 通道（RequestClient 只读代理，见 HostHttpClient） */
   http?: HostHttpClient;
+  /** 宿主通知通道：子应用把 toast 消息上抛给宿主 ToastRegion 渲染（缺省 = 独立态本地渲染） */
+  onNotify?: (
+    message: string,
+    level?: 'error' | 'warning' | 'success' | 'info',
+  ) => void;
   /** 宿主当前会话 token（getter 语义，mount 时取最新） */
   token?: string;
   /** 宿主菜单树派生的权限码数组（getter 语义，见 register.ts flattenPermissions） */
