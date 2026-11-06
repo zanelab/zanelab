@@ -442,19 +442,20 @@ async function resolveUser(
 /** 用户的权限码并集；admin 含 '*' 通配（seed），此处原样返回由调用方判定。
  *  两步查询：user_roles 与 role_permissions 无直接 FK（两者都只引用 roles），
  *  嵌入查询 role_permissions(permission) 会被 PostgREST 判为无关系 → 空集。
- *  先取 role_id，再按 role_id 集取 permission。 */
+ *  先取 role_id，再按 role_id 集取 permission。
+ *  用 supabaseAdmin（service role）：这些表开了 RLS，publishable 读不到。 */
 async function userPermissions(
-  ctx: { supabase: SupabaseClient },
+  ctx: { supabaseAdmin: SupabaseClient },
   userId: string,
 ): Promise<string[]> {
-  const { data: roleRows, error: roleErr } = await ctx.supabase
+  const { data: roleRows, error: roleErr } = await ctx.supabaseAdmin
     .from('user_roles')
     .select('role_id')
     .eq('user_id', userId);
   if (roleErr || !roleRows?.length) return [];
 
   const roleIds = roleRows.map((r: { role_id: number }) => r.role_id);
-  const { data: permRows, error: permErr } = await ctx.supabase
+  const { data: permRows, error: permErr } = await ctx.supabaseAdmin
     .from('role_permissions')
     .select('permission')
     .in('role_id', roleIds);
@@ -493,11 +494,11 @@ function toTree(rows: MenuRow[]): MenuNode[] {
   return prune(roots);
 }
 
-/** 全量菜单树（登录用户基础数据）。 */
+/** 全量菜单树（登录用户基础数据）。用 supabaseAdmin：menus 表开了 RLS。 */
 async function fetchAllRows(ctx: {
-  supabase: SupabaseClient;
+  supabaseAdmin: SupabaseClient;
 }): Promise<MenuRow[]> {
-  const { data, error } = await ctx.supabase
+  const { data, error } = await ctx.supabaseAdmin
     .from('menus')
     .select(MENU_COLUMNS)
     .order('sort', { ascending: true });
@@ -517,7 +518,7 @@ async function fetchAllRows(ctx: {
  */
 async function menusList(
   req: Request,
-  ctx: { supabase: SupabaseClient },
+  ctx: { supabase: SupabaseClient; supabaseAdmin: SupabaseClient },
   lang: string,
 ): Promise<Response> {
   const rows = await fetchAllRows(ctx);
@@ -574,7 +575,7 @@ async function menusList(
  * 只校验权限码，不校验角色（行业标准铁律）——admin 即「角色默认持有 '*'」。
  */
 async function requirePermission(
-  ctx: { supabase: SupabaseClient },
+  ctx: { supabase: SupabaseClient; supabaseAdmin: SupabaseClient },
   req: Request,
   lang: string,
   perm: string,
@@ -669,7 +670,7 @@ function asErrorResponse(lang: string, e: unknown): Response | null {
 
 async function menusCreate(
   req: Request,
-  ctx: { supabase: SupabaseClient },
+  ctx: { supabase: SupabaseClient; supabaseAdmin: SupabaseClient },
   lang: string,
 ): Promise<Response> {
   const auth = await requirePermission(ctx, req, lang, 'system:menu:create');
@@ -695,7 +696,7 @@ async function menusCreate(
     ...input,
     component: input.component ?? null,
   };
-  const { data, error: dbErr } = await ctx.supabase
+  const { data, error: dbErr } = await ctx.supabaseAdmin
     .from('menus')
     .insert(insert)
     .select(MENU_COLUMNS)
@@ -709,7 +710,7 @@ async function menusCreate(
 
 async function menusUpdate(
   req: Request,
-  ctx: { supabase: SupabaseClient },
+  ctx: { supabase: SupabaseClient; supabaseAdmin: SupabaseClient },
   lang: string,
   id: number,
 ): Promise<Response> {
@@ -734,7 +735,7 @@ async function menusUpdate(
 
   // pid 自环/成环不做图遍历校验——FK 存在，自环由触发器外的应用层约定（MVP 接受）；
   // 真成环会导致 toTree 孤儿分支，重拉列表即可发现。
-  const { data, error: dbErr } = await ctx.supabase
+  const { data, error: dbErr } = await ctx.supabaseAdmin
     .from('menus')
     .update(input)
     .eq('id', id)
@@ -749,7 +750,7 @@ async function menusUpdate(
 
 async function menusDelete(
   req: Request,
-  ctx: { supabase: SupabaseClient },
+  ctx: { supabase: SupabaseClient; supabaseAdmin: SupabaseClient },
   lang: string,
   id: number,
 ): Promise<Response> {
@@ -758,7 +759,7 @@ async function menusDelete(
   const user = auth;
 
   // 级联子树由 FK on delete cascade 完成（design DD1）；删不存在的 id 返回 404 语义
-  const { data, error: dbErr } = await ctx.supabase
+  const { data, error: dbErr } = await ctx.supabaseAdmin
     .from('menus')
     .delete()
     .eq('id', id)
