@@ -497,12 +497,13 @@ async function fetchAllRows(ctx: {
 }
 
 /**
- * GET /auth/menus —— 匿名 → 游客可见子集；有效 JWT → 按权限过滤。
+ * GET /auth/menus —— 匿名 → 游客可见子集；有效 JWT → 按权限过滤（无码门槛）。
  *
- * 过滤规则（任务 11-04 修订：scopes 语义 = 适用范围，含 C 即客户端可见 = 游客可见）：
+ * 过滤规则（任务 11-06 RBAC：permission 语义权限码）：
  * - 匿名：hidden=false 且 scopes 含 'C' 且 type!=='button'（按钮是权限粒度非导航）
  *   的节点 + 为保持树形完整的祖先链。
- * - 登录非 admin：节点可见 ⇔ hidden=false 且（type!=='button' 或其权限码 uri ∈ 用户权限集）。
+ * - 登录非 admin：节点可见 ⇔ hidden=false 且（permission 为空 = 公开 或
+ *   permission ∈ 用户权限集）。
  * - admin（权限含 '*'）：全量（含 hidden——管理员要能看到待发布的节点）。
  */
 async function menusList(
@@ -533,17 +534,10 @@ async function menusList(
     return json(lang, toTree(rows.filter((r) => visible.has(r.id))));
   }
 
-  // 登录 → 读接口鉴权（system:menu:list）+ 按权限过滤
+  // 登录 → 按权限过滤（无码门槛——菜单树是壳的公共数据，任何登录用户都要能拉到
+  // 自己的过滤树；system:menu:list 只作为「菜单管理」菜单节点的 permission 值，
+  // 控制该菜单项是否出现在过滤结果里，而非给整个 /auth/menus 加 403 门槛）
   const perms = await userPermissions(ctx, user.id);
-  if (!perms.includes('*') && !perms.includes('system:menu:list')) {
-    return new Response(
-      JSON.stringify({ code: 1011, data: null, msg: msg(lang, 'forbidden') }),
-      {
-        status: 403,
-        headers: { ...corsHeaders, 'content-type': 'application/json' },
-      },
-    );
-  }
   if (perms.includes('*')) {
     return json(lang, toTree(rows));
   }

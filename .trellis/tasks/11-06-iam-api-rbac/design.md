@@ -45,7 +45,9 @@ async function requirePermission(
 ```
 
 - **只校验权限码，不校验角色**（F1 铁律）；admin 是「`*` 通配」而非「role==admin」。
-- 读端点的登录分支同样加码（`system:menu:list` 等）；匿名分支（scopes 含 C）不鉴权。
+- 写端点 + 管理页读端点（`system:user:list` / `system:role:list` 等）加码；`GET /auth/menus`
+  是壳的公共数据源（登录用户都要能拉自己的过滤树），**只过滤不加码门槛**（DD4）。
+  匿名分支（scopes 含 C）不鉴权。
 - `requireAdmin` / `requireAdminUsers` 删除，调用点全部迁移。
 
 ### DD4 · 菜单可见性（menusList 登录分支）
@@ -86,8 +88,8 @@ admin '*'         → 全量（含 hidden）
 - menu-handlers 种子补 permission；role-handlers 的授权集合按 permission 存。
 - 写端点 mock：从「Authorization 身份判定」升级为「角色授权集合含对应 permission 才放行，
   否则 403」——与 Edge Fn requirePermission 同语义。
-- guest 种子授权：公开菜单（permission 空）无需授权；`system:menu:list` 等读码授权给 guest
-  （否则登录空菜单）。
+- guest 种子授权：公开菜单（permission 空）无需授权；`system:menu:list` 等读码授权给 guest，
+  让 guest 保持「管理菜单可见（只读）」并放行 user/role 读端点（写操作仍无码 → 403）。
 
 ## 改动边界
 
@@ -109,8 +111,9 @@ admin '*'         → 全量（含 hidden）
 
 ## 相容性与风险
 
-- **读端点加码的破坏性**：登录用户调 `GET /auth/menus` 现在要求 `system:menu:list`——guest 种子
-  必须补该码（DD7），否则登录空菜单。这是预期行为变化，PRD AC2 已含。
+- **管理页读端点加码**：`GET /auth/users`（system:user:list）、`GET /auth/roles`（system:role:list）
+  对无码登录用户返回 403——guest 种子必须补读码（DD7）。`GET /auth/menus` 不加码（壳公共数据，
+  只过滤），避免登录用户拉不到菜单树。
 - **旧 code 过滤 → permission 过滤**：上一任务「纯授权按 code 过滤」改「按 permission 过滤」，
   menusList 逻辑重写；menu mock 种子 code 与 permission 需同步（种子补 permission）。
 - **回滚**：revert + db reset；云上迁移（加列）非破坏性，但种子更新需 db push。

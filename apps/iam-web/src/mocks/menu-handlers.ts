@@ -211,9 +211,7 @@ export const iamMenuHandlers = [
           ),
         );
       }
-      // 登录：先要求 system:menu:list 读码；再按 permission 过滤（空=公开，非空=授权）
-      if (!can(perms, 'system:menu:list'))
-        return fail(1011, '没有执行此操作的权限', 403);
+      // 登录：按 permission 过滤（空=公开，非空=授权）；无码门槛（菜单树是壳公共数据）
       const permSet = new Set(perms);
       return ok(
         filterTree(

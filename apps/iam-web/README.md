@@ -48,7 +48,7 @@ supabase/
 
 | 端点 | 方法 | 权限码 |
 | --- | --- | --- |
-| `/auth/menus` | GET | 登录分支 `system:menu:list`（匿名走 scopes 含 C 公开子集） |
+| `/auth/menus` | GET | 无码门槛（匿名走 scopes 含 C 公开子集；登录按 permission 过滤） |
 | `/menus` | POST | `system:menu:create` |
 | `/menus/:id` | PUT | `system:menu:update` |
 | `/menus/:id` | DELETE | `system:menu:delete` |
