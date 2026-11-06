@@ -192,6 +192,13 @@ export function setupMicroApps() {
       // 路由挂载前缀显式传递（与 activeRule 对齐）：
       // - Vite 子应用（vite-plugin-qiankun）读 props.basename
       basename: cfg.activeRule,
+
+      // 基座运行时资源（config.js icons / iconPackUrl / i18n.packUrls）：
+      // 子应用独立 bundle 拿不到宿主 config，mount 时经 setupHostAssets 自注册
+      // 图标 / 注入语言包 URL（与 setupLocale 同模式的资源接线）。
+      icons: appConfig.icons,
+      iconPackUrl: appConfig.iconPackUrl,
+      i18n: { packUrls: appConfig.i18n.packUrls },
     },
   }));
   if (apps.length === 0) return;

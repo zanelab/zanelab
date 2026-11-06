@@ -87,6 +87,10 @@ export interface PltProps {
   token?: string;
   /** 宿主菜单树派生的权限码数组（getter 语义，见 register.ts flattenPermissions） */
   permissions?: string[];
+  /** 宿主运行时图标注册（config.js icons 内联包；iconPackUrl 由宿主 fetch 后合并） */
+  icons?: Record<string, { viewBox?: string; paths: string[]; fill?: string }>;
+  /** 宿主运行时语言包（config.js i18n.packUrls；键 = 语言代码，值 = JSON URL） */
+  i18n?: { packUrls?: Record<string, string> };
   [key: string]: unknown;
 }
 

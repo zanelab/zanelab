@@ -8,7 +8,7 @@ import { App } from './App';
 import { ToastRegion, initIcons } from '@zanelab/ui';
 // 独立运行态唯一样式来源（集成态样式由宿主注入，见 index.css 头注释）
 import './index.css';
-import { setupI18n, setLocale } from './locales/i18n';
+import { setupI18n, setLocale, injectMessagePacks } from './locales/i18n';
 // props 契约与状态（类型 + getProps/setProps）——从本文件抽出（任务 11-03，
 // api 层的 import 链不再经过 qiankun 入口，见 props.ts 头注释）
 import { getProps, setProps, type PltProps } from './props';
@@ -36,6 +36,33 @@ function setupLocale(props: PltProps) {
     const prefs = state.preferences as { locale?: string } | undefined;
     setLocale(prefs?.locale);
   });
+}
+
+/**
+ * 接线基座下发的运行时资源（config.js icons / iconPackUrl / i18n.packUrls）：
+ * - 图标：props.icons（内联包）注册进本应用 store + props.iconPackUrl（远端包）。
+ *   qiankun 里宿主与子应用是独立 bundle、独立 store 实例，宿主的 initIcons
+ *   进不了子应用，子应用必须自注册（幂等，复 mount 重复注册同键只是覆盖同值）。
+ * - 语言包：props.i18n.packUrls 注入 locales/i18n 的懒加载表；初始语言的包
+ *   由 setupI18n 内部触发，运行期切语言由 setLocale 触发。
+ * 独立态（无宿主）：不调用——图标用内置表 + VITE_ICON_PACK_URL 兜底，语言包
+ * 无外部来源（packUrls 空 → 懒加载 no-op）。
+ */
+function setupHostAssets(props: PltProps) {
+  const icons = props.icons;
+  const iconPackUrl = props.iconPackUrl as string | undefined;
+  const hasIcons = !!icons && Object.keys(icons).length > 0;
+  const hasPackUrl = typeof iconPackUrl === 'string' && iconPackUrl !== '';
+  if (hasIcons || hasPackUrl) {
+    void initIcons({
+      ...(hasIcons ? { icons } : {}),
+      ...(hasPackUrl ? { iconPackUrl } : {}),
+    });
+  }
+  const packUrls = props.i18n?.packUrls;
+  if (packUrls && typeof packUrls === 'object') {
+    injectMessagePacks(packUrls);
+  }
 }
 
 function render(props: PltProps) {
@@ -75,12 +102,7 @@ renderWithQiankun({
     setProps(props as PltProps);
     console.log('[iam] mount', props.basename);
     setupLocale(getProps()); // i18n 初始化/复挂载对齐 + 语言订阅（React 渲染前）
-    // 图标注册表：qiankun 里宿主与子应用是独立 bundle、独立 store 实例，
-    // 宿主的 initIcons 注册进的是宿主那份，iam 必须自注册才能在 IconPicker/
-    // AppIcon 里看到 pack.json 图标。pack.json 部署在宿主 public（集成态页面
-    // origin 同源可达）；独立态无宿主时该路径 404 → initIcons 静默降级，只剩
-    // 内置表（幂等，重复 mount 不重复注册同键也只是覆盖同值）。
-    void initIcons({ iconPackUrl: '/icons/pack.json' });
+    setupHostAssets(getProps()); // 基座运行时资源：icons/iconPackUrl + i18n.packUrls
     // 集成态也要启动 worker：mock 拦截点在页面 origin 的 SW（见函数注释）
     if (import.meta.env.DEV && import.meta.env.VITE_USE_MOCK === 'true') {
       void startMockWorker();

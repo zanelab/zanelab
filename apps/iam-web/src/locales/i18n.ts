@@ -61,6 +61,8 @@ export function setupI18n(propsLocale?: string) {
     return;
   }
   initI18n(propsLocale);
+  // 初始语言的外部语言包（packUrls 经 setupHostAssets 在本调用前注入）
+  void loadMessagePack(resolveIamLocale(propsLocale) ?? FALLBACK);
 }
 
 /** 语言切换（基座 onHostStateChange 推送 / mount 复挂载对齐的唯一入口）。 */
@@ -69,6 +71,51 @@ export function setLocale(locale?: string) {
   if (!next || i18n.language === next) return;
   void i18n.changeLanguage(next);
   document.documentElement.lang = next;
+  // 切语言时按需拉取该语言的外部语言包（未配置 URL/已加载 → no-op）
+  void loadMessagePack(next);
+}
+
+// ── 运行时语言包懒加载（基座 props.i18n.packUrls 下发）────────────────────
+// 第三方菜单的 i18nKey 可能不在内置语言包里；语言包通常较大，props 只放 URL，
+// 切换到对应语言时才按需 fetch，深合并进 translation 命名空间。与宿主
+// loadMessagePack 同思路（apps/portal-web/src/locales/i18n.ts），数据源换成
+// 基座下发的 props（子应用不读宿主 config.js）。
+
+/** 基座下发的 packUrls（setupHostAssets 注入；未下发时懒加载 no-op）。 */
+let packUrls: Record<string, string> = {};
+const loadedPacks = new Set<string>();
+
+/** 注入基座下发的语言包 URL 表（setupHostAssets 调用；setLocale/setupI18n 消费）。 */
+export function injectMessagePacks(urls: Record<string, string>) {
+  packUrls = { ...packUrls, ...urls };
+}
+
+/**
+ * 懒加载某语言的语言包：未下发 URL 或已加载过 → no-op（幂等）。
+ * fetch 失败静默降级内置文案（console.warn；不重试，避免切语言时反复打失败请求）。
+ */
+export async function loadMessagePack(lng: string): Promise<void> {
+  const url = packUrls[lng];
+  if (!url || loadedPacks.has(lng)) return;
+  loadedPacks.add(lng); // 先标记再请求，并发调用只 fetch 一次
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const pack = (await res.json()) as Record<string, unknown>;
+    i18n.addResourceBundle(lng, 'translation', pack, true, true);
+
+    // react-i18next 默认只订阅 languageChanged，store 'added' 不触发重渲染——
+    // 对当前语言补发一次，让 t() 直调的消费点取到新文案（与宿主同款处理）。
+    if (i18n.language === lng) i18n.emit('languageChanged', lng);
+  } catch (e) {
+    console.warn('[iam i18n] 语言包加载失败，降级内置文案：', url, e);
+  }
+}
+
+/** 测试复位用：清空语言包注入与已加载记录（生产代码勿调用）。 */
+export function __resetMessagePacksForTest() {
+  packUrls = {};
+  loadedPacks.clear();
 }
 
 export default i18n;
