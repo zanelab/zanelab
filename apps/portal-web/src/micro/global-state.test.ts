@@ -34,7 +34,7 @@ describe('setupHostState（§9.4 单向同步）', () => {
     expect(listener).toHaveBeenCalledTimes(1);
     expect(listener).toHaveBeenLastCalledWith(
       expect.objectContaining({
-        permissions: expect.arrayContaining(['system:user:list']),
+        permissions: expect.arrayContaining(['m_311']),
       }),
       expect.anything(),
     );
@@ -42,7 +42,7 @@ describe('setupHostState（§9.4 单向同步）', () => {
     useMenuStore.setState({ menus: [...mockMenus] });
     expect(listener).toHaveBeenCalledTimes(1);
 
-    useMenuStore.getState().mergePermissions(['system:user:list']);
+    useMenuStore.getState().mergePermissions(['m_311']);
     expect(listener).toHaveBeenCalledTimes(1);
 
     useAuthStore.getState().setToken('t2');

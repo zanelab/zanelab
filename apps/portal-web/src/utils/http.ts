@@ -132,13 +132,22 @@ async function refreshToken(): Promise<string> {
   );
   const body = (await res.json()) as {
     code: number | string;
-    data: { token: string };
+    data: { token: string; refreshToken?: string };
     msg?: string;
     message?: string;
   };
   if (!isSuccessCode(body.code) || !body.data?.token) {
     throw new Error(
       body.msg ?? body.message ?? i18n.t('common.http.refreshFailed'),
+    );
+  }
+  // GoTrue 轮换语义（refreshEndpoint 切 iam /auth/refresh 后）：refresh_token 一次性，
+  // 响应下发的新 refreshToken 必须覆盖本地，否则下一次刷新必失败。
+  // 旧后端不轮换（无 refreshToken 字段）→ 可选字段缺省时保持旧值不变。
+  if (body.data.refreshToken) {
+    localStorage.setItem(
+      appConfig.auth.refreshTokenKey,
+      body.data.refreshToken,
     );
   }
   return body.data.token;

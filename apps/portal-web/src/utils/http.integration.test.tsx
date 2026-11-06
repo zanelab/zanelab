@@ -39,7 +39,7 @@ describe('http 拦截器 × MSW', () => {
 
   it('HTTP 500（menus 端点）→ notify 服务器错误', async () => {
     server.use(
-      http.get('/api/user/menus', () =>
+      http.get('/iam/functions/v1/iam/auth/menus', () =>
         HttpResponse.json(null, { status: 500 }),
       ),
     );
@@ -62,7 +62,7 @@ describe('MSW handler 契约（父 design §4）', () => {
 
     expect(result.token).toBe('mock-access-token');
 
-    // mock 侧补 refreshToken（与 /sys/auth/refresh 校验值一致）打通 401 单飞链路
+    // mock 侧补 refreshToken（与 /iam/functions/v1/iam/auth/refresh 校验值一致）打通 401 单飞链路
     expect(result.refreshToken).toBe('mock-refresh-token');
 
     expect(result.user).toEqual({

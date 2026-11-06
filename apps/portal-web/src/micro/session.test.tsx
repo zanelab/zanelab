@@ -48,7 +48,7 @@ describe('登录 → 拉菜单 → 渲染（§5.1 集成）', () => {
       mockMenus,
     );
 
-    expect(useMenuStore.getState().permissions).toContain('system:menu:list');
+    expect(useMenuStore.getState().permissions).toContain('m_321');
 
     render(<MenuProbe />);
     expect(screen.getByText('首页')).toBeTruthy();

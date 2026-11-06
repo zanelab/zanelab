@@ -1,0 +1,2 @@
+{"file": ".trellis/spec/frontend/index.md", "reason": "核心不变式——apps 间不互引（跨契约靠运行时数据/类型复制）、路径从运行时配置读取"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "评审清单与测试策略——transformMenu 映射用例、mock 双态一致性"}

@@ -67,8 +67,18 @@ const refreshHandlers = pagePaths(REFRESH_PATH_MOCK).map((path) =>
   }),
 );
 
+// 登出（独立态/集成态共用）：GoTrue signOut，mock 恒成功
+const LOGOUT_PATH = '/functions/v1/iam/auth/logout';
+const logoutHandlers = pagePaths(LOGOUT_PATH).map((path) =>
+  http.post(path, async () => {
+    await delay(150);
+    return ok({ success: true });
+  }),
+);
+
 export const iamOtpHandlers = [
   ...refreshHandlers,
+  ...logoutHandlers,
   // 步骤 1 发码：模拟 GoTrue signInWithOtp（恒 success，防枚举同款语义）
   ...pagePaths(OTP_SEND_PATH).map((path) =>
     http.post(path, async ({ request }) => {

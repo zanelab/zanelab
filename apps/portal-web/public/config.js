@@ -13,11 +13,9 @@ window.__APP_CONFIG__ = {
   },
   api: {
     baseURL: '',
-    menusEndpoint: '/menu/tree',
-    logoutEndpoint: '/auth/logout',
-    refreshEndpoint: '/auth/refresh',
-    // Supabase publishable key：请求拦截器注入 apikey 头（留空 = 不注入）。
-    // 指向云 Supabase 时必填；经自建网关反代且网关已带鉴权头时可留空。
+    menusEndpoint: '/iam/functions/v1/iam/auth/menus',
+    logoutEndpoint: '/iam/functions/v1/iam/auth/logout',
+    refreshEndpoint: '/iam/functions/v1/iam/auth/refresh',
     apiKey: 'sb_publishable_mLaIc7HxpEB3Ky6GMkkZRw_wm3-7uC8',
   },
   route: {

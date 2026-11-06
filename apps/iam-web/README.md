@@ -49,11 +49,12 @@ supabase/
 
 `scopes` = 适用范围多选（**A=管理端 / C=客户端**，必填至少一项）；**含 C 即游客可见**。
 
-### 会话刷新（独立态 401 单飞的数据源；任务：token refresh）
+### 会话刷新与登出（任务：token refresh + 11-06 宿主切 iam）
 
 | 端点 | 方法 | 鉴权 | 说明 |
 | --- | --- | --- | --- |
 | `/auth/refresh` | POST | 匿名（凭 refresh_token 本身） | `{ refreshToken }` → GoTrue 轮换（grant_type=refresh_token）→ `{ token, refreshToken }` 双发；失效 1004/401（前端单飞失败 → 跳登录）。**GoTrue rotate 语义：旧 refresh_token 一次性**，调用方须覆盖本地双 token |
+| `/auth/logout` | POST | 匿名（凭 Bearer access_token） | GoTrue signOut（`POST /auth/v1/logout`）；失败不致命（宿主角落是清本地会话），恒返回 `{ success: true }` |
 
 ### 用户契约（任务 11-05）
 

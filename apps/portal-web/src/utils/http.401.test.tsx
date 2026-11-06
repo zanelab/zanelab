@@ -23,7 +23,7 @@ describe('401 单飞刷新', () => {
 
     let refreshCalls = 0;
     server.use(
-      http.post('/sys/auth/refresh', () => {
+      http.post('/iam/functions/v1/iam/auth/refresh', () => {
         refreshCalls++;
         return HttpResponse.json({
           code: 0,

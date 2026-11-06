@@ -19,157 +19,172 @@ vi.mock('../utils/http', () => ({
 const { default: http } = await import('../utils/http');
 const { fetchMenus } = await import('./menu');
 
+// 新契约 fixture（iam Edge Fn /auth/menus 结构）：helper 补全必填字段；
+// 「虚拟分组应用」（旧后端 app+空 uri 表达跨 app 目录）改由 group 节点表达。
+type R = {
+  id: number;
+  pid?: number | null;
+  code?: string;
+  name: string;
+  component?: string | null;
+  uri?: string | null;
+  type: 'app' | 'menu' | 'button' | 'group';
+  sort?: number;
+  icon?: string | null;
+  hidden?: boolean;
+  scopes?: ('A' | 'C')[];
+  children?: R[] | null;
+};
+function node(n: R): R {
+  return {
+    pid: null,
+    code: `m_${n.id}`,
+    component: null,
+    uri: null,
+    sort: 0,
+    icon: null,
+    hidden: false,
+    scopes: ['C'],
+    children: null,
+    ...n,
+  };
+}
+
 const rawMenus = [
-  {
+  node({
     id: 285,
-    code: '534',
     name: 'AgentFlow',
     component: 'agent_flow',
-    uri: 'agent_flow',
+    uri: '/agent_flow',
     type: 'app',
     children: [
-      {
+      node({
         id: 478,
         name: '工作台',
         component: '/app/list',
         uri: '/app/list',
         type: 'menu',
-        children: null,
-      },
+      }),
     ],
-  },
-  {
+  }),
+  node({
     id: 284,
-    code: '87',
     name: 'MAIP',
     component: 'maip',
-    uri: '',
+    uri: '/maip',
     type: 'app',
     children: [
-      {
+      node({
         id: 269,
         name: '基础模型',
         component: './ModelManage/index',
         uri: '/model_manage/basic',
         type: 'menu',
-        children: null,
-      },
-      {
+      }),
+      node({
         id: 296,
         name: '服务中心',
         component: '/maasHub',
         uri: '/maasHub',
         type: 'menu',
         children: [
-          {
+          node({
             id: 297,
             name: '渠道管理',
             component: '/channelManage',
             uri: '/channelManage',
             type: 'menu',
-            children: null,
-          },
+          }),
         ],
-      },
+      }),
     ],
-  },
-  {
+  }),
+  // 旧契约的「虚拟分组应用」→ 新契约 group（跨 app 目录）
+  node({
     id: 598,
-    code: '121677',
     name: 'MAIP Studio',
-    component: 'aiasset',
-    uri: null,
-    type: 'app',
+    type: 'group',
     children: [
-      {
+      node({
         id: 604,
         name: '模型服务',
         component: 'ModelsDeploy',
         uri: '/maip/models_deploy',
         type: 'menu',
         children: [
-          {
+          node({
             id: 289,
             name: '批量任务',
             component: './OfflineTask/index',
             uri: '/maip/offline_task',
             type: 'menu',
-            children: null,
-          },
+          }),
         ],
-      },
+      }),
     ],
-  },
-  {
+  }),
+  node({
     id: 321,
-    code: '1635',
     name: 'ABP',
     component: 'app_builder',
-    uri: null,
+    uri: '/app_builder',
     type: 'app',
     children: [
-      {
+      node({
         id: 457,
         name: '应用资产中心',
         component: 'applicationTemplate',
         uri: '/app_builder/applicationTemplate',
         type: 'menu',
         children: [
-          {
+          node({
             id: 458,
             name: '模板广场',
             component: 'applicationTemplate',
             uri: '/applicationTemplate/templateSquare',
             type: 'menu',
-            children: null,
-          },
+          }),
         ],
-      },
+      }),
     ],
-  },
-  {
+  }),
+  node({
     id: 266,
-    code: '1',
     name: '基础管理',
-    component: 'platform_manager',
-    uri: '',
-    type: 'app',
+    type: 'group',
     children: [
-      {
+      node({
         id: 333,
         name: '解决方案',
         component: '/agent_flow/solution/endB',
         uri: '/agent_flow/solution/endB',
         type: 'menu',
-        children: null,
-      },
-      {
+      }),
+      node({
         id: 404,
         name: '用户管理',
         component: '/npa-plt-system/admin/user',
         uri: '/npa-plt-system/admin/user',
         type: 'menu',
-        children: null,
-      },
-      {
+      }),
+      node({
         id: 328,
         name: '数据统计',
         component: 'data_statistics',
         uri: '/data_statistics',
         type: 'menu',
         children: [
-          {
+          node({
             id: 329,
             name: '调度数据统计',
             component: 'workflowStatistics',
             uri: '/workflow/statistics',
             type: 'menu',
-            children: null,
-          },
+          }),
         ],
-      },
+      }),
     ],
-  },
+  }),
 ];
 
 function pathsOf(menus: { path: string; children?: unknown }[]): string[] {

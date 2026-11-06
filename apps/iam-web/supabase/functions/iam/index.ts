@@ -135,6 +135,9 @@ export default {
         if (path.endsWith('/auth/refresh')) {
           return await authRefresh(req, lang);
         }
+        if (path.endsWith('/auth/logout')) {
+          return await authLogout(req, lang);
+        }
         if (path.endsWith('/auth/menus')) {
           return await menusList(req, ctx, lang);
         }
@@ -294,6 +297,37 @@ async function authRefresh(req: Request, lang: string): Promise<Response> {
     token: session.access_token,
     refreshToken: session.refresh_token,
   });
+}
+
+// ==================== 登出（GoTrue signOut，宿主角落是清本地会话） ====================
+
+/**
+ * POST /auth/logout —— GoTrue 会话登出（凭 Bearer access_token）。
+ *
+ * 语义：登出在宿主侧主要是清本地会话（handleLogout 清 store/cache）；GoTrue 侧
+ * signOut 使 access/refresh token 失效是「尽力而为」——失败不致命（用户已本地登出，
+ * 服务端 token 随过期自然失效）。故恒返回成功，失败仅 warn。
+ */
+async function authLogout(req: Request, lang: string): Promise<Response> {
+  const url = Deno.env.get('SUPABASE_URL');
+  const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
+  if (!url || !anonKey) {
+    console.error('[iam] logout env missing');
+    return error(lang, 500, 'internalError', 500);
+  }
+
+  const authHeader = req.headers.get('authorization');
+  const res = await fetch(`${url}/auth/v1/logout`, {
+    method: 'POST',
+    headers: {
+      ...(authHeader ? { authorization: authHeader } : {}),
+      apikey: anonKey,
+      'content-type': 'application/json',
+    },
+    body: '{}',
+  });
+  if (!res.ok) console.warn('[iam] logout failed:', res.status);
+  return json(lang, { success: true });
 }
 
 // ==================== 菜单管理（RBAC，见 migrations/0001） ====================
@@ -521,9 +555,8 @@ async function menusList(
   };
   for (const row of rows) {
     const permRequired = row.type === 'button';
-    const allowed =
-      !row.hidden &&
-      (!permRequired || (row.uri != null && permSet.has(row.uri)));
+    // 按钮权限码 = code（自动码 m_<id>，11-04「全部自动码」约定；uri 恒 null）
+    const allowed = !row.hidden && (!permRequired || permSet.has(row.code));
     if (allowed) keep(row);
   }
   return json(lang, toTree(rows.filter((r) => visible.has(r.id))));
