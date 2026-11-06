@@ -627,9 +627,12 @@ function parseMenuInput(
   if (body.sort !== undefined) input.sort = Number(body.sort) || 0;
   if (body.icon !== undefined)
     input.icon = body.icon === null ? null : String(body.icon);
-  if (body.active_icon !== undefined)
-    input.active_icon =
-      body.active_icon === null ? null : String(body.active_icon);
+  // activeIcon（camelCase，前端 MenuInput 形态）与 active_icon（snake_case，DB 列）
+  // 双形态入参兼容——camelCase 会被 DB 静默丢弃，故必须归一
+  const rawActiveIcon =
+    body.active_icon !== undefined ? body.active_icon : body.activeIcon;
+  if (rawActiveIcon !== undefined)
+    input.active_icon = rawActiveIcon === null ? null : String(rawActiveIcon);
   if (body.hidden !== undefined) input.hidden = !!body.hidden;
   if (body.permission !== undefined)
     input.permission =
