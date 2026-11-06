@@ -439,19 +439,28 @@ async function resolveUser(
   return error || !data?.user ? null : { id: data.user.id };
 }
 
-/** 用户的权限码并集；admin 含 '*' 通配（seed），此处原样返回由调用方判定。 */
+/** 用户的权限码并集；admin 含 '*' 通配（seed），此处原样返回由调用方判定。
+ *  两步查询：user_roles 与 role_permissions 无直接 FK（两者都只引用 roles），
+ *  嵌入查询 role_permissions(permission) 会被 PostgREST 判为无关系 → 空集。
+ *  先取 role_id，再按 role_id 集取 permission。 */
 async function userPermissions(
   ctx: { supabase: SupabaseClient },
   userId: string,
 ): Promise<string[]> {
-  const { data } = await ctx.supabase
+  const { data: roleRows, error: roleErr } = await ctx.supabase
     .from('user_roles')
-    .select('role_permissions(permission)')
+    .select('role_id')
     .eq('user_id', userId);
-  return (data ?? []).flatMap(
-    (row: { role_permissions: { permission: string }[] }) =>
-      (row.role_permissions ?? []).map((p) => p.permission),
-  );
+  if (roleErr || !roleRows?.length) return [];
+
+  const roleIds = roleRows.map((r: { role_id: number }) => r.role_id);
+  const { data: permRows, error: permErr } = await ctx.supabase
+    .from('role_permissions')
+    .select('permission')
+    .in('role_id', roleIds);
+  if (permErr) return [];
+
+  return (permRows ?? []).map((p: { permission: string }) => p.permission);
 }
 
 /** 构建期节点：children 恒为数组（出口处终叶归 null，见 prune） */
