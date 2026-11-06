@@ -58,7 +58,7 @@ describe('setupMicroApps props 注入（首登 bug 修复）', () => {
       props: Record<string, unknown>;
     }>;
     expect(apps[0].props.token).toBe('t1');
-    expect(apps[0].props.permissions).toContain('m_321');
+    expect(apps[0].props.permissions).toContain('system:menu:list');
 
     useAuthStore.getState().setToken('t2');
     expect(apps[0].props.token).toBe('t2');
@@ -126,6 +126,6 @@ describe('setupMicroApps props 注入（首登 bug 修复）', () => {
       props: Record<string, unknown>;
     }>;
     expect(apps[0].props.token).toBe('mock-access-token');
-    expect(apps[0].props.permissions).toContain('m_321');
+    expect(apps[0].props.permissions).toContain('system:menu:list');
   });
 });

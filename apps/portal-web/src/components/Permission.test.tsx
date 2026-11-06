@@ -14,7 +14,7 @@ describe('Permission（§7.4）', () => {
   it('有权限码 → 原样渲染 children', () => {
     useMenuStore.getState().setMenus(mockMenus);
     render(
-      <Permission code="m_311">
+      <Permission code="system:user:list">
         <button type="button">删除</button>
       </Permission>,
     );

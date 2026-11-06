@@ -24,17 +24,21 @@ describe('rolesApi（admin 身份）', () => {
     const admin = roles.find((r) => r.code === 'admin');
     expect(admin?.permissionCount).toBe(1); // '*'
     const guest = roles.find((r) => r.code === 'guest');
-    expect(guest?.permissionCount).toBe(4); // home/iam/users/menus
+    expect(guest?.permissionCount).toBe(3); // system:menu/user/role:list
   });
 
-  it('getPermissions → 返回该角色授权 code 集合', async () => {
+  it('getPermissions → 返回该角色授权权限码集合', async () => {
     const perms = await rolesApi.getPermissions(2);
-    expect(perms).toEqual(['home', 'iam', 'users', 'menus']);
+    expect(perms).toEqual([
+      'system:menu:list',
+      'system:user:list',
+      'system:role:list',
+    ]);
   });
 
   it('savePermissions → 全量替换落库；getPermissions 反映新集合', async () => {
-    await rolesApi.savePermissions(2, ['home']);
-    expect(await rolesApi.getPermissions(2)).toEqual(['home']);
+    await rolesApi.savePermissions(2, ['system:menu:list']);
+    expect(await rolesApi.getPermissions(2)).toEqual(['system:menu:list']);
   });
 
   it('savePermissions 空数组 → throw（1018）', async () => {

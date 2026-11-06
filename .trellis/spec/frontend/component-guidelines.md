@@ -60,6 +60,13 @@ interface PermissionProps {
 - `mode='disabled'`：无权限时 `React.cloneElement(children, { disabled: true })`。目标元素是带 `btn` 的原生 `<button>/<a>`；具体禁用实现（原生 `disabled` 属性 / `btn-disabled` 类 / `aria-disabled`）按 daisyui `button` 指南执行。
 - 判断依据是 `state.menu.permissions`（后端菜单提取 + 外部合并的权限码，见 [状态管理](./state-management.md)）；无 `permission`（空）视为放行。
 
+### 权限码同源（RBAC 任务 11-06）
+
+- **权限码 = 接口鉴权锚点**：菜单节点上的 `permission`（语义码 `模块:资源:操作`，如 `system:user:list`）既是后端 `requirePermission(perm)` 的比对值，也是前端 `Permission`/路由守卫的显隐依据——**前端隐藏与后端强制用同一份码**，禁止前端另造一套码集合。
+- **菜单节点挂 permission**：目录/菜单节点 = 进入权限、按钮节点 = 操作权限、`permission` 空 = 公开（所有登录用户可见）；admin 通配 `*`。值域是数据（菜单节点的字段值），不是代码常量表——新增操作 = 建一个 button 节点填 permission，不改鉴权代码。
+- **前端只是体验优化，后端才强制**：`Permission` 隐藏按钮不替代后端 `requirePermission`；独立态（宿主未注入 permissions）一律渲染，写操作靠接口 403 兜底。
+- iam 子应用自建 `src/components/Permission.tsx`（`<Permission code mode="hide|disabled">`，读 `props.permissions`），与基座 `Permission`（读 `state.menu.permissions`）同语义、不同数据源——跨应用不互引，按各自 props/store 取码。
+
 ## 侧边栏与布局
 
 用 daisyUI `drawer` 组装：桌面常驻 `lg:drawer-open`，小屏通过 `drawer-toggle` 复选框切换（daisyui `drawer` 指南）。`drawer-content` 里放 navbar 与内容区：

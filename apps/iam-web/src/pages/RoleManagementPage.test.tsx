@@ -27,20 +27,25 @@ describe('RoleManagementPage', () => {
     localStorage.removeItem('iam_token');
   });
 
-  it('选中角色 → 树回显其授权（guest 授权 home/iam 树）', async () => {
+  it('选中角色 → 树回显其授权（guest 授权 system:* 读码）', async () => {
     localStorage.setItem('iam_token', 'mock-admin');
     const user = userEvent.setup();
     render(<RoleManagementPage />);
     await waitFor(() => expect(screen.getByText('游客')).toBeInTheDocument());
     await user.click(screen.getByText('游客'));
-    // 树回显：首页 checkbox 应勾选（guest 授权含 home）
+    // 树回显：guest 授权 system:user:list/system:menu:list → 用户管理/菜单管理勾选；
+    // 首页/系统管理 permission 为空（公开节点）→ 不勾选
     await waitFor(() => {
-      const homeCheckbox = screen
-        .getByText('首页')
+      const usersCheckbox = screen
+        .getByText('用户管理')
         .closest('label')!
         .querySelector('input')!;
-      expect(homeCheckbox.checked).toBe(true);
+      expect(usersCheckbox.checked).toBe(true);
     });
+    expect(
+      screen.getByText('首页').closest('label')!.querySelector('input')!
+        .checked,
+    ).toBe(false);
     localStorage.removeItem('iam_token');
   });
 

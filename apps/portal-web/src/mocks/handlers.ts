@@ -52,7 +52,7 @@ export const mockMenus: MenuItem[] = [
             id: 311,
             name: '查看',
             path: '',
-            permission: 'm_311',
+            permission: 'system:user:list',
           },
         ],
       },
@@ -67,7 +67,7 @@ export const mockMenus: MenuItem[] = [
             id: 321,
             name: '查看',
             path: '',
-            permission: 'm_321',
+            permission: 'system:menu:list',
           },
         ],
       },
@@ -85,14 +85,14 @@ export const mockMenus: MenuItem[] = [
 /**
  * 菜单原始格式（iam Edge Fn GET /auth/menus 返回结构，任务 11-06 切换后）。
  * fetchMenus 内 transformMenu 转换为项目 MenuItem 格式。
- * 新契约要点：无 parent/menuType；scopes = A/C；code = m_<id> 自动码（按钮即权限码）；
+ * 新契约要点：无 parent/menuType；scopes = A/C；permission = 语义权限码（菜单=进入码、按钮=操作码、空=公开）；
  * app 的 component = 子应用注册键（home/iam）、uri = 默认落点路由。
  */
 const mockRawMenus = [
   {
     id: 1,
     pid: null,
-    code: 'm_1',
+    permission: null,
     name: '首页',
     component: null,
     uri: '/home',
@@ -107,7 +107,7 @@ const mockRawMenus = [
   {
     id: 3,
     pid: null,
-    code: 'm_3',
+    permission: null,
     name: '系统管理',
     component: 'iam',
     uri: '/iam',
@@ -121,7 +121,7 @@ const mockRawMenus = [
       {
         id: 31,
         pid: 3,
-        code: 'm_31',
+        permission: 'system:user:list',
         name: '用户管理',
         component: null,
         uri: '/users',
@@ -135,7 +135,7 @@ const mockRawMenus = [
           {
             id: 311,
             pid: 31,
-            code: 'm_311',
+            permission: 'system:user:list',
             name: '查看',
             component: null,
             uri: null,
@@ -152,7 +152,7 @@ const mockRawMenus = [
       {
         id: 32,
         pid: 3,
-        code: 'm_32',
+        permission: 'system:menu:list',
         name: '菜单管理',
         component: null,
         uri: '/menus',
@@ -166,7 +166,7 @@ const mockRawMenus = [
           {
             id: 321,
             pid: 32,
-            code: 'm_321',
+            permission: 'system:menu:list',
             name: '查看',
             component: null,
             uri: null,
@@ -183,7 +183,7 @@ const mockRawMenus = [
       {
         id: 33,
         pid: 3,
-        code: 'm_33',
+        permission: 'system:role:list',
         name: '角色管理',
         component: null,
         uri: '/roles',

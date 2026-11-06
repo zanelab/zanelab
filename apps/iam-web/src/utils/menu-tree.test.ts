@@ -12,7 +12,7 @@ function row(
   return {
     id,
     pid,
-    code: `code-${id}`,
+    permission: null,
     name: `n${id}`,
     component: '',
     uri: null,

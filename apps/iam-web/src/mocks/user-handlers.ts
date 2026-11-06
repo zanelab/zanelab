@@ -6,16 +6,18 @@ import {
   INTEGRATION_PREFIX,
 } from '../api/endpoints';
 import type { UserRecord } from '../api/users';
+import { resolvePermissions, can } from './auth';
 
 /*
  * iam 子应用用户 mock handler（用户自身接口的 mock 契约，与菜单 mock 同模式）。
  *
  * 契约 = Edge Fn 用户端点：
- * - GET  /auth/users          → 用户列表（admin-only）
- * - PUT  /users/:id/roles     → 角色分配（admin-only；全量替换）
- * - PUT  /users/:id/ban       → 禁用/恢复（admin-only；自禁 1015）
+ * - GET  /auth/users          → 用户列表（require system:user:list）
+ * - PUT  /users/:id/roles     → 角色分配（require system:user:assign；全量替换）
+ * - PUT  /users/:id/ban       → 禁用/恢复（require system:user:ban；自禁 1015）
  *
- * 身份判定与 otp/menu handlers 同款：Bearer mock-admin = admin，其余 = 游客。
+ * 身份判定：resolvePermissions(request)（admin '*' / 游客读码 / 匿名空），
+ * 按权限码放行（requirePermission 同语义）。
  */
 
 const seedUsers: UserRecord[] = [
@@ -45,29 +47,24 @@ const fail = (code: number, msg: string, status = 400) =>
 
 const pagePaths = (p: string) => [p, `${INTEGRATION_PREFIX}${p}`];
 
-function identity(request: Request): 'admin' | 'guest' {
-  const auth = request.headers.get('authorization') ?? '';
-  return auth === 'Bearer mock-admin' ? 'admin' : 'guest';
-}
-
 const VALID_ROLES = ['admin', 'guest'];
 
 export const iamUserHandlers = [
-  // GET 列表（admin-only；游客 403）
+  // GET 列表（require system:user:list）
   ...pagePaths(USERS_LIST_PATH).map((path) =>
     http.get(path, async ({ request }) => {
       await delay(200);
-      if (identity(request) !== 'admin')
+      if (!can(resolvePermissions(request), 'system:user:list'))
         return fail(1011, '没有执行此操作的权限', 403);
       return ok(users);
     }),
   ),
 
-  // PUT 角色分配（全量替换；自改放行——角色分配无自保护语义）
+  // PUT 角色分配（全量替换；require system:user:assign）
   ...pagePaths(USER_ROLES_PATH(':id')).map((path) =>
     http.put(path, async ({ request, params }) => {
       await delay(200);
-      if (identity(request) !== 'admin')
+      if (!can(resolvePermissions(request), 'system:user:assign'))
         return fail(1011, '没有执行此操作的权限', 403);
       const id = String(params['id']);
       const row = users.find((u) => u.id === id);
@@ -83,11 +80,11 @@ export const iamUserHandlers = [
     }),
   ),
 
-  // PUT 禁用/恢复（自禁 1015；被禁用户标记 banned_until）
+  // PUT 禁用/恢复（自禁 1015；require system:user:ban）
   ...pagePaths(USER_BAN_PATH(':id')).map((path) =>
     http.put(path, async ({ request, params }) => {
       await delay(200);
-      if (identity(request) !== 'admin')
+      if (!can(resolvePermissions(request), 'system:user:ban'))
         return fail(1011, '没有执行此操作的权限', 403);
       const id = String(params['id']);
       const row = users.find((u) => u.id === id);

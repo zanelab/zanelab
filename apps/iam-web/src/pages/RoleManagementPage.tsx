@@ -17,8 +17,8 @@ import { showToast } from '../utils/notify';
  * 收集时只收勾选节点自身 code（不含半选父节点的空壳）。
  */
 
-/** 勾选状态：checked 集合 + 初始快照（还原用）。 */
-type CheckState = { checked: Set<string>; initial: Set<string> };
+/** 勾选状态：勾选的节点 id 集合 + 初始快照（还原用）。 */
+type CheckState = { checked: Set<number>; initial: Set<number> };
 
 /** 平铺树（递归收集 code 用）。 */
 function flattenNodes(nodes: MenuItemRecord[]): MenuItemRecord[] {
@@ -26,8 +26,8 @@ function flattenNodes(nodes: MenuItemRecord[]): MenuItemRecord[] {
 }
 
 /** 收集子树全部 code（勾选父节点时级联）。 */
-function collectSubtreeCodes(node: MenuItemRecord): string[] {
-  return [node.code, ...(node.children ?? []).flatMap(collectSubtreeCodes)];
+function collectSubtreeIds(node: MenuItemRecord): number[] {
+  return [node.id, ...(node.children ?? []).flatMap(collectSubtreeIds)];
 }
 
 export function RoleManagementPage() {
@@ -100,8 +100,14 @@ export function RoleManagementPage() {
     setSelectedRole(role);
     try {
       const perms = await rolesApi.getPermissions(role.id);
-      const initial = new Set(perms);
-      setCheck({ checked: new Set(perms), initial });
+      const permSet = new Set(perms);
+      // 授权集合（permission 字符串）→ 勾选的节点 id（permission 命中的节点勾选）
+      const initialIds = new Set(
+        flattenNodes(tree)
+          .filter((n) => n.permission && permSet.has(n.permission))
+          .map((n) => n.id),
+      );
+      setCheck({ checked: new Set(initialIds), initial: new Set(initialIds) });
     } catch (e) {
       const msg =
         e instanceof Error && e.message ? e.message : t('iam.role.loadFailed');
@@ -114,9 +120,9 @@ export function RoleManagementPage() {
   const toggleNode = (node: MenuItemRecord, shouldCheck: boolean) => {
     setCheck((prev) => {
       const next = new Set(prev.checked);
-      for (const code of collectSubtreeCodes(node)) {
-        if (shouldCheck) next.add(code);
-        else next.delete(code);
+      for (const id of collectSubtreeIds(node)) {
+        if (shouldCheck) next.add(id);
+        else next.delete(id);
       }
       return { ...prev, checked: next };
     });
@@ -125,12 +131,12 @@ export function RoleManagementPage() {
   /** 节点三态：自身 checked / 部分子选中 → indeterminate / 否则 unchecked。 */
   const nodeState = (
     node: MenuItemRecord,
-    checked: Set<string>,
+    checked: Set<number>,
   ): 'checked' | 'indeterminate' | 'unchecked' => {
-    if (checked.has(node.code)) return 'checked';
+    if (checked.has(node.id)) return 'checked';
     const children = node.children ?? [];
     if (children.length === 0) return 'unchecked';
-    const anyChecked = flattenNodes(children).some((c) => checked.has(c.code));
+    const anyChecked = flattenNodes(children).some((c) => checked.has(c.id));
     return anyChecked ? 'indeterminate' : 'unchecked';
   };
 
@@ -144,7 +150,11 @@ export function RoleManagementPage() {
     if (!selectedRole || saving) return;
     setSaving(true);
     try {
-      await rolesApi.savePermissions(selectedRole.id, [...check.checked]);
+      // 勾选节点 → 收集其 permission（非空才入集合；空 permission 的公开节点不产生授权项）
+      const perms = flattenNodes(tree)
+        .filter((n) => check.checked.has(n.id) && n.permission)
+        .map((n) => n.permission!);
+      await rolesApi.savePermissions(selectedRole.id, perms);
       // 保存成功后把新集合设为初始（还原基线刷新）
       setCheck((prev) => ({ ...prev, initial: new Set(prev.checked) }));
       showToast(t('iam.role.saved'), 'success');
@@ -312,11 +322,11 @@ function RoleTree({
 }: {
   nodes: MenuItemRecord[];
   depth: number;
-  check: Set<string>;
+  check: Set<number>;
   onToggle: (node: MenuItemRecord, checked: boolean) => void;
   nodeState: (
     node: MenuItemRecord,
-    checked: Set<string>,
+    checked: Set<number>,
   ) => 'checked' | 'indeterminate' | 'unchecked';
 }) {
   const [collapsed, setCollapsed] = useState<Set<number>>(new Set());

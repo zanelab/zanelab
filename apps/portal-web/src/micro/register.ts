@@ -409,13 +409,18 @@ export function setupHostState() {
 }
 
 /**
- * App 顶层挂载一次：global-logout 事件 → 跳登录页（§5.3）。
+ * App 顶层挂载一次：global-logout 事件 → 整页跳登录页（§5.3）。
  * 注意：事件由 handleLogout 派发（清理已完成），此处**只导航**——
  * 若在这里再调 handleLogout 会再次派发同一事件 → 无限循环。
- * 返回清理函数（测试用）。
+ *
+ * redirect 由调用方注入（App 传 window.location.replace）：登出/会话失效要
+ * 穿越 layout↔auth 两套 React 树，SubAppLayer 常驻容器在整树切换时被 React
+ * 卸载重建，而 qiankun 的 single-spa 只响应 popstate/hashchange，不响应客户端
+ * pushState → 子应用不会重挂载到新容器，DOM 孤悬成白屏。整页跳转与启动期
+ * redirectToLogin 同语义，彻底重建容器与子应用。返回清理函数（测试用）。
  */
-export function watchGlobalLogout(navigate: (path: string) => void) {
-  const handler = () => navigate(appConfig.auth.loginPath);
+export function watchGlobalLogout(redirect: (path: string) => void) {
+  const handler = () => redirect(appConfig.auth.loginPath);
   window.addEventListener('global-logout', handler);
   return () => window.removeEventListener('global-logout', handler);
 }

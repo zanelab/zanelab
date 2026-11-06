@@ -17,7 +17,8 @@ src/
 supabase/
   config.toml                # CLI 配置（verify_jwt = false）
   migrations/0001_rbac_init.sql # RBAC 底座：menus/roles/user_roles/role_permissions + 注册触发器
-  functions/iam/index.ts     # Edge Function（OTP send + verify；菜单 list/CRUD）
+  migrations/0002_permission.sql # 权限体系重构：menus 加 permission 语义权限码 + 删冗余 code
+  functions/iam/index.ts     # Edge Function（OTP send + verify；菜单 list/CRUD + 权限鉴权）
 ```
 
 ## 认证契约
@@ -29,14 +30,52 @@ supabase/
 
 错误消息根据 `Accept-Language` 返回中文或英文；缺省 zh-CN。
 
+## RBAC 权限体系（任务 11-06）
+
+权限码 = **接口鉴权锚点**（NIST RBAC：Permission = 操作 × 资源，值域 `模块:资源:操作`）。菜单节点挂 `permission`，前端隐藏与后端强制用同一份码（同源）。
+
+### 权限码清单（固定值，挂在菜单节点上而非代码常量表）
+
+| 模块 | 读（菜单节点 = 进入权限） | 写（按钮节点 = 操作权限） |
+| --- | --- | --- |
+| menu | `system:menu:list` | `system:menu:create` / `system:menu:update` / `system:menu:delete` |
+| user | `system:user:list` | `system:user:assign` / `system:user:ban` |
+| role | `system:role:list` | `system:role:assign` |
+
+`permission` 为空 = 公开（所有登录用户可见）；`*` = admin 通配（admin 角色默认持有）。
+
+### 鉴权矩阵（Edge Fn `requirePermission`，只校验权限码不校验角色）
+
+| 端点 | 方法 | 权限码 |
+| --- | --- | --- |
+| `/auth/menus` | GET | 登录分支 `system:menu:list`（匿名走 scopes 含 C 公开子集） |
+| `/menus` | POST | `system:menu:create` |
+| `/menus/:id` | PUT | `system:menu:update` |
+| `/menus/:id` | DELETE | `system:menu:delete` |
+| `/auth/users` | GET | `system:user:list` |
+| `/users/:id/roles` | PUT | `system:user:assign` |
+| `/users/:id/ban` | PUT | `system:user:ban` |
+| `/auth/roles` | GET | `system:role:list` |
+| `/auth/roles/:id/permissions` | GET | `system:role:list` |
+| `/auth/roles/:id/permissions` | PUT | `system:role:assign` |
+
+### 菜单可见性规则（`GET /auth/menus`）
+
+```
+匿名                    → hidden=false + scopes 含 C + 非按钮（+ 祖先链）
+登录 + permission 空    → 公开（所有登录用户可见）
+登录 + permission 非空  → 角色授权该码才可见（+ 祖先链）
+admin（权限含 '*'）      → 全量（含 hidden）
+```
+
 ## 菜单契约（RBAC；任务 11-04 修订后）
 
 | 端点 | 方法 | 鉴权 | 说明 |
 | --- | --- | --- | --- |
-| `/auth/menus` | GET | 匿名可调 | 无/无效 JWT → 游客可见子集（`hidden=false + scopes 含 C（客户端） + 非按钮` + 祖先链）；有效 JWT → 按用户角色权限过滤；admin（权限含 `*`）→ 全量 |
-| `/menus` | POST | 仅 admin | 无 JWT → 1010/401；非 admin → 1011/403；**类型联动校验违例 → 1014/400**；编码（code）由服务端自动生成（`m_<id>`，请求不携带） |
-| `/menus/:id` | PUT | 仅 admin | 更新（缺省字段沿用行值后再校验；编码不可改——body.code 忽略） |
-| `/menus/:id` | DELETE | 仅 admin | 删除（FK 级联子树；id 不存在 → 1013/404） |
+| `/auth/menus` | GET | 匿名可调 | 无/无效 JWT → 游客可见子集（见上「可见性规则」）；有效 JWT → 按权限过滤；admin（权限含 `*`）→ 全量 |
+| `/menus` | POST | `system:menu:create` | 无 JWT → 1010/401；无码 → 1011/403；**类型联动校验违例 → 1014/400**；`permission` 由请求体携带（选填，空 = 公开） |
+| `/menus/:id` | PUT | `system:menu:update` | 更新（缺省字段沿用行值后再校验；permission 可改） |
+| `/menus/:id` | DELETE | `system:menu:delete` | 删除（FK 级联子树；id 不存在 → 1013/404） |
 
 **类型联动矩阵**（前端弹窗与 Edge Fn 同一语义，绕过前端直调 API 同样被拦）：
 
@@ -53,11 +92,11 @@ supabase/
 
 | 端点 | 方法 | 鉴权 | 说明 |
 | --- | --- | --- | --- |
-| `/auth/roles` | GET | 仅 admin | 角色列表（roles 表 + 授权菜单数） |
-| `/auth/roles/:id/permissions` | GET | 仅 admin | 该角色已授权 code 集合（`*` 记入） |
-| `/auth/roles/:id/permissions` | PUT | 仅 admin | 全量替换授权（`{ permissions: string[] }`）；值域 = menus 表的 code 或 `*`；空数组 1018、非法值 1016 |
+| `/auth/roles` | GET | `system:role:list` | 角色列表（roles 表 + 授权权限码数） |
+| `/auth/roles/:id/permissions` | GET | `system:role:list` | 该角色已授权 permission 集合（`*` 记入） |
+| `/auth/roles/:id/permissions` | PUT | `system:role:assign` | 全量替换授权（`{ permissions: string[] }`）；值域 = menus 表的 permission 或 `*`；空数组 1018、非法值 1016 |
 
-**登录菜单可见性 = 纯授权**（角色管理任务）：登录用户（任意角色）只看角色被授权的 `code` 集合（所有类型，含祖先链）；admin 持 `*` 全量；匿名走 `scopes 含 C` 公开子集。注册默认 `guest` 角色无授权 → 登录后空菜单（管理员在角色页给 guest 勾选公开菜单即可）。
+**角色授权界面 = 权限树**：右侧树数据源 = `menusApi.list()`（含 permission 字段）；勾选节点收集其 `permission`（空 permission 的公开节点可勾选以联动子树但不产生授权项）；操作权限随按钮层级自动含入。
 
 ### 会话刷新与登出（任务：token refresh + 11-06 宿主切 iam）
 
@@ -70,13 +109,13 @@ supabase/
 
 | 端点 | 方法 | 鉴权 | 说明 |
 | --- | --- | --- | --- |
-| `/auth/users` | GET | 仅 admin | service role 列 `auth.users` + `user_roles`/`roles` 聚合（email/角色/`banned_until`/时间） |
-| `/users/:id/roles` | PUT | 仅 admin | 全量替换角色绑定（`{ roles: string[] }`，码须在 `roles` 表）；1016 = 角色码无效 |
-| `/users/:id/ban` | PUT | 仅 admin | 禁用/恢复（`{ disabled: boolean }`）→ `auth.admin.updateUserById` 置 GoTrue `banned_until`；**自禁 1015**；被禁用户下次 OTP 登录由 GoTrue 拒绝 |
+| `/auth/users` | GET | `system:user:list` | service role 列 `auth.users` + `user_roles`/`roles` 聚合（email/角色/`banned_until`/时间） |
+| `/users/:id/roles` | PUT | `system:user:assign` | 全量替换角色绑定（`{ roles: string[] }`，码须在 `roles` 表）；1016 = 角色码无效 |
+| `/users/:id/ban` | PUT | `system:user:ban` | 禁用/恢复（`{ disabled: boolean }`）→ `auth.admin.updateUserById` 置 GoTrue `banned_until`；**自禁 1015**；被禁用户下次 OTP 登录由 GoTrue 拒绝 |
 
-用户域的读与写均走 `ctx.supabaseAdmin`（`withSupabase` 提供的 secret-key client）—— `auth` schema 对 publishable key 不可见。页面路由 `/iam/users`（权限码 `system:user:list` 由 admin `*` 通配命中，未单独种子——用户确认）。
+用户域的读与写均走 `ctx.supabaseAdmin`（`withSupabase` 提供的 secret-key client）—— `auth` schema 对 publishable key 不可见。页面路由 `/iam/users`。
 
-- **RBAC 初始化**（`supabase/migrations/0001_rbac_init.sql`）：首个注册用户自动成为 `admin`（`auth.users` INSERT 触发器，`user_roles` 空表判定），其余注册用户默认 `guest`；角色权限种子随迁移写入（admin: `*` + `system:menu:*`；guest: 无——只能看公开子集）。
+- **RBAC 初始化**（`supabase/migrations/0001_rbac_init.sql`）：首个注册用户自动成为 `admin`（`auth.users` INSERT 触发器，`user_roles` 空表判定），其余注册用户默认 `guest`；角色权限种子随迁移写入（admin: `*`；guest: `system:menu:list` / `system:user:list` / `system:role:list` 读码——否则登录空菜单）。
 - **表结构（11-04 修订，已并入初始化迁移 0001）**：无 `menu_type`（与 type 重复）与 `parent`（旧树冗余，宿主消费端零使用，pid 单源承载树形）；有 `active_icon`（激活态图标，app/menu 类型成对使用）；`scopes` 值域 A/C。字段名与旧 `RawMenuItem` 契约已脱钩——宿主 `fetchMenus` 将来切数据源时 `transformMenu` 需做一层映射。
 - **不启用 RLS**：Edge Fn 是唯一写入口，前端不直连 Postgres；将来若引入 supabase-js 直查，必须先补 RLS。
 
@@ -107,12 +146,12 @@ curl -X POST https://<ref>.supabase.co/functions/v1/iam/auth/otp/verify \
 # 菜单列表（匿名 → 游客子集；带 Authorization: Bearer <JWT> → 按权限）
 curl -X POST https://<ref>.supabase.co/functions/v1/iam/auth/menus \
   -H "apikey: <publishable-key>"
-# 新建菜单（仅 admin；Bearer 用登录返回的 token）
+# 新建菜单（require system:menu:create；Bearer 用登录返回的 token）
 curl -X POST https://<ref>.supabase.co/functions/v1/iam/menus \
   -H 'content-type: application/json' \
   -H "apikey: <publishable-key>" \
   -H "authorization: Bearer <access-token>" \
-  -d '{"code":"roles","name":"角色管理","uri":"/roles","type":"menu","sort":3}'
+  -d '{"permission":"system:role:list","name":"角色管理","uri":"/roles","type":"menu","sort":3}'
 # → {"code":0,"data":{...新节点...},"msg":"ok"}
 ```
 
@@ -151,7 +190,7 @@ mock 用 MSW，handler 在 `src/mocks/otp-handlers.ts`（OTP）与 `src/mocks/me
 - 发码恒返 success（300ms 模拟延迟）
 - 验码接受任意 6 位数字（测试用 `123456`）
 - 验码成功返回 mock 会话
-- 菜单：内存数据模拟 CRUD；**身份按 `Authorization` 头判定**—— `Bearer mock-admin` → 全量 + 可写；无/Bearer mock-guest → 游客子集 + 写 403。独立态切换身份：devtools 里 `localStorage.iam_token = 'mock-admin'` 后刷新。
+- 菜单：内存数据模拟 CRUD；**身份按 `Authorization` 头判定（三级）**—— `Bearer mock-admin`（`*`）→ 全量 + 可写；`Bearer mock-guest`（读码）→ 按 permission 过滤 + 写 403；无头（匿名）→ scopes 含 C 公开子集 + 写 403。独立态切换身份：devtools 里 `localStorage.iam_token = 'mock-admin'`（或 `'mock-guest'`）后刷新。
 
 ### 集成态
 

@@ -22,7 +22,8 @@ import {
 export interface MenuItemRecord {
   id: number;
   pid: number | null;
-  code: string;
+  /** 语义权限码（system:menu:list）；目录/菜单=进入权限、按钮=操作权限、空=公开 */
+  permission: string | null;
   name: string;
   component: string | null;
   uri: string | null;
@@ -38,7 +39,8 @@ export interface MenuItemRecord {
 /** 菜单管理页可写的字段集合（id/pid/parent/created_at 由服务端管理）。 */
 export interface MenuInput {
   pid?: number | null;
-  /** 服务端自动生成（m_<id>），请求不携带 */
+  /** 语义权限码（system:menu:list 等；空 = 公开） */
+  permission?: string | null;
   name: string;
   component?: string | null;
   uri?: string | null;

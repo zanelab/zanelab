@@ -4,14 +4,15 @@
 //   POST   /auth/otp/send   { email }       → { code: 0, data: { success: true } }
 //   POST   /auth/otp/verify { email, code }   → { code: 0, data: { token, refreshToken, user } }
 //   GET    /auth/menus      （匿名可调）      → 游客可见子集；有效 JWT → 按权限过滤的菜单树
-//   POST   /menus           { ...菜单字段 }   → 新建（仅 admin）
-//   PUT    /menus/:id       { ...菜单字段 }   → 更新（仅 admin）
-//   DELETE /menus/:id                         → 删除（级联子树，仅 admin）
+//   POST   /menus           { ...菜单字段 }   → 新建（system:menu:create）
+//   PUT    /menus/:id       { ...菜单字段 }   → 更新（system:menu:update）
+//   DELETE /menus/:id                         → 删除（级联子树，system:menu:delete）
+//   GET/PUT /auth/roles[ /:id/permissions ]    → 角色/授权（system:role:list / system:role:assign）
+//   GET/PUT /auth/users[ /:id/roles | /:id/ban ] → 用户（system:user:list / assign / ban）
 //
-// 鉴权：菜单端点不做匿名拒绝——GET 无/无效 JWT 时返回游客可见子集
-// （hidden=false AND scopes @>'{O}' 且无权限要求 + 祖先链）；写端点要求
-// admin（第一个注册用户，user_roles 触发器分配，见 migrations/0001）。
-// 无 JWT 写 → 1010/401；非 admin 写 → 1011/403；code 重复 → 1012/400。
+// 鉴权（任务 11-06 RBAC）：requirePermission(perm) 只校验权限码不校验角色——
+// admin 即角色默认持 '*' 通配。无 JWT → 1010/401；无该权限码 → 1011/403。
+// 菜单 GET 匿名不拒绝：无/无效 JWT 时返回游客可见子集（scopes 含 C）。
 //
 // 语言：前端通过 Accept-Language header 传 locale（zh-CN / en-US），缺省 zh-CN。
 // envelope { code, data, msg } 对齐 portal http.ts 解包；code 0 = 成功。
@@ -41,9 +42,7 @@ const t: Record<string, Record<string, string>> = {
     internalError: '服务器内部错误',
     unauthorized: '请先登录',
     forbidden: '没有执行此操作的权限',
-    codeExists: '菜单编码已存在',
     menuNotFound: '菜单不存在',
-    menuRequired: '菜单名称和编码不能为空',
     typeMismatch: '字段与所选菜单类型不匹配（缺少必填项或值无效）',
     selfBan: '不能禁用当前登录的账号',
     invalidRoles: '角色编码无效',
@@ -61,9 +60,7 @@ const t: Record<string, Record<string, string>> = {
     internalError: 'Internal server error',
     unauthorized: 'Please sign in first',
     forbidden: 'You do not have permission to perform this action',
-    codeExists: 'Menu code already exists',
     menuNotFound: 'Menu not found',
-    menuRequired: 'Menu name and code are required',
     typeMismatch:
       'Fields do not match the selected menu type (missing required or invalid)',
   },
@@ -347,7 +344,8 @@ async function authLogout(req: Request, lang: string): Promise<Response> {
 interface MenuRow {
   id: number;
   pid: number | null;
-  code: string;
+  /** 语义权限码（system:menu:list）；目录/菜单=进入权限、按钮=操作权限、空=公开 */
+  permission: string | null;
   name: string;
   component: string;
   uri: string | null;
@@ -362,8 +360,8 @@ interface MenuRow {
 /** 菜单管理页可写的字段集合（id/pid/created_at 由服务端管理） */
 interface MenuInput {
   pid?: number | null;
-  /** 仅回填场景写入（create 后 m_<id>）；请求体里的 code 一律忽略（parseMenuInput 不读） */
-  code?: string;
+  /** 语义权限码（system:menu:list 等；空 = 公开） */
+  permission?: string | null;
   name?: string;
   component?: string | null;
   uri?: string | null;
@@ -376,7 +374,7 @@ interface MenuInput {
 }
 
 const MENU_COLUMNS =
-  'id,pid,code,name,component,uri,type,sort,icon,active_icon,hidden,scopes';
+  'id,pid,permission,name,component,uri,type,sort,icon,active_icon,hidden,scopes';
 
 /**
  * 类型联动校验矩阵（任务 11-04，用户提示词 F3）：
@@ -439,20 +437,6 @@ async function resolveUser(
   if (!token) return null;
   const { data, error } = await ctx.supabase.auth.getUser(token);
   return error || !data?.user ? null : { id: data.user.id };
-}
-
-/** 用户是否 admin：user_roles join roles.code='admin'。 */
-async function isAdmin(
-  ctx: { supabase: SupabaseClient },
-  userId: string,
-): Promise<boolean> {
-  const { data } = await ctx.supabase
-    .from('user_roles')
-    .select('roles!inner(code)')
-    .eq('user_id', userId)
-    .eq('roles.code', 'admin')
-    .limit(1);
-  return !!data && data.length > 0;
 }
 
 /** 用户的权限码并集；admin 含 '*' 通配（seed），此处原样返回由调用方判定。 */
@@ -549,8 +533,17 @@ async function menusList(
     return json(lang, toTree(rows.filter((r) => visible.has(r.id))));
   }
 
-  // 登录 → 按权限过滤
+  // 登录 → 读接口鉴权（system:menu:list）+ 按权限过滤
   const perms = await userPermissions(ctx, user.id);
+  if (!perms.includes('*') && !perms.includes('system:menu:list')) {
+    return new Response(
+      JSON.stringify({ code: 1011, data: null, msg: msg(lang, 'forbidden') }),
+      {
+        status: 403,
+        headers: { ...corsHeaders, 'content-type': 'application/json' },
+      },
+    );
+  }
   if (perms.includes('*')) {
     return json(lang, toTree(rows));
   }
@@ -565,18 +558,23 @@ async function menusList(
     }
   };
   for (const row of rows) {
-    // 纯授权（角色管理任务）：所有类型按角色被授权的 code 过滤；祖先链由 keep 保留。
-    // hidden 菜单即使授权也不显示（admin 的 '*' 全量已在上面短路）。
-    if (!row.hidden && permSet.has(row.code)) keep(row);
+    // 语义权限码（任务 11-06 RBAC 重构）：permission 空 = 公开（所有登录用户可见）；
+    // 非空 = 需角色授权该码；祖先链由 keep 保留；hidden 即使授权也不显示（admin '*' 已短路）。
+    if (!row.hidden && (!row.permission || permSet.has(row.permission)))
+      keep(row);
   }
   return json(lang, toTree(rows.filter((r) => visible.has(r.id))));
 }
 
-/** 写端点的公共前置：无 JWT → 401；非 admin → 403；通过 → 返回 user。 */
-async function requireAdmin(
+/**
+ * 接口鉴权前置（RBAC 语义权限码）：无 JWT → 401；角色无该权限码且非 '*' → 403；通过 → 返回 user。
+ * 只校验权限码，不校验角色（行业标准铁律）——admin 即「角色默认持有 '*'」。
+ */
+async function requirePermission(
   ctx: { supabase: SupabaseClient },
   req: Request,
   lang: string,
+  perm: string,
 ): Promise<{ id: string } | Response> {
   const user = await resolveUser(ctx, req.headers.get('authorization'));
   if (!user) {
@@ -592,7 +590,8 @@ async function requireAdmin(
       },
     );
   }
-  if (!(await isAdmin(ctx, user.id))) {
+  const perms = await userPermissions(ctx, user.id);
+  if (!perms.includes('*') && !perms.includes(perm)) {
     return new Response(
       JSON.stringify({ code: 1011, data: null, msg: msg(lang, 'forbidden') }),
       {
@@ -606,7 +605,7 @@ async function requireAdmin(
 
 /**
  * 归一化写请求体（类型裁剪 + 矩阵校验）；违例 → Error('VALIDATION:...')。
- * code 由服务端自动生成（m_<id>，见 insertMenuRow）——请求体里的 code 一律忽略。
+ * permission 由请求体携带（选填，空 = 公开）；无「编码」字段（11-06 已删 code）。
  */
 function parseMenuInput(
   body: Record<string, unknown>,
@@ -628,12 +627,15 @@ function parseMenuInput(
     input.active_icon =
       body.active_icon === null ? null : String(body.active_icon);
   if (body.hidden !== undefined) input.hidden = !!body.hidden;
+  if (body.permission !== undefined)
+    input.permission =
+      body.permission === null ? null : String(body.permission).trim();
   if (body.scopes !== undefined)
     input.scopes = Array.isArray(body.scopes)
       ? (body.scopes as string[]).map((s) => String(s))
       : [];
 
-  // 类型必填兜底（create）：type/name（code 由服务端生成，见 insertMenuRow）
+  // 类型必填兜底（create）：type/name
   const type = input.type ?? 'app';
   if (!['app', 'menu', 'button', 'group'].includes(type)) {
     throw new Error('VALIDATION:type');
@@ -667,7 +669,7 @@ async function menusCreate(
   ctx: { supabase: SupabaseClient },
   lang: string,
 ): Promise<Response> {
-  const auth = await requireAdmin(ctx, req, lang);
+  const auth = await requirePermission(ctx, req, lang, 'system:menu:create');
   if (auth instanceof Response) return auth;
   const user = auth;
 
@@ -686,7 +688,6 @@ async function menusCreate(
     return resp ?? error(lang, 500, 'internalError');
   }
 
-  // code 服务端生成（m_<id>，identity 主键回填后 update）——请求体里的 code 忽略
   const insert = {
     ...input,
     component: input.component ?? null,
@@ -700,19 +701,7 @@ async function menusCreate(
     console.error('[iam] menu create failed:', dbErr.message);
     return error(lang, 500, 'internalError');
   }
-  // 生成编码并回填（identity id 已知 → m_<id> 确定性唯一）
-  const generatedCode = `m_${data.id}`;
-  const { data: withCode, error: codeErr } = await ctx.supabase
-    .from('menus')
-    .update({ code: generatedCode })
-    .eq('id', data.id)
-    .select(MENU_COLUMNS)
-    .single();
-  if (codeErr) {
-    console.error('[iam] menu code backfill failed:', codeErr.message);
-    return error(lang, 500, 'internalError');
-  }
-  return json(lang, withCode);
+  return json(lang, data);
 }
 
 async function menusUpdate(
@@ -721,7 +710,7 @@ async function menusUpdate(
   lang: string,
   id: number,
 ): Promise<Response> {
-  const auth = await requireAdmin(ctx, req, lang);
+  const auth = await requirePermission(ctx, req, lang, 'system:menu:update');
   if (auth instanceof Response) return auth;
   const user = auth;
 
@@ -740,14 +729,11 @@ async function menusUpdate(
     return resp ?? error(lang, 500, 'internalError');
   }
 
-  // code 服务端管理（生成于 create）——update 不接受改码，剔除后再更新
-  const { code: _ignored, ...updatable } = input;
-
   // pid 自环/成环不做图遍历校验——FK 存在，自环由触发器外的应用层约定（MVP 接受）；
   // 真成环会导致 toTree 孤儿分支，重拉列表即可发现。
   const { data, error: dbErr } = await ctx.supabase
     .from('menus')
-    .update(updatable)
+    .update(input)
     .eq('id', id)
     .select(MENU_COLUMNS)
     .single();
@@ -764,7 +750,7 @@ async function menusDelete(
   lang: string,
   id: number,
 ): Promise<Response> {
-  const auth = await requireAdmin(ctx, req, lang);
+  const auth = await requirePermission(ctx, req, lang, 'system:menu:delete');
   if (auth instanceof Response) return auth;
   const user = auth;
 
@@ -811,10 +797,10 @@ async function fetchAllUserRoles(ctx: {
 /** 触发器给每个用户至少一个角色（首个 admin 余者 guest）——空角色视为数据异常，返回空列表由前端兜底。 */
 async function usersList(
   req: Request,
-  ctx: { supabaseAdmin: SupabaseClient },
+  ctx: { supabase: SupabaseClient; supabaseAdmin: SupabaseClient },
   lang: string,
 ): Promise<Response> {
-  const auth = await requireAdminUsers(ctx, req, lang);
+  const auth = await requirePermission(ctx, req, lang, 'system:user:list');
   if (auth instanceof Response) return auth;
 
   // service role 列 auth.users（auth schema 对 publishable 不可见）
@@ -860,7 +846,7 @@ function invalidRolesResponse(lang: string): Response {
 }
 
 async function validateRoleCodes(
-  ctx: { supabaseAdmin: SupabaseClient },
+  ctx: { supabase: SupabaseClient; supabaseAdmin: SupabaseClient },
   roleCodes: string[],
   lang: string,
 ): Promise<Response | null> {
@@ -875,45 +861,6 @@ async function validateRoleCodes(
   return null;
 }
 
-/**
- * requireAdmin 的 users 版：ctx 用 supabaseAdmin（isAdmin 查询与菜单共用同一实现，
- * 此处单独包装是因为 requireAdmin 绑定的是 ctx.supabase——两者表权限等价（RLS 未启），
- * 但语义上用户管理统一走 admin client）。
- */
-async function requireAdminUsers(
-  ctx: { supabaseAdmin: SupabaseClient },
-  req: Request,
-  lang: string,
-): Promise<{ id: string } | Response> {
-  const user = await resolveUser(
-    { supabase: ctx.supabaseAdmin },
-    req.headers.get('authorization'),
-  );
-  if (!user) {
-    return new Response(
-      JSON.stringify({
-        code: 1010,
-        data: null,
-        msg: msg(lang, 'unauthorized'),
-      }),
-      {
-        status: 401,
-        headers: { ...corsHeaders, 'content-type': 'application/json' },
-      },
-    );
-  }
-  if (!(await isAdmin({ supabase: ctx.supabaseAdmin }, user.id))) {
-    return new Response(
-      JSON.stringify({ code: 1011, data: null, msg: msg(lang, 'forbidden') }),
-      {
-        status: 403,
-        headers: { ...corsHeaders, 'content-type': 'application/json' },
-      },
-    );
-  }
-  return user;
-}
-
 /** PUT /users/:id/roles —— 全量替换角色绑定（admin-only）。 */
 async function usersAssignRoles(
   req: Request,
@@ -921,7 +868,7 @@ async function usersAssignRoles(
   lang: string,
   userId: string,
 ): Promise<Response> {
-  const auth = await requireAdminUsers(ctx, req, lang);
+  const auth = await requirePermission(ctx, req, lang, 'system:user:assign');
   if (auth instanceof Response) return auth;
 
   let body: { roles?: string[] };
@@ -971,7 +918,7 @@ async function usersBan(
   lang: string,
   userId: string,
 ): Promise<Response> {
-  const auth = await requireAdminUsers(ctx, req, lang);
+  const auth = await requirePermission(ctx, req, lang, 'system:user:ban');
   if (auth instanceof Response) return auth;
   const self = auth as { id: string };
 
@@ -1009,9 +956,9 @@ async function usersBan(
   return json(lang, { id: userId, disabled: !!body.disabled });
 }
 
-// ==================== 角色管理（admin-only；授权菜单 code → role_permissions） ====================
+// ==================== 角色管理（require 权限码；授权 permission → role_permissions） ====================
 
-/** 角色行（列表出参）：roles 表 + 授权菜单数 */
+/** 角色行（列表出参）：roles 表 + 授权权限码数 */
 interface RoleRow {
   id: number;
   code: string;
@@ -1022,10 +969,10 @@ interface RoleRow {
 /** 角色列表：roles 表 + 每个角色的授权码数量。 */
 async function rolesList(
   req: Request,
-  ctx: { supabaseAdmin: SupabaseClient },
+  ctx: { supabase: SupabaseClient; supabaseAdmin: SupabaseClient },
   lang: string,
 ): Promise<Response> {
-  const auth = await requireAdminUsers(ctx, req, lang);
+  const auth = await requirePermission(ctx, req, lang, 'system:role:list');
   if (auth instanceof Response) return auth;
 
   const { data: roles, error: rolesErr } = await ctx.supabaseAdmin
@@ -1062,7 +1009,7 @@ async function rolesList(
 
 /** 角色 id 解析：'*' 或数字；roles 表不存在 → 404。 */
 async function resolveRoleId(
-  ctx: { supabaseAdmin: SupabaseClient },
+  ctx: { supabase: SupabaseClient; supabaseAdmin: SupabaseClient },
   raw: string,
 ): Promise<number | Response> {
   const numeric = Number(raw);
@@ -1092,14 +1039,14 @@ async function resolveRoleId(
   return numeric;
 }
 
-/** GET /auth/roles/:id/permissions —— 该角色已授权 code 集合（'*' 记入）。 */
+/** GET /auth/roles/:id/permissions —— 该角色已授权 permission 集合（'*' 记入）。 */
 async function rolesGetPermissions(
   req: Request,
-  ctx: { supabaseAdmin: SupabaseClient },
+  ctx: { supabase: SupabaseClient; supabaseAdmin: SupabaseClient },
   lang: string,
   rawId: string,
 ): Promise<Response> {
-  const auth = await requireAdminUsers(ctx, req, lang);
+  const auth = await requirePermission(ctx, req, lang, 'system:role:list');
   if (auth instanceof Response) return auth;
 
   const roleId = await resolveRoleId(ctx, rawId);
@@ -1121,16 +1068,16 @@ async function rolesGetPermissions(
 
 /**
  * PUT /auth/roles/:id/permissions —— 全量替换授权。
- * 值域校验：每个值必须是 menus 表的 code 或 '*'（'*' 即 admin 通配全量）。
+ * 值域校验：每个值必须是 menus 表的 permission 或 '*'（'*' 即 admin 通配全量）。
  * 自保护：admin 角色的授权不可清空（清空后系统无管理员，谁也进不了角色页）。
  */
 async function rolesSavePermissions(
   req: Request,
-  ctx: { supabaseAdmin: SupabaseClient },
+  ctx: { supabase: SupabaseClient; supabaseAdmin: SupabaseClient },
   lang: string,
   rawId: string,
 ): Promise<Response> {
-  const auth = await requireAdminUsers(ctx, req, lang);
+  const auth = await requirePermission(ctx, req, lang, 'system:role:assign');
   if (auth instanceof Response) return auth;
 
   const roleId = await resolveRoleId(ctx, rawId);
@@ -1157,23 +1104,23 @@ async function rolesSavePermissions(
     );
   }
 
-  // 值域校验：'*' 或 menus 表存在的 code
-  const menusCodes = new Set<string>();
+  // 值域校验：'*' 或 menus 表存在的 permission
+  const menuPerms = new Set<string>();
   if (permissions.some((p) => p !== '*')) {
     const { data: menus, error: mErr } = await ctx.supabaseAdmin
       .from('menus')
-      .select('code')
+      .select('permission')
       .in(
-        'code',
+        'permission',
         permissions.filter((p) => p !== '*'),
       );
     if (mErr) {
-      console.error('[iam] menus code query failed:', mErr.message);
+      console.error('[iam] menus permission query failed:', mErr.message);
       return error(lang, 500, 'internalError', 500);
     }
-    for (const m of menus ?? []) menusCodes.add(m.code);
+    for (const m of menus ?? []) if (m.permission) menuPerms.add(m.permission);
   }
-  const invalid = permissions.filter((p) => p !== '*' && !menusCodes.has(p));
+  const invalid = permissions.filter((p) => p !== '*' && !menuPerms.has(p));
   if (invalid.length) {
     return new Response(
       JSON.stringify({

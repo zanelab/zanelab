@@ -35,9 +35,9 @@ describe('menusApi.list（经本地 http 客户端，无 token = 游客）', () 
     const tree = await menusApi.list();
     expect(Array.isArray(tree)).toBe(true);
     // 种子数据全部公开（scopes 含 C + hidden=false）→ 游客也看得到，但仍是树
-    const home = tree.find((n) => n.code === 'home');
+    const home = tree.find((n) => n.name === '首页');
     expect(home).toBeDefined();
-    const iam = tree.find((n) => n.code === 'iam');
+    const iam = tree.find((n) => n.name === '系统管理');
     expect(iam?.children?.length).toBeGreaterThan(0);
   });
 
@@ -66,12 +66,12 @@ describe('menusApi CRUD（admin 身份，localStorage 注入 token）', () => {
   it('create → 编码自动生成（m_<id>）；list 可见', async () => {
     const created = await menusApi.create(input);
     expect(created.id).toBeGreaterThan(0);
-    expect(created.code).toBe(`m_${created.id}`);
+    expect(created.permission).toBeNull();
     const tree = await menusApi.list();
     expect(
       tree
         .flatMap((n) => [n, ...(n.children ?? [])])
-        .some((n) => n.code === created.code),
+        .some((n) => n.id === created.id),
     ).toBe(true);
   });
 

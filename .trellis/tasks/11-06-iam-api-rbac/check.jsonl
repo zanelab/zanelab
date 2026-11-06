@@ -1,0 +1,2 @@
+{"file": ".trellis/spec/frontend/index.md", "reason": "核心不变式——权限「体验优化 vs 真鉴权在后端」的边界（接口级 RBAC 落在 Edge Fn，前端只是体验）"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "测试策略与评审清单——requirePermission 语义用例、Permission 组件显隐、权限树收集用例"}

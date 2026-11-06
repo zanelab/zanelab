@@ -6,6 +6,7 @@ import {
   INTEGRATION_PREFIX,
 } from '../api/endpoints';
 import type { MenuItemRecord } from '../api/menus';
+import { resolvePermissions, can } from './auth';
 
 /*
  * iam 子应用菜单 mock handler（iam 自身接口的 mock 契约，design DD6）。
@@ -17,9 +18,10 @@ import type { MenuItemRecord } from '../api/menus';
  * - PUT    /menus/:id               → 更新（仅 admin）
  * - DELETE /menus/:id               → 删除（级联子树，仅 admin）
  *
- * 身份模拟（README「mock 路线」节）：handler 读 Authorization 头——
- * - 无 / Bearer mock-guest：游客子集 + 写操作 403
- * - Bearer mock-admin：全量 + 写操作成功
+ * 身份模拟（README「mock 路线」节）：handler 读 Authorization 头 ——
+ * - 无 Authorization：匿名 → scopes C 游客子集 + 写操作 403
+ * - Bearer mock-guest：游客（读码）→ 按 permission 过滤 + 写操作 403
+ * - Bearer mock-admin：admin('*') → 全量 + 写操作成功
  * 独立态切换身份：devtools 里 localStorage.iam_token = 'mock-admin' 后刷新。
  *
  * 路径派生：与 otp-handlers 同模式（pagePaths），常量来自 api/endpoints.ts，
@@ -33,7 +35,7 @@ const seedMenus: MenuItemRecord[] = [
   {
     id: 1,
     pid: null,
-    code: 'home',
+    permission: null,
     name: '首页',
     component: null,
     uri: '/home',
@@ -48,7 +50,7 @@ const seedMenus: MenuItemRecord[] = [
   {
     id: 3,
     pid: null,
-    code: 'iam',
+    permission: null,
     name: '系统管理',
     component: 'iam',
     uri: '/iam',
@@ -62,7 +64,7 @@ const seedMenus: MenuItemRecord[] = [
       {
         id: 31,
         pid: 3,
-        code: 'users',
+        permission: 'system:user:list',
         name: '用户管理',
         component: null,
         uri: '/users',
@@ -77,7 +79,7 @@ const seedMenus: MenuItemRecord[] = [
       {
         id: 32,
         pid: 3,
-        code: 'menus',
+        permission: 'system:menu:list',
         name: '菜单管理',
         component: null,
         uri: '/menus',
@@ -101,11 +103,6 @@ const fail = (code: number, msg: string, status = 400) =>
 
 /** 集成态页面 fetch 带 /iam 前缀（SW 拦截在宿主 proxy rewrite 之前），两种路径形态都登记。 */
 const pagePaths = (p: string) => [p, `${INTEGRATION_PREFIX}${p}`];
-
-function identity(request: Request): 'admin' | 'guest' {
-  const auth = request.headers.get('authorization') ?? '';
-  return auth === 'Bearer mock-admin' ? 'admin' : 'guest';
-}
 
 /** 类型联动矩阵（与页面 TYPE_MATRIX / Edge Fn TYPE_FIELD_MATRIX 同语义）。 */
 const TYPE_MATRIX: Record<
@@ -143,8 +140,11 @@ function flatten(tree: MenuItemRecord[]): MenuItemRecord[] {
   return tree.flatMap((n) => [n, ...flatten(n.children ?? [])]);
 }
 
-/** 游客可见过滤（对齐 Edge Fn 11-04 规则）：hidden=false + scopes 含 C + 非 button + 祖先链。 */
-function guestView(tree: MenuItemRecord[]): MenuItemRecord[] {
+/** 按谓词过滤树（含祖先链保留）：镜像 Edge Fn menusList 的 keep/prune。 */
+function filterTree(
+  tree: MenuItemRecord[],
+  predicate: (n: MenuItemRecord) => boolean,
+): MenuItemRecord[] {
   const flat = flatten(tree);
   const byId = new Map(flat.map((n) => [n.id, n]));
   const visible = new Set<number>();
@@ -157,7 +157,7 @@ function guestView(tree: MenuItemRecord[]): MenuItemRecord[] {
     }
   };
   for (const n of flat) {
-    if (!n.hidden && n.scopes.includes('C') && n.type !== 'button') keep(n);
+    if (predicate(n)) keep(n);
   }
   const prune = (nodes: MenuItemRecord[]): MenuItemRecord[] =>
     nodes
@@ -196,19 +196,39 @@ function attach(tree: MenuItemRecord[], node: MenuItemRecord): boolean {
 }
 
 export const iamMenuHandlers = [
-  // GET 列表（匿名/游客 → 子集；mock-admin → 全量）
+  // GET 列表（镜像 Edge Fn menusList）：匿名 → scopes C 子集；登录 → 按权限过滤；admin('*') → 全量
   ...pagePaths(MENUS_LIST_PATH).map((path) =>
     http.get(path, async ({ request }) => {
       await delay(200);
-      return ok(identity(request) === 'admin' ? menus : guestView(menus));
+      const perms = resolvePermissions(request);
+      if (perms.includes('*')) return ok(menus);
+      if (perms.length === 0) {
+        // 匿名：hidden=false + scopes 含 C + 非 button（按钮是权限粒度非导航）
+        return ok(
+          filterTree(
+            menus,
+            (n) => !n.hidden && n.scopes.includes('C') && n.type !== 'button',
+          ),
+        );
+      }
+      // 登录：先要求 system:menu:list 读码；再按 permission 过滤（空=公开，非空=授权）
+      if (!can(perms, 'system:menu:list'))
+        return fail(1011, '没有执行此操作的权限', 403);
+      const permSet = new Set(perms);
+      return ok(
+        filterTree(
+          menus,
+          (n) => !n.hidden && (!n.permission || permSet.has(n.permission)),
+        ),
+      );
     }),
   ),
 
-  // POST 新建（仅 admin）
+  // POST 新建（require system:menu:create）
   ...pagePaths(MENUS_COLLECTION_PATH).map((path) =>
     http.post(path, async ({ request }) => {
       await delay(200);
-      if (identity(request) !== 'admin')
+      if (!can(resolvePermissions(request), 'system:menu:create'))
         return fail(1011, '没有执行此操作的权限', 403);
       const body = (await request.json().catch(() => null)) as Record<
         string,
@@ -223,7 +243,7 @@ export const iamMenuHandlers = [
       const node: MenuItemRecord = {
         id: newId,
         pid: (body.pid as number | null) ?? null,
-        code: `m_${newId}`, // 编码服务端自动生成（与 Edge Fn m_<id> 同语义）
+        permission: (body.permission as string | null) ?? null,
         name: String(body.name),
         component: matrix.component
           ? ((body.component as string | null) ?? null)
@@ -247,11 +267,11 @@ export const iamMenuHandlers = [
     }),
   ),
 
-  // PUT 更新（仅 admin）
+  // PUT 更新（require system:menu:update）
   ...pagePaths(MENUS_ITEM_PATH(':id')).map((path) =>
     http.put(path, async ({ request, params }) => {
       await delay(200);
-      if (identity(request) !== 'admin')
+      if (!can(resolvePermissions(request), 'system:menu:update'))
         return fail(1011, '没有执行此操作的权限', 403);
       const id = Number(params['id']);
       const row = flatten(menus).find((n) => n.id === id);
@@ -260,7 +280,7 @@ export const iamMenuHandlers = [
         string,
         unknown
       >;
-      // 编码服务端管理（create 时 m_<id> 生成）——body.code 一律忽略
+      // permission 可更新（语义权限码）；body 缺省沿用行值
       // 部分更新：body 缺省的字段沿用行上现值，再过矩阵校验（与 Edge Fn 语义一致）
       const effective = {
         uri: body.uri !== undefined ? body.uri : row.uri,
@@ -303,11 +323,11 @@ export const iamMenuHandlers = [
     }),
   ),
 
-  // DELETE 删除（级联，仅 admin）
+  // DELETE 删除（级联，require system:menu:delete）
   ...pagePaths(MENUS_ITEM_PATH(':id')).map((path) =>
     http.delete(path, async ({ request, params }) => {
       await delay(200);
-      if (identity(request) !== 'admin')
+      if (!can(resolvePermissions(request), 'system:menu:delete'))
         return fail(1011, '没有执行此操作的权限', 403);
       const id = Number(params['id']);
       if (!flatten(menus).some((n) => n.id === id))
@@ -319,9 +339,11 @@ export const iamMenuHandlers = [
 ];
 
 /** 测试重置：恢复种子数据（vitest afterEach 里调）。 */
-/** 全部菜单 code（授权树值域校验用；含种子语义码 + 运行期 m_<id>）。 */
-export function allMenuCodes(): string[] {
-  return flatten(menus).map((n) => n.code);
+/** 全部菜单 permission（授权树值域校验用；含种子语义码 + 运行期新增）。 */
+export function allMenuPermissions(): string[] {
+  return flatten(menus)
+    .map((n) => n.permission)
+    .filter((p): p is string => !!p);
 }
 
 export function resetMenuMock(): void {

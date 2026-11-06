@@ -7,8 +7,8 @@ import type { MenuItem } from '../types';
 interface RawMenuItem {
   id: number;
   pid: number | null;
-  /** 服务端自动码 m_<id>；button 节点即权限码（11-04「全部自动码」约定） */
-  code: string;
+  /** 语义权限码（system:menu:list）；空 = 公开 */
+  permission: string | null;
   name: string;
   /** app 节点 = 子应用注册键（home/iam，与 config.microApps 键一致）；menu = 本地组件路径 */
   component: string | null;
@@ -103,13 +103,13 @@ function transformMenu(
   noPrefix = false,
 ): MenuItem | null {
   // button 类型 → 只取权限码，不生成菜单/路由
-  // （新契约 button 的 uri 恒 null——权限码 = code（自动码 m_<id>，见 11-04 约定））
+  // （权限码 = 语义 permission（system:user:add），任务 11-06 RBAC 重构）
   if (raw.type === 'button') {
     return {
       id: raw.id,
       name: raw.name,
       path: '', // 无 path → toShellMenus/buildMenuRoutes 自然跳过
-      permission: raw.code || undefined,
+      permission: raw.permission || undefined,
     };
   }
 

@@ -264,7 +264,6 @@ function NotFoundOrFallback() {
 // ── App：认证页不走守卫（否则未登录重定向到 login 后守卫仍挂载，
 // Navigate 每次渲染都触发 → 无限导航循环）；受保护区由 RouteGuard 包裹 ──
 export function App() {
-  const navigate = useNavigate();
   const location = useLocation();
 
   // 进入方式：'POP' = 手输 URL / 刷新 / 书签 / 前进后退；'PUSH'|'REPLACE' = 应用内跳转
@@ -277,7 +276,10 @@ export function App() {
   // 仅取订阅副作用。
   useTranslation();
 
-  useEffect(() => watchGlobalLogout((path) => navigate(path)), [navigate]);
+  useEffect(
+    () => watchGlobalLogout((path) => window.location.replace(path)),
+    [],
+  );
 
   // 裸渲染仅限「免鉴权 ∩ 认证页」（iam 登录页等）；免鉴权内容页（home）
   // 带壳渲染，登录前后容器位置不变。已登录回退到登录页转 AuthRedirect。

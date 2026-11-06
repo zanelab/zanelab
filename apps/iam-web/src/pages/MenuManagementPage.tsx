@@ -10,6 +10,7 @@ import { getProps } from '../props';
 import { showToast } from '../utils/notify';
 import { menusApi, type MenuItemRecord, type MenuInput } from '../api/menus';
 import { buildTree, countWithDescendants } from '../utils/menu-tree';
+import { Permission } from '../components/Permission';
 
 /*
  * 菜单管理页 —— iam 首个业务域（任务 11-03，design DD5）。
@@ -29,6 +30,7 @@ import { buildTree, countWithDescendants } from '../utils/menu-tree';
 interface MenuFormState {
   id: number | null; // null = 新建
   pid: number | null;
+  permission: string; // 语义权限码（system:menu:list；空=公开）
   name: string;
   component: string; // 组件名称（app/menu 类型动态显示）
   uri: string;
@@ -43,6 +45,7 @@ interface MenuFormState {
 const EMPTY_FORM: MenuFormState = {
   id: null,
   pid: null,
+  permission: '',
   name: '',
   component: '',
   uri: '',
@@ -169,6 +172,7 @@ export function MenuManagementPage() {
     setForm({
       id: row.id,
       pid: row.pid,
+      permission: row.permission ?? '',
       name: row.name,
       component: row.component ?? '',
       uri: row.uri ?? '',
@@ -229,6 +233,7 @@ export function MenuManagementPage() {
     setFormError('');
     const input: MenuInput = {
       pid: form.pid,
+      permission: form.permission.trim() || null,
       name: form.name.trim(),
       uri: matrix.uri === 'hidden' ? null : form.uri.trim() || null,
       type: form.type,
@@ -329,7 +334,6 @@ export function MenuManagementPage() {
               )}
             </div>
           </td>
-          <td className="font-mono text-xs">{node.code}</td>
           <td className="text-xs">{node.uri ?? '—'}</td>
           <td>
             <span className="badge badge-outline badge-sm">{node.type}</span>
@@ -338,30 +342,36 @@ export function MenuManagementPage() {
           {!readOnly && (
             <td>
               <div className="flex gap-1">
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-xs"
-                  onClick={() => openCreate(node.id)}
-                >
-                  {t('iam.menu.addChild')}
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-xs"
-                  onClick={() => openEdit(node)}
-                >
-                  {t('iam.menu.edit')}
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-xs text-error"
-                  onClick={() => {
-                    setDeleteError('');
-                    setDeleteTarget(node);
-                  }}
-                >
-                  {t('iam.menu.delete')}
-                </button>
+                <Permission code="system:menu:create">
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-xs"
+                    onClick={() => openCreate(node.id)}
+                  >
+                    {t('iam.menu.addChild')}
+                  </button>
+                </Permission>
+                <Permission code="system:menu:update">
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-xs"
+                    onClick={() => openEdit(node)}
+                  >
+                    {t('iam.menu.edit')}
+                  </button>
+                </Permission>
+                <Permission code="system:menu:delete">
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-xs text-error"
+                    onClick={() => {
+                      setDeleteError('');
+                      setDeleteTarget(node);
+                    }}
+                  >
+                    {t('iam.menu.delete')}
+                  </button>
+                </Permission>
               </div>
             </td>
           )}
@@ -396,23 +406,25 @@ export function MenuManagementPage() {
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-xl font-semibold">{t('iam.menu.title')}</h1>
         {!readOnly && (
-          <button
-            type="button"
-            className="btn btn-sm gap-2 rounded-(--page-radius) bg-(--page-primary) text-white hover:opacity-90"
-            onClick={() => openCreate(null)}
-          >
-            <svg
-              className="size-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              aria-hidden="true"
+          <Permission code="system:menu:create">
+            <button
+              type="button"
+              className="btn btn-sm gap-2 rounded-(--page-radius) bg-(--page-primary) text-white hover:opacity-90"
+              onClick={() => openCreate(null)}
             >
-              <path d="M12 5v14M5 12h14" />
-            </svg>
-            {t('iam.menu.create')}
-          </button>
+              <svg
+                className="size-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                aria-hidden="true"
+              >
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              {t('iam.menu.create')}
+            </button>
+          </Permission>
         )}
       </div>
 
@@ -431,7 +443,6 @@ export function MenuManagementPage() {
           <thead>
             <tr>
               <th>{t('iam.menu.colName')}</th>
-              <th>{t('iam.menu.colCode')}</th>
               <th>{t('iam.menu.colUri')}</th>
               <th>{t('iam.menu.colType')}</th>
               <th>{t('iam.menu.colSort')}</th>
@@ -612,6 +623,19 @@ export function MenuManagementPage() {
                   />
                 </label>
               )}
+              {/* 权限码（进入/操作权限，选填，空=公开）——button 节点即操作权限码 */}
+              <label className="flex flex-col gap-1">
+                <span className="text-sm">{t('iam.menu.colPermission')}</span>
+                <input
+                  type="text"
+                  placeholder={t('iam.menu.permissionPlaceholder')}
+                  className="input input-sm bg-base-200 w-full font-mono"
+                  value={form.permission}
+                  onChange={(e) =>
+                    setForm({ ...form, permission: e.target.value })
+                  }
+                />
+              </label>
               {TYPE_MATRIX[form.type].icon && (
                 <>
                   <label className="flex flex-col gap-1">
