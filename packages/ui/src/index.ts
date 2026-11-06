@@ -6,3 +6,4 @@ export * from './form';
 export * from './icon/app-icon';
 export * from './icon/icon-store';
 export { BUILTIN_ICONS } from './icon/builtin-icons';
+export { IconPicker } from './icon/icon-picker';
