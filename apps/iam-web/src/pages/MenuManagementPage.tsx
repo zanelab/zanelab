@@ -11,7 +11,7 @@ import { showToast } from '../utils/notify';
 import { menusApi, type MenuItemRecord, type MenuInput } from '../api/menus';
 import { buildTree, countWithDescendants } from '../utils/menu-tree';
 import { Permission } from '../components/Permission';
-import { AppIcon, BUILTIN_ICONS, useIconStore } from '@zanelab/ui';
+import { AppIcon, BUILTIN_ICONS, useIconStore, IconPicker } from '@zanelab/ui';
 
 /*
  * 菜单管理页 —— iam 首个业务域（任务 11-03，design DD5）。
@@ -710,32 +710,26 @@ export function MenuManagementPage() {
               </label>
               {TYPE_MATRIX[form.type].icon && (
                 <>
-                  <label className="flex flex-col gap-1">
+                  <div className="flex flex-col gap-1">
                     <span className="text-sm">{t('iam.menu.colIcon')}</span>
-                    <input
-                      type="text"
-                      placeholder={t('iam.menu.iconPlaceholder')}
-                      className="input input-sm bg-base-200 w-full font-mono"
-                      value={form.icon}
-                      onChange={(e) =>
-                        setForm({ ...form, icon: e.target.value })
+                    <IconPicker
+                      value={form.icon || null}
+                      onChange={(name) =>
+                        setForm({ ...form, icon: name ?? '' })
                       }
                     />
-                  </label>
-                  <label className="flex flex-col gap-1">
+                  </div>
+                  <div className="flex flex-col gap-1">
                     <span className="text-sm">
                       {t('iam.menu.colActiveIcon')}
                     </span>
-                    <input
-                      type="text"
-                      placeholder={t('iam.menu.activeIconPlaceholder')}
-                      className="input input-sm bg-base-200 w-full font-mono"
-                      value={form.activeIcon}
-                      onChange={(e) =>
-                        setForm({ ...form, activeIcon: e.target.value })
+                    <IconPicker
+                      value={form.activeIcon || null}
+                      onChange={(name) =>
+                        setForm({ ...form, activeIcon: name ?? '' })
                       }
                     />
-                  </label>
+                  </div>
                 </>
               )}
 
