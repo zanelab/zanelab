@@ -618,7 +618,10 @@ body {
   .range,
   .otp
 ):is(:focus, :focus-within, :focus-visible),
+.otp:has(input:valid:focus) > span,
+.otp:after,
 .select:open {
+  box-shadow: none !important;
   outline: none !important;
   outline-offset: 0 !important;
 }
