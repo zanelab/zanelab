@@ -367,72 +367,66 @@ export function MenuManagementPage() {
             <td>
               <div className="flex items-center justify-end gap-1">
                 <Permission code="system:menu:create">
-                  <span className="tooltip" data-tip={t('iam.menu.addChild')}>
-                    <button
-                      type="button"
-                      className="btn btn-ghost btn-square btn-xs"
-                      aria-label={t('iam.menu.addChild')}
-                      onClick={() => openCreate(node.id)}
+                  <button
+                    type="button"
+                    className="btn btn-soft btn-xs gap-1"
+                    onClick={() => openCreate(node.id)}
+                  >
+                    <svg
+                      className="size-3.5"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      aria-hidden="true"
                     >
-                      <svg
-                        className="size-3.5"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        aria-hidden="true"
-                      >
-                        <path d="M12 5v14M5 12h14" />
-                      </svg>
-                    </button>
-                  </span>
+                      <path d="M12 5v14M5 12h14" />
+                    </svg>
+                    {t('iam.menu.addChild')}
+                  </button>
                 </Permission>
                 <Permission code="system:menu:update">
-                  <span className="tooltip" data-tip={t('iam.menu.edit')}>
-                    <button
-                      type="button"
-                      className="btn btn-ghost btn-square btn-xs"
-                      aria-label={t('iam.menu.edit')}
-                      onClick={() => openEdit(node)}
+                  <button
+                    type="button"
+                    className="btn btn-soft btn-xs gap-1"
+                    onClick={() => openEdit(node)}
+                  >
+                    <svg
+                      className="size-3.5"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      aria-hidden="true"
                     >
-                      <svg
-                        className="size-3.5"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        aria-hidden="true"
-                      >
-                        <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-                      </svg>
-                    </button>
-                  </span>
+                      <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                    </svg>
+                    {t('iam.menu.edit')}
+                  </button>
                 </Permission>
                 <Permission code="system:menu:delete">
-                  <span className="tooltip" data-tip={t('iam.menu.delete')}>
-                    <button
-                      type="button"
-                      className="btn btn-ghost btn-square btn-xs text-error"
-                      aria-label={t('iam.menu.delete')}
-                      onClick={() => {
-                        setDeleteError('');
-                        setDeleteTarget(node);
-                      }}
+                  <button
+                    type="button"
+                    className="btn btn-soft btn-error btn-xs gap-1"
+                    onClick={() => {
+                      setDeleteError('');
+                      setDeleteTarget(node);
+                    }}
+                  >
+                    <svg
+                      className="size-3.5"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      aria-hidden="true"
                     >
-                      <svg
-                        className="size-3.5"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        aria-hidden="true"
-                      >
-                        <path d="M3 6h18" />
-                        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
-                      </svg>
-                    </button>
-                  </span>
+                      <path d="M3 6h18" />
+                      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                    </svg>
+                    {t('iam.menu.delete')}
+                  </button>
                 </Permission>
               </div>
             </td>
