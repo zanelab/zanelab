@@ -335,7 +335,7 @@ export function MenuManagementPage() {
             </div>
           </td>
           {/* 图标列：默认 icon；hover 有 activeIcon 时切换展示 */}
-          <td className="text-center">
+          <td>
             {node.icon ? (
               <span
                 className="group/ic inline-flex cursor-help items-center"
@@ -364,7 +364,7 @@ export function MenuManagementPage() {
           </td>
           <td className="text-xs">{node.sort}</td>
           {!readOnly && (
-            <td>
+            <td className="w-60">
               <div className="flex items-center justify-end gap-1">
                 <Permission code="system:menu:create">
                   <button
@@ -503,7 +503,9 @@ export function MenuManagementPage() {
               <th>{t('iam.menu.colUri')}</th>
               <th>{t('iam.menu.colType')}</th>
               <th>{t('iam.menu.colSort')}</th>
-              {!readOnly && <th>{t('iam.menu.colActions')}</th>}
+              {!readOnly && (
+                <th className="w-60">{t('iam.menu.colActions')}</th>
+              )}
             </tr>
           </thead>
           <tbody>
