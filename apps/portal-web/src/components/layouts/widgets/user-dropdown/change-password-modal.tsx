@@ -17,7 +17,7 @@ import {
   validatePasswordPolicy,
   notify,
 } from '@zanelab/utils';
-import { AppIcon } from '../../../icons/app-icon';
+import { AppIcon } from '@zanelab/ui';
 
 type PasswordFieldName = 'oldPassword' | 'newPassword' | 'confirmPassword';
 

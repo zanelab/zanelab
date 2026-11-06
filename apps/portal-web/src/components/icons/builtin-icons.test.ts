@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BUILTIN_ICONS } from './builtin-icons';
+import { BUILTIN_ICONS } from '@zanelab/ui';
 
 function pathsOf(name: string): string[] {
   const icon = BUILTIN_ICONS[name];

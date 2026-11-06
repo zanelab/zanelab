@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { TinyColor } from '@ctrl/tinycolor';
 
 import { convertToHsl } from '@zanelab/utils';
-import { AppIcon } from '../../../../../icons/app-icon';
+import { AppIcon } from '@zanelab/ui';
 
 /** 等价 reference BuiltinThemePreset（@core/preferences constants.ts:3-7） */
 interface BuiltinThemePreset {

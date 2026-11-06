@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { useTimezoneStore } from '../../../../stores/timezone-store';
 import type { TimezoneOption } from '../../../../stores/timezone-store';
-import { AppIcon } from '../../../icons/app-icon';
+import { AppIcon } from '@zanelab/ui';
 
 /**
  * TimezoneButton — 1:1 port of widgets/timezone/timezone-button.vue.

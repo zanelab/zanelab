@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useMenuContext, useSubMenuContext } from './context';
 import { MenuBadge } from './menu-badge';
-import { renderMenuIcon } from '../icons/app-icon';
+import { renderMenuIcon } from '@zanelab/ui';
 import type { MenuItemProps, MenuItemRegistered } from './types';
 
 /**

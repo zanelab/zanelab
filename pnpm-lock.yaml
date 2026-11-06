@@ -273,9 +273,15 @@ importers:
 
   packages/ui:
     dependencies:
+      '@zanelab/types':
+        specifier: workspace:*
+        version: link:../types
       '@zanelab/utils':
         specifier: workspace:*
         version: link:../utils
+      zustand:
+        specifier: ^5.0.15
+        version: 5.0.15(@types/react@19.2.18)(immer@11.1.18)(react@19.2.8)(use-sync-external-store@1.6.0(react@19.2.8))
     devDependencies:
       '@types/react':
         specifier: ^19.2.18

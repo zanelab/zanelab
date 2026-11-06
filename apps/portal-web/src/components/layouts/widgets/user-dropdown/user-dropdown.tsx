@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { usePreferencesStore } from '../../../../stores/preferences-store';
 import { usePreferencesButtonPosition } from '../../hooks/use-preferences';
 import { AnchoredPortal } from '@zanelab/ui';
-import { AppIcon } from '../../../icons/app-icon';
+import { AppIcon } from '@zanelab/ui';
 import { LockScreenModal } from '../lock-screen/lock-screen-modal';
 import { PreferencesDrawer } from '../preferences/preferences-drawer';
 import { useOpenPreferences } from '../preferences/use-open-preferences';

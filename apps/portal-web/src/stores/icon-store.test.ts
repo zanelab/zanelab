@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { useIconStore } from './icon-store';
+import { useIconStore } from '@zanelab/ui';
 import type { IconData } from '@zanelab/types';
 
 const A: IconData = { paths: ['M0 0'] };

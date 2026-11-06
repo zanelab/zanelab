@@ -36,7 +36,7 @@ import {
   hasMenuPath,
 } from '@/utils/menu-views';
 import type { DropdownMenuEntry } from '@/utils/menu-views';
-import { AppIcon } from '@/components/icons/app-icon';
+import { AppIcon } from '@zanelab/ui';
 import type { UserDropdownMenu } from '@/components/layouts/widgets/user-dropdown/user-dropdown';
 import type { MenuItem } from '@/types';
 

@@ -11,6 +11,7 @@ import { showToast } from '../utils/notify';
 import { menusApi, type MenuItemRecord, type MenuInput } from '../api/menus';
 import { buildTree, countWithDescendants } from '../utils/menu-tree';
 import { Permission } from '../components/Permission';
+import { AppIcon, BUILTIN_ICONS, useIconStore } from '@zanelab/ui';
 
 /*
  * 菜单管理页 —— iam 首个业务域（任务 11-03，design DD5）。
@@ -79,6 +80,7 @@ const TYPE_MATRIX: Record<
 export function MenuManagementPage() {
   const { t } = useTranslation();
   const props = getProps();
+  const runtimeIcons = useIconStore((s) => s.icons);
 
   // preferences 派生（与 LoginPage 同款：props 字段优先 + 中性缺省）
   const prefs = {
@@ -94,6 +96,11 @@ export function MenuManagementPage() {
     fontSize?: number;
   };
   const dark = prefs.mode === 'dark';
+
+  /** 图标名是否可渲染（与 AppIcon 解析顺序一致：注册表 → 内置表 → svg:）。 */
+  const renderableIcon = (name: string | null | undefined): boolean =>
+    !!name &&
+    (!!runtimeIcons[name] || !!BUILTIN_ICONS[name] || name.startsWith('svg:'));
 
   const [flat, setFlat] = useState<MenuItemRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -334,7 +341,7 @@ export function MenuManagementPage() {
               )}
             </div>
           </td>
-          {/* 图标列：默认 icon；hover 有 activeIcon 时切换展示 */}
+          {/* 图标列：默认 icon；hover 有可渲染的 activeIcon 时切换展示 */}
           <td>
             {node.icon ? (
               <span
@@ -345,13 +352,19 @@ export function MenuManagementPage() {
                     : node.icon
                 }
               >
-                <span className="badge badge-ghost badge-sm font-mono normal-case group-hover/ic:hidden">
-                  {node.icon}
-                </span>
-                {node.activeIcon && (
-                  <span className="badge badge-secondary badge-sm hidden font-mono normal-case group-hover/ic:inline-flex">
-                    {node.activeIcon}
-                  </span>
+                <AppIcon
+                  name={node.icon}
+                  className={`size-4 ${
+                    renderableIcon(node.activeIcon)
+                      ? 'group-hover/ic:hidden'
+                      : ''
+                  }`}
+                />
+                {renderableIcon(node.activeIcon) && (
+                  <AppIcon
+                    name={node.activeIcon ?? undefined}
+                    className="hidden size-4 group-hover/ic:inline"
+                  />
                 )}
               </span>
             ) : (

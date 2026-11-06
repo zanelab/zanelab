@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { usePreferencesStore } from '../../../stores/preferences-store';
 import { switchLocale } from '../../../locales/i18n';
 import { AnchoredPortal } from '@zanelab/ui';
-import { AppIcon } from '../../icons/app-icon';
+import { AppIcon } from '@zanelab/ui';
 
 /** 等价于 上游常量包 SUPPORT_LANGUAGES */
 const SUPPORT_LANGUAGES: Array<{ label: string; value: string }> = [

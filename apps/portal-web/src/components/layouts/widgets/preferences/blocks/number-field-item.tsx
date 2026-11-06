@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { AppIcon } from '../../../../icons/app-icon';
+import { AppIcon } from '@zanelab/ui';
 
 interface NumberFieldItemProps {
   value: number;

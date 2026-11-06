@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import type { FC } from 'react';
 import type { IContextMenuItem } from './types';
 import { AnchoredPortal } from '@zanelab/ui';
-import { AppIcon } from '../icons/app-icon';
+import { AppIcon } from '@zanelab/ui';
 
 interface ToolMoreProps {
   menus?: IContextMenuItem[];

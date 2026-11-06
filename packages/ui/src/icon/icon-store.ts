@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { appConfig } from '../config';
 import { IconDataSchema } from '@zanelab/types';
 import type { IconData } from '@zanelab/types';
 
@@ -12,7 +11,7 @@ import type { IconData } from '@zanelab/types';
  * 2. config.js 顶层 iconPackUrl（远端 JSON，fetch 注册；失败静默降级）
  * 3. window.__registerIcons(pack)（qiankun 子应用/第三方脚本）
  *
- * 解析顺序见 components/icons/app-icon.tsx：本 store → 内置表 → svg: 直通 → null。
+ * 解析顺序见 app-icon.tsx：本 store → 内置表 → svg: 直通 → null。
  * 异步时序：iconPackUrl 晚于菜单渲染不阻塞——store 更新驱动订阅组件补画。
  */
 interface IconState {
@@ -64,17 +63,23 @@ declare global {
 window.__registerIcons = (pack) => useIconStore.getState().registerIcons(pack);
 
 /**
- * 启动时初始化（main.tsx 在 appConfig 就绪后调用一次）：
+ * 启动时初始化（宿主在 appConfig 就绪后调用一次）：
  * 内联包立即注册；远端包异步注册（失败 console.warn，不阻塞页面）。
+ * 参数由调用方注入（本包不依赖任何 app 的 config）。
  */
-export async function initIcons(): Promise<void> {
-  const inline = appConfig.icons;
+export async function initIcons(
+  params: {
+    icons?: Record<string, IconData>;
+    iconPackUrl?: string;
+  } = {},
+): Promise<void> {
+  const inline = params.icons;
   if (inline && Object.keys(inline).length) {
     useIconStore.getState().registerIcons(inline);
   }
-  if (appConfig.iconPackUrl) {
+  if (params.iconPackUrl) {
     try {
-      const res = await fetch(appConfig.iconPackUrl);
+      const res = await fetch(params.iconPackUrl);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json: unknown = await res.json();
       if (!json || typeof json !== 'object' || Array.isArray(json)) {

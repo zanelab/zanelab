@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import type { MenuRecordRaw } from '@zanelab/types';
-import { AppIcon } from '../../../icons/app-icon';
+import { AppIcon } from '@zanelab/ui';
 import { Scrollbar } from '@zanelab/ui';
 
 interface SearchPanelProps {

@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import type { MenuRecordRaw } from '@zanelab/types';
-import { AppIcon } from '../../../icons/app-icon';
+import { AppIcon } from '@zanelab/ui';
 import { SearchPanel } from './search-panel';
 
 function isWindowsOs() {

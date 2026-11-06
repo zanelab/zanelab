@@ -11,7 +11,7 @@ import {
   defaultPreferences,
 } from '../../../../stores/preferences-store';
 import { useLayoutStore } from '../../../../stores/layout-store';
-import { AppIcon } from '../../../icons/app-icon';
+import { AppIcon } from '@zanelab/ui';
 import { diff } from '@zanelab/utils';
 import { switchLocale } from '../../../../locales/i18n';
 import { switchThemeMode } from '../../../../utils/theme-transition';

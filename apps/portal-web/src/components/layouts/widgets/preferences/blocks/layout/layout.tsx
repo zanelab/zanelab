@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { AppIcon } from '../../../../../icons/app-icon';
+import { AppIcon } from '@zanelab/ui';
 import {
   SidebarNav,
   SidebarMixedNav,

@@ -1,8 +1,7 @@
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
-import { AppIcon, renderMenuIcon } from './app-icon';
-import { BUILTIN_ICONS } from './builtin-icons';
-import { useIconStore } from '../../stores/icon-store';
+import { AppIcon, renderMenuIcon, BUILTIN_ICONS } from '@zanelab/ui';
+import { useIconStore } from '@zanelab/ui';
 import type { IconData } from '@zanelab/types';
 
 afterEach(() => {
