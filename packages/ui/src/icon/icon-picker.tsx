@@ -1,18 +1,23 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { AppIcon } from './app-icon';
 import { BUILTIN_ICONS } from './builtin-icons';
 import { useIconStore } from './icon-store';
 
 /*
- * IconPicker —— 图标选择器（下拉展示所有可渲染图标供选择）。
+ * IconPicker —— 图标选择器（Card as dropdown）。
  *
- * 数据源 = BUILTIN_ICONS（内置表）+ useIconStore 运行时注册表（iconPackUrl /
- * window.__registerIcons），运行时同键覆盖内置。每项渲染 AppIcon 预览 + 标识符。
+ * 触发按钮经 popover API 展开一个 card 面板：10×10 图标网格（每页 100），
+ * 图标项只渲染图标（名字用 tooltip 展示）；超过一页用 Pagination 分页。
  *
- * 受控用法：
+ * 数据源 = BUILTIN_ICONS（内置表）+ useIconStore 运行时注册表（运行时同键覆盖
+ * 内置）。受控用法：
  *   <IconPicker value={form.icon} onChange={(name) => setForm({ ...form, icon: name })} />
- * name = 选中标识符；null = 清空（allowEmpty 时才有「无」选项）。
+ * name = 选中标识符；null = 清空（allowEmpty 时面板头部有「无」按钮）。
  */
+
+let uid = 0;
+
+const PAGE_SIZE = 100; // 10 × 10
 
 export interface IconPickerProps {
   /** 当前选中的图标标识符（空/未选 = null 或 undefined） */
@@ -38,8 +43,13 @@ export function IconPicker({
   className,
 }: IconPickerProps) {
   const runtimeIcons = useIconStore((s) => s.icons);
-  const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
+  const [page, setPage] = useState(1);
+
+  // popover 唯一 id + 同名 CSS anchor（每个实例一个，稳定）
+  const idRef = useRef<string | null>(null);
+  if (idRef.current === null) idRef.current = `icon-picker-${++uid}`;
+  const popoverId = idRef.current;
+  const popoverRef = useRef<HTMLDivElement>(null);
 
   // 内置 + 运行时注册表合并（运行时同键覆盖内置），按标识符排序
   const iconNames = useMemo(() => {
@@ -50,33 +60,23 @@ export function IconPicker({
     return [...merged].sort((a, b) => a.localeCompare(b));
   }, [runtimeIcons]);
 
-  // 点击面板外关闭
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e: MouseEvent) => {
-      if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', onDown);
-    return () => document.removeEventListener('mousedown', onDown);
-  }, [open]);
+  const totalPages = Math.max(1, Math.ceil(iconNames.length / PAGE_SIZE));
+  const pageIcons = iconNames.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const select = (name: string | null) => {
     onChange?.(name);
-    setOpen(false);
+    // 选中后收起面板（native popover 点面板内不会自动关闭）
+    popoverRef.current?.hidePopover();
   };
 
   return (
-    <div
-      ref={rootRef}
-      className={`dropdown ${open ? 'dropdown-open' : ''} ${className ?? ''}`}
-    >
-      {/* 触发按钮：当前图标 + 标识符；未选显示占位 */}
+    <div className={className}>
+      {/* 触发按钮 */}
       <button
         type="button"
         className="btn btn-sm gap-2"
-        onClick={() => setOpen((v) => !v)}
+        popoverTarget={popoverId}
+        style={{ anchorName: `--${popoverId}` }}
       >
         {value ? (
           <>
@@ -88,31 +88,80 @@ export function IconPicker({
         )}
       </button>
 
-      {/* 下拉列表：可滚动，项 = 图标预览 + 标识符 */}
-      <ul
-        className="dropdown-content menu menu-sm rounded-box bg-base-100 z-50 max-h-64 w-56 overflow-y-auto p-2 shadow"
-        tabIndex={0}
+      {/* Card as dropdown（popover 面板） */}
+      <div
+        ref={popoverRef}
+        id={popoverId}
+        popover="auto"
+        className="dropdown card card-border bg-base-100 w-80 p-3 shadow"
+        style={{ positionAnchor: `--${popoverId}` }}
       >
-        {allowEmpty && (
-          <li>
-            <button type="button" onClick={() => select(null)}>
-              <span className="text-base-content/50">{emptyLabel}</span>
-            </button>
-          </li>
-        )}
-        {iconNames.map((name) => (
-          <li key={name}>
+        <div className="flex items-center justify-between">
+          <span className="text-base-content/60 text-xs">{placeholder}</span>
+          {allowEmpty && value && (
             <button
               type="button"
-              className={value === name ? 'menu-active' : ''}
-              onClick={() => select(name)}
+              className="btn btn-ghost btn-xs"
+              onClick={() => select(null)}
             >
-              <AppIcon name={name} className="size-4" />
-              <span className="font-mono text-xs">{name}</span>
+              {emptyLabel}
             </button>
-          </li>
-        ))}
-      </ul>
+          )}
+        </div>
+
+        {/* 图标网格：10 × 10，仅图标（名字走 tooltip） */}
+        <div className="mt-2 grid grid-cols-10 gap-1">
+          {pageIcons.map((name) => (
+            <div key={name} className="tooltip" data-tip={name}>
+              <button
+                type="button"
+                className={`btn btn-ghost btn-square btn-xs ${
+                  value === name ? 'btn-active' : ''
+                }`}
+                onClick={() => select(name)}
+              >
+                <AppIcon name={name} className="size-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {/* 分页：超过一页才显示 */}
+        {totalPages > 1 && (
+          <div className="mt-2 flex justify-center">
+            <div className="join">
+              <button
+                type="button"
+                className="join-item btn btn-xs"
+                disabled={page <= 1}
+                onClick={() => setPage((p) => p - 1)}
+              >
+                «
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  className={`join-item btn btn-xs ${
+                    p === page ? 'btn-active' : ''
+                  }`}
+                  onClick={() => setPage(p)}
+                >
+                  {p}
+                </button>
+              ))}
+              <button
+                type="button"
+                className="join-item btn btn-xs"
+                disabled={page >= totalPages}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                »
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
