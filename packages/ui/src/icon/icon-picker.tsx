@@ -63,6 +63,17 @@ export function IconPicker({
   const totalPages = Math.max(1, Math.ceil(iconNames.length / PAGE_SIZE));
   const pageIcons = iconNames.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
+  // 打开面板时定位到当前选中值所在页（pack.json 图标多、按字母序排在后面，
+  // 不定位的话选中值/已注册图标可能落在第 2+ 页，看起来像「没注册进来」）
+  const locateToValue = () => {
+    if (value) {
+      const idx = iconNames.indexOf(value);
+      if (idx >= 0) setPage(Math.floor(idx / PAGE_SIZE) + 1);
+    } else {
+      setPage(1);
+    }
+  };
+
   const select = (name: string | null) => {
     onChange?.(name);
     // 选中后收起面板（native popover 点面板内不会自动关闭）
@@ -77,6 +88,7 @@ export function IconPicker({
         className="btn btn-sm gap-2"
         popoverTarget={popoverId}
         style={{ anchorName: `--${popoverId}` }}
+        onClick={locateToValue}
       >
         {value ? (
           <>
