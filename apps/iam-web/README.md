@@ -222,6 +222,24 @@ VITE_PROXY_TARGET=https://<ref>.supabase.co VITE_API_KEY=<key> pnpm dev
 | 401       | 宿主 rejectSessionExpired | `window.location.replace('/login')` |
 | 登录会话  | `props.onLoginSuccess`    | 本地 localStorage + 跳 `/home`      |
 
+## 运行时资源下发（icons / i18n）
+
+qiankun 宿主与子应用是**独立 bundle、独立 store 实例**——宿主注册的图标/语言包子应用看不到，须由基座经 props 下发、子应用自注册：
+
+| props 字段 | 来源（config.js） | iam 消费 |
+| --- | --- | --- |
+| `icons` | `icons`（内联包） | `setupHostAssets` → `initIcons({ icons })` 注册进本应用 store |
+| `iconPackUrl` | `iconPackUrl`（远端 JSON） | 同上 → `initIcons({ iconPackUrl })` fetch 注册 |
+| `i18n.packUrls` | `i18n.packUrls`（语言包 URL 表） | `injectMessagePacks` 注入懒加载表；`setupI18n` 初始语言 + `setLocale` 切语言时按需 fetch，深合并 translation |
+
+`setupHostAssets`（main.tsx，mount 调用，与 `setupLocale` 同模式）统一接线；独立态不调用——图标走内置表 + `VITE_ICON_PACK_URL` 兜底，语言包无外部来源（no-op）。
+
+**新增图标的操作路径**：
+
+1. **编译期**（跟版本走）：加进 `packages/ui/src/icon/builtin-icons.ts`（同键覆盖注意 stroke/fill 风格差异）。
+2. **运行期**（免重编译，推荐增量）：加进宿主 `apps/portal-web/public/icons/pack.json`（现留 `bell` 作示例骨架）——宿主启动 fetch 注册，子应用经 `props.iconPackUrl` 拉同一份自注册。
+3. 使用：菜单节点的 `icon`/`active_icon` 填标识符即可（IconPicker 下拉可选全部已注册图标）。
+
 ## 常用命令
 
 ```bash
