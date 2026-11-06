@@ -60,15 +60,24 @@ export default defineConfig(({ mode }) => {
       // 请求到不了这里；关掉 mock 才由本代理转发。
       // 注意 target 是 Supabase 基址（不含 /functions/v1），路径原样转发、不 rewrite
       // ——与 portal 侧不同（那条要剥掉 /iam 前缀）。
-      proxy: proxyTarget
-        ? {
-            '/functions/v1': {
-              target: proxyTarget,
-              changeOrigin: true,
-              secure: false,
-            },
-          }
-        : undefined,
+      proxy: {
+        ...(proxyTarget
+          ? {
+              '/functions/v1': {
+                target: proxyTarget,
+                changeOrigin: true,
+                secure: false,
+              },
+            }
+          : {}),
+        // 独立态图标包：pack.json 部署在宿主 portal 的 public（本应用无），
+        // 反代到宿主 dev server 让 IconPicker/AppIcon 在 :8081 也能拿到全量图标。
+        // 生产集成态与宿主同源、直接命中宿主静态文件，不走此代理。
+        '/icons/pack.json': {
+          target: 'http://localhost:5173',
+          changeOrigin: true,
+        },
+      },
     },
     preview: {
       host: '0.0.0.0',

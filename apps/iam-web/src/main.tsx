@@ -5,7 +5,7 @@ import {
   qiankunWindow,
 } from 'vite-plugin-qiankun/dist/helper';
 import { App } from './App';
-import { ToastRegion } from '@zanelab/ui';
+import { ToastRegion, initIcons } from '@zanelab/ui';
 // 独立运行态唯一样式来源（集成态样式由宿主注入，见 index.css 头注释）
 import './index.css';
 import { setupI18n, setLocale } from './locales/i18n';
@@ -75,6 +75,12 @@ renderWithQiankun({
     setProps(props as PltProps);
     console.log('[iam] mount', props.basename);
     setupLocale(getProps()); // i18n 初始化/复挂载对齐 + 语言订阅（React 渲染前）
+    // 图标注册表：qiankun 里宿主与子应用是独立 bundle、独立 store 实例，
+    // 宿主的 initIcons 注册进的是宿主那份，iam 必须自注册才能在 IconPicker/
+    // AppIcon 里看到 pack.json 图标。pack.json 部署在宿主 public（集成态页面
+    // origin 同源可达）；独立态无宿主时该路径 404 → initIcons 静默降级，只剩
+    // 内置表（幂等，重复 mount 不重复注册同键也只是覆盖同值）。
+    void initIcons({ iconPackUrl: '/icons/pack.json' });
     // 集成态也要启动 worker：mock 拦截点在页面 origin 的 SW（见函数注释）
     if (import.meta.env.DEV && import.meta.env.VITE_USE_MOCK === 'true') {
       void startMockWorker();
@@ -103,6 +109,13 @@ if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
   // mock 启动独立分支同样调用（幂等，见 startMockWorker 注释）。
   void (async () => {
     setupI18n();
+    // 独立态图标注册表：pack.json 在宿主 public，独立 :8081 直开无此文件 →
+    // initIcons 静默降级（只内置表）；本机联调可用 VITE_ICON_PACK_URL 覆盖。
+    void initIcons({
+      iconPackUrl:
+        (import.meta.env.VITE_ICON_PACK_URL as string | undefined) ??
+        '/icons/pack.json',
+    });
     if (import.meta.env.DEV && import.meta.env.VITE_USE_MOCK === 'true') {
       await startMockWorker();
     }
