@@ -391,8 +391,8 @@ const TYPE_FIELD_MATRIX: Record<
   }
 > = {
   app: { uri: 'required', component: true, icon: true, needsPid: false },
-  group: { uri: 'hidden', component: false, icon: false, needsPid: true },
-  menu: { uri: 'required', component: true, icon: true, needsPid: true },
+  group: { uri: 'hidden', component: false, icon: false, needsPid: false },
+  menu: { uri: 'required', component: true, icon: true, needsPid: false },
   button: { uri: 'hidden', component: false, icon: false, needsPid: true },
 };
 

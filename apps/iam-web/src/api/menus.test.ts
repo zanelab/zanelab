@@ -106,10 +106,10 @@ describe('menusApi CRUD（admin 身份，localStorage 注入 token）', () => {
     );
   });
 
-  it('group 类型缺 pid → 1014 该类型必须选择父级菜单', async () => {
+  it('button 类型缺 pid → 1014 该类型必须选择父级菜单', async () => {
     const { pid: _omit, ...noPid } = input;
     await expect(
-      menusApi.create({ ...noPid, type: 'group', uri: null }),
+      menusApi.create({ ...noPid, type: 'button', uri: null }),
     ).rejects.toThrow('该类型必须选择父级菜单');
   });
 

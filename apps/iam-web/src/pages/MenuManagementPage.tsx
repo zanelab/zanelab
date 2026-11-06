@@ -60,7 +60,7 @@ const EMPTY_FORM: MenuFormState = {
 
 /**
  * 类型联动矩阵（与 Edge Fn TYPE_FIELD_MATRIX 同语义；用户提示词 F3）：
- * uri 必填性、component/icon 可见性、是否必选父级。
+ * uri 必填性、component/icon 可见性、是否显示父级选择、是否可为根（根目录）。
  */
 const TYPE_MATRIX: Record<
   MenuItemRecord['type'],
@@ -69,12 +69,37 @@ const TYPE_MATRIX: Record<
     component: boolean;
     icon: boolean;
     needsPid: boolean;
+    canBeRoot: boolean;
   }
 > = {
-  app: { uri: 'required', component: true, icon: true, needsPid: false },
-  group: { uri: 'hidden', component: false, icon: false, needsPid: true },
-  menu: { uri: 'required', component: true, icon: true, needsPid: true },
-  button: { uri: 'hidden', component: false, icon: false, needsPid: true },
+  app: {
+    uri: 'required',
+    component: true,
+    icon: true,
+    needsPid: false,
+    canBeRoot: true,
+  },
+  group: {
+    uri: 'hidden',
+    component: false,
+    icon: false,
+    needsPid: true,
+    canBeRoot: true,
+  },
+  menu: {
+    uri: 'required',
+    component: true,
+    icon: true,
+    needsPid: true,
+    canBeRoot: true,
+  },
+  button: {
+    uri: 'hidden',
+    component: false,
+    icon: false,
+    needsPid: true,
+    canBeRoot: false,
+  },
 };
 
 export function MenuManagementPage() {
@@ -178,7 +203,7 @@ export function MenuManagementPage() {
     setFormError('');
     setForm({
       id: row.id,
-      pid: row.pid,
+      pid: row.pid ?? 0,
       permission: row.permission ?? '',
       name: row.name,
       component: row.component ?? '',
@@ -199,6 +224,8 @@ export function MenuManagementPage() {
     setForm({
       ...form,
       type,
+      // 切到不可为根的类型（button）时，把「根目录」哨兵 0 复位为未选
+      pid: !matrix.canBeRoot && form.pid === 0 ? null : form.pid,
       uri: matrix.uri === 'hidden' ? '' : form.uri,
       component: matrix.component ? form.component : '',
       icon: matrix.icon ? form.icon : '',
@@ -239,7 +266,7 @@ export function MenuManagementPage() {
     setSaving(true);
     setFormError('');
     const input: MenuInput = {
-      pid: form.pid,
+      pid: form.pid === 0 ? null : form.pid,
       permission: form.permission.trim() || null,
       name: form.name.trim(),
       uri: matrix.uri === 'hidden' ? null : form.uri.trim() || null,
@@ -596,6 +623,9 @@ export function MenuManagementPage() {
                     }
                   >
                     <option value="">{t('iam.menu.selectParent')}</option>
+                    {TYPE_MATRIX[form.type].canBeRoot && (
+                      <option value="0">{t('iam.menu.root')}</option>
+                    )}
                     {parentCandidates.map((row) => (
                       <option key={row.id} value={row.id}>
                         {row.name}
