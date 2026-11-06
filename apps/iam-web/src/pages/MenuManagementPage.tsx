@@ -334,6 +334,30 @@ export function MenuManagementPage() {
               )}
             </div>
           </td>
+          {/* 图标列：默认 icon；hover 有 activeIcon 时切换展示 */}
+          <td className="text-center">
+            {node.icon ? (
+              <span
+                className="group/ic inline-flex cursor-help items-center"
+                title={
+                  node.activeIcon
+                    ? `${node.icon} → ${node.activeIcon}`
+                    : node.icon
+                }
+              >
+                <span className="badge badge-ghost badge-sm font-mono normal-case group-hover/ic:hidden">
+                  {node.icon}
+                </span>
+                {node.activeIcon && (
+                  <span className="badge badge-secondary badge-sm hidden font-mono normal-case group-hover/ic:inline-flex">
+                    {node.activeIcon}
+                  </span>
+                )}
+              </span>
+            ) : (
+              <span className="text-base-content/30">—</span>
+            )}
+          </td>
           <td className="text-xs">{node.uri ?? '—'}</td>
           <td>
             <span className="badge badge-outline badge-sm">{node.type}</span>
@@ -341,36 +365,74 @@ export function MenuManagementPage() {
           <td className="text-xs">{node.sort}</td>
           {!readOnly && (
             <td>
-              <div className="flex gap-1">
+              <div className="flex items-center justify-end gap-1">
                 <Permission code="system:menu:create">
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-xs"
-                    onClick={() => openCreate(node.id)}
-                  >
-                    {t('iam.menu.addChild')}
-                  </button>
+                  <span className="tooltip" data-tip={t('iam.menu.addChild')}>
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-square btn-xs"
+                      aria-label={t('iam.menu.addChild')}
+                      onClick={() => openCreate(node.id)}
+                    >
+                      <svg
+                        className="size-3.5"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        aria-hidden="true"
+                      >
+                        <path d="M12 5v14M5 12h14" />
+                      </svg>
+                    </button>
+                  </span>
                 </Permission>
                 <Permission code="system:menu:update">
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-xs"
-                    onClick={() => openEdit(node)}
-                  >
-                    {t('iam.menu.edit')}
-                  </button>
+                  <span className="tooltip" data-tip={t('iam.menu.edit')}>
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-square btn-xs"
+                      aria-label={t('iam.menu.edit')}
+                      onClick={() => openEdit(node)}
+                    >
+                      <svg
+                        className="size-3.5"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        aria-hidden="true"
+                      >
+                        <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                      </svg>
+                    </button>
+                  </span>
                 </Permission>
                 <Permission code="system:menu:delete">
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-xs text-error"
-                    onClick={() => {
-                      setDeleteError('');
-                      setDeleteTarget(node);
-                    }}
-                  >
-                    {t('iam.menu.delete')}
-                  </button>
+                  <span className="tooltip" data-tip={t('iam.menu.delete')}>
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-square btn-xs text-error"
+                      aria-label={t('iam.menu.delete')}
+                      onClick={() => {
+                        setDeleteError('');
+                        setDeleteTarget(node);
+                      }}
+                    >
+                      <svg
+                        className="size-3.5"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        aria-hidden="true"
+                      >
+                        <path d="M3 6h18" />
+                        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                      </svg>
+                    </button>
+                  </span>
                 </Permission>
               </div>
             </td>
@@ -443,6 +505,7 @@ export function MenuManagementPage() {
           <thead>
             <tr>
               <th>{t('iam.menu.colName')}</th>
+              <th>{t('iam.menu.colIcon')}</th>
               <th>{t('iam.menu.colUri')}</th>
               <th>{t('iam.menu.colType')}</th>
               <th>{t('iam.menu.colSort')}</th>
@@ -452,7 +515,7 @@ export function MenuManagementPage() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={readOnly ? 5 : 6}>
+                <td colSpan={readOnly ? 6 : 7}>
                   <div className="flex justify-center py-8">
                     <span className="loading loading-spinner loading-lg" />
                   </div>
@@ -461,7 +524,7 @@ export function MenuManagementPage() {
             ) : tree.length === 0 ? (
               <tr>
                 <td
-                  colSpan={readOnly ? 5 : 6}
+                  colSpan={readOnly ? 6 : 7}
                   className="text-base-content/50 py-8 text-center"
                 >
                   {loadError || t('iam.menu.empty')}
