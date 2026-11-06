@@ -365,11 +365,11 @@ export function MenuManagementPage() {
           <td className="text-xs">{node.sort}</td>
           {!readOnly && (
             <td className="w-60">
-              <div className="flex items-center justify-end gap-1">
+              <div className="flex items-center justify-start gap-1">
                 <Permission code="system:menu:create">
                   <button
                     type="button"
-                    className="btn btn-soft btn-xs gap-1"
+                    className="btn btn-soft btn-info btn-xs gap-1"
                     onClick={() => openCreate(node.id)}
                   >
                     <svg
@@ -388,7 +388,7 @@ export function MenuManagementPage() {
                 <Permission code="system:menu:update">
                   <button
                     type="button"
-                    className="btn btn-soft btn-xs gap-1"
+                    className="btn btn-soft btn-primary btn-xs gap-1"
                     onClick={() => openEdit(node)}
                   >
                     <svg
