@@ -49,6 +49,16 @@ supabase/
 
 `scopes` = 适用范围多选（**A=管理端 / C=客户端**，必填至少一项）；**含 C 即游客可见**。
 
+### 角色契约（任务 11-06）
+
+| 端点 | 方法 | 鉴权 | 说明 |
+| --- | --- | --- | --- |
+| `/auth/roles` | GET | 仅 admin | 角色列表（roles 表 + 授权菜单数） |
+| `/auth/roles/:id/permissions` | GET | 仅 admin | 该角色已授权 code 集合（`*` 记入） |
+| `/auth/roles/:id/permissions` | PUT | 仅 admin | 全量替换授权（`{ permissions: string[] }`）；值域 = menus 表的 code 或 `*`；空数组 1018、非法值 1016 |
+
+**登录菜单可见性 = 纯授权**（角色管理任务）：登录用户（任意角色）只看角色被授权的 `code` 集合（所有类型，含祖先链）；admin 持 `*` 全量；匿名走 `scopes 含 C` 公开子集。注册默认 `guest` 角色无授权 → 登录后空菜单（管理员在角色页给 guest 勾选公开菜单即可）。
+
 ### 会话刷新与登出（任务：token refresh + 11-06 宿主切 iam）
 
 | 端点 | 方法 | 鉴权 | 说明 |

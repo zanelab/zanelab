@@ -127,6 +127,7 @@ export function MenuManagementPage() {
       const msg =
         e instanceof Error && e.message ? e.message : t('iam.menu.loadFailed');
       setLoadError(msg);
+      if (/401|403|登录|权限/i.test(msg)) setReadOnly(true);
       const status = (e as { response?: { status?: number }; status?: number })
         ?.response?.status;
       const integration = typeof getProps().onNotify === 'function';

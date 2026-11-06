@@ -103,6 +103,21 @@
       "saveFailed": "保存失败",
       "role_admin": "管理员",
       "role_guest": "游客"
+    },
+    "role": {
+      "title": "角色管理",
+      "colName": "角色名称",
+      "colCode": "角色编码",
+      "colPermCount": "授权菜单数",
+      "empty": "暂无角色",
+      "treeTitle": "菜单授权",
+      "prev": "上一页",
+      "next": "下一页",
+      "revert": "还原",
+      "save": "保存",
+      "saved": "保存成功",
+      "loadFailed": "角色加载失败",
+      "saveFailed": "保存失败"
     }
   }
 }

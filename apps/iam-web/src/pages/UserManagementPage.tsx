@@ -51,6 +51,7 @@ export function UserManagementPage() {
       const msg =
         e instanceof Error && e.message ? e.message : t('iam.user.loadFailed');
       setLoadError(msg);
+      if (/401|403|登录|权限/i.test(msg)) setReadOnly(true);
       // 集成态 403/5xx/网络错已由宿主拦截器 notify；404 等静默放行状态本页补弹
       const status = (e as { response?: { status?: number } })?.response
         ?.status;

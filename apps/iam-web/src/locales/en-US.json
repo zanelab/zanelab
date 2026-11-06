@@ -103,6 +103,21 @@
       "saveFailed": "Failed to save",
       "role_admin": "Admin",
       "role_guest": "Guest"
+    },
+    "role": {
+      "title": "Role Management",
+      "colName": "Role",
+      "colCode": "Code",
+      "colPermCount": "Permissions",
+      "empty": "No roles yet",
+      "treeTitle": "Menu permissions",
+      "prev": "Prev",
+      "next": "Next",
+      "revert": "Revert",
+      "save": "Save",
+      "saved": "Saved",
+      "loadFailed": "Failed to load roles",
+      "saveFailed": "Failed to save"
     }
   }
 }

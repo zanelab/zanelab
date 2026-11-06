@@ -319,6 +319,11 @@ export const iamMenuHandlers = [
 ];
 
 /** 测试重置：恢复种子数据（vitest afterEach 里调）。 */
+/** 全部菜单 code（授权树值域校验用；含种子语义码 + 运行期 m_<id>）。 */
+export function allMenuCodes(): string[] {
+  return flatten(menus).map((n) => n.code);
+}
+
 export function resetMenuMock(): void {
   menus = structuredClone(seedMenus);
   seedId = 1000;

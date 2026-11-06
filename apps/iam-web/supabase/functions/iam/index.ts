@@ -49,6 +49,7 @@ const t: Record<string, Record<string, string>> = {
     invalidRoles: '角色编码无效',
     refreshInvalid: '登录已过期，请重新登录',
     refreshRequired: 'refreshToken 不能为空',
+    rolesRequired: '请至少勾选一个授权菜单',
   },
   'en-US': {
     ok: 'ok',
@@ -155,6 +156,16 @@ export default {
         // ── 用户管理（supabaseAdmin：列 auth.users / 改角色 / 禁用须 admin 客户端）──
         if (path.endsWith('/auth/users')) {
           return await usersList(req, ctx, lang);
+        }
+        if (path.endsWith('/auth/roles')) {
+          return await rolesList(req, ctx, lang);
+        }
+        const rolePerms = path.match(/\/auth\/roles\/([\w-]+)\/permissions$/);
+        if (rolePerms) {
+          if (req.method === 'GET')
+            return await rolesGetPermissions(req, ctx, lang, rolePerms[1]);
+          if (req.method === 'PUT')
+            return await rolesSavePermissions(req, ctx, lang, rolePerms[1]);
         }
         const userRoles = path.match(/\/users\/([\w-]+)\/roles$/);
         if (userRoles && req.method === 'PUT') {
@@ -554,10 +565,9 @@ async function menusList(
     }
   };
   for (const row of rows) {
-    const permRequired = row.type === 'button';
-    // 按钮权限码 = code（自动码 m_<id>，11-04「全部自动码」约定；uri 恒 null）
-    const allowed = !row.hidden && (!permRequired || permSet.has(row.code));
-    if (allowed) keep(row);
+    // 纯授权（角色管理任务）：所有类型按角色被授权的 code 过滤；祖先链由 keep 保留。
+    // hidden 菜单即使授权也不显示（admin 的 '*' 全量已在上面短路）。
+    if (!row.hidden && permSet.has(row.code)) keep(row);
   }
   return json(lang, toTree(rows.filter((r) => visible.has(r.id))));
 }
@@ -997,4 +1007,202 @@ async function usersBan(
   }
   void banned_until;
   return json(lang, { id: userId, disabled: !!body.disabled });
+}
+
+// ==================== 角色管理（admin-only；授权菜单 code → role_permissions） ====================
+
+/** 角色行（列表出参）：roles 表 + 授权菜单数 */
+interface RoleRow {
+  id: number;
+  code: string;
+  name: string;
+  permissionCount: number; // 授权码数量（'*' 记 1）
+}
+
+/** 角色列表：roles 表 + 每个角色的授权码数量。 */
+async function rolesList(
+  req: Request,
+  ctx: { supabaseAdmin: SupabaseClient },
+  lang: string,
+): Promise<Response> {
+  const auth = await requireAdminUsers(ctx, req, lang);
+  if (auth instanceof Response) return auth;
+
+  const { data: roles, error: rolesErr } = await ctx.supabaseAdmin
+    .from('roles')
+    .select('id, code, name')
+    .order('id', { ascending: true });
+  if (rolesErr) {
+    console.error('[iam] roles query failed:', rolesErr.message);
+    return error(lang, 500, 'internalError', 500);
+  }
+
+  const { data: perms, error: permsErr } = await ctx.supabaseAdmin
+    .from('role_permissions')
+    .select('role_id');
+  if (permsErr) {
+    console.error('[iam] role_permissions query failed:', permsErr.message);
+    return error(lang, 500, 'internalError', 500);
+  }
+  const countByRole = new Map<number, number>();
+  for (const p of perms ?? []) {
+    countByRole.set(p.role_id, (countByRole.get(p.role_id) ?? 0) + 1);
+  }
+
+  const result: RoleRow[] = (roles ?? []).map(
+    (r: { id: number; code: string; name: string }) => ({
+      id: r.id,
+      code: r.code,
+      name: r.name,
+      permissionCount: countByRole.get(r.id) ?? 0,
+    }),
+  );
+  return json(lang, result);
+}
+
+/** 角色 id 解析：'*' 或数字；roles 表不存在 → 404。 */
+async function resolveRoleId(
+  ctx: { supabaseAdmin: SupabaseClient },
+  raw: string,
+): Promise<number | Response> {
+  const numeric = Number(raw);
+  if (!Number.isInteger(numeric)) {
+    return new Response(
+      JSON.stringify({ code: 1013, data: null, msg: '角色不存在' }),
+      {
+        status: 404,
+        headers: { ...corsHeaders, 'content-type': 'application/json' },
+      },
+    );
+  }
+  const { data } = await ctx.supabaseAdmin
+    .from('roles')
+    .select('id')
+    .eq('id', numeric)
+    .limit(1);
+  if (!data || data.length === 0) {
+    return new Response(
+      JSON.stringify({ code: 1013, data: null, msg: '角色不存在' }),
+      {
+        status: 404,
+        headers: { ...corsHeaders, 'content-type': 'application/json' },
+      },
+    );
+  }
+  return numeric;
+}
+
+/** GET /auth/roles/:id/permissions —— 该角色已授权 code 集合（'*' 记入）。 */
+async function rolesGetPermissions(
+  req: Request,
+  ctx: { supabaseAdmin: SupabaseClient },
+  lang: string,
+  rawId: string,
+): Promise<Response> {
+  const auth = await requireAdminUsers(ctx, req, lang);
+  if (auth instanceof Response) return auth;
+
+  const roleId = await resolveRoleId(ctx, rawId);
+  if (roleId instanceof Response) return roleId;
+
+  const { data, error: err } = await ctx.supabaseAdmin
+    .from('role_permissions')
+    .select('permission')
+    .eq('role_id', roleId);
+  if (err) {
+    console.error('[iam] role permissions query failed:', err.message);
+    return error(lang, 500, 'internalError', 500);
+  }
+  return json(
+    lang,
+    (data ?? []).map((r: { permission: string }) => r.permission),
+  );
+}
+
+/**
+ * PUT /auth/roles/:id/permissions —— 全量替换授权。
+ * 值域校验：每个值必须是 menus 表的 code 或 '*'（'*' 即 admin 通配全量）。
+ * 自保护：admin 角色的授权不可清空（清空后系统无管理员，谁也进不了角色页）。
+ */
+async function rolesSavePermissions(
+  req: Request,
+  ctx: { supabaseAdmin: SupabaseClient },
+  lang: string,
+  rawId: string,
+): Promise<Response> {
+  const auth = await requireAdminUsers(ctx, req, lang);
+  if (auth instanceof Response) return auth;
+
+  const roleId = await resolveRoleId(ctx, rawId);
+  if (roleId instanceof Response) return roleId;
+
+  let body: { permissions?: string[] };
+  try {
+    body = await req.json();
+  } catch {
+    return error(lang, 1001, 'invalidBody');
+  }
+  const permissions = body.permissions ?? [];
+  if (!permissions.length) {
+    return new Response(
+      JSON.stringify({
+        code: 1018,
+        data: null,
+        msg: msg(lang, 'rolesRequired'),
+      }),
+      {
+        status: 400,
+        headers: { ...corsHeaders, 'content-type': 'application/json' },
+      },
+    );
+  }
+
+  // 值域校验：'*' 或 menus 表存在的 code
+  const menusCodes = new Set<string>();
+  if (permissions.some((p) => p !== '*')) {
+    const { data: menus, error: mErr } = await ctx.supabaseAdmin
+      .from('menus')
+      .select('code')
+      .in(
+        'code',
+        permissions.filter((p) => p !== '*'),
+      );
+    if (mErr) {
+      console.error('[iam] menus code query failed:', mErr.message);
+      return error(lang, 500, 'internalError', 500);
+    }
+    for (const m of menus ?? []) menusCodes.add(m.code);
+  }
+  const invalid = permissions.filter((p) => p !== '*' && !menusCodes.has(p));
+  if (invalid.length) {
+    return new Response(
+      JSON.stringify({
+        code: 1016,
+        data: null,
+        msg: msg(lang, 'invalidRoles'),
+      }),
+      {
+        status: 400,
+        headers: { ...corsHeaders, 'content-type': 'application/json' },
+      },
+    );
+  }
+
+  // 先删后插（全量替换；非原子窗口同用户管理 assignRoles，MVP 接受）
+  const { error: delErr } = await ctx.supabaseAdmin
+    .from('role_permissions')
+    .delete()
+    .eq('role_id', roleId);
+  if (delErr) {
+    console.error('[iam] role permissions delete failed:', delErr.message);
+    return error(lang, 500, 'internalError', 500);
+  }
+  const { error: insErr } = await ctx.supabaseAdmin
+    .from('role_permissions')
+    .insert(permissions.map((permission) => ({ role_id: roleId, permission })));
+  if (insErr) {
+    console.error('[iam] role permissions insert failed:', insErr.message);
+    return error(lang, 500, 'internalError', 500);
+  }
+  return json(lang, { id: roleId, permissions });
 }

@@ -1,0 +1,2 @@
+{"file": ".trellis/spec/frontend/index.md", "reason": "核心不变式——纯授权可见性（code 过滤全类型）与独立运行性、路径不硬编码在新页面仍成立"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "测试策略与评审清单——树勾选联动/还原/保存用例设计"}

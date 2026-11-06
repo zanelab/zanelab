@@ -4,6 +4,7 @@ import { getProps } from './props';
 import { LoginPage } from './pages/LoginPage';
 import { MenuManagementPage } from './pages/MenuManagementPage';
 import { UserManagementPage } from './pages/UserManagementPage';
+import { RoleManagementPage } from './pages/RoleManagementPage';
 
 function SystemPage({ title }: { title: string }) {
   const props = getProps();
@@ -102,7 +103,7 @@ export function App() {
       <Route index element={<SystemPage title="用户管理" />} />
       <Route path="users" element={<UserManagementPage />} />
       <Route path="menus" element={<MenuManagementPage />} />
-      <Route path="roles" element={<SystemPage title="角色管理" />} />
+      <Route path="roles" element={<RoleManagementPage />} />
       <Route path="chat" element={<ChatPage />} />
       <Route path="login" element={<LoginPage />} />
       <Route path="*" element={<SystemPage title="系统管理" />} />

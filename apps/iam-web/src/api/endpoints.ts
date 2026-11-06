@@ -59,3 +59,10 @@ export const USER_ROLES_PATH = (userId: string) =>
 /** 用户禁用/恢复（PUT，admin-only；body { disabled: boolean }）。 */
 export const USER_BAN_PATH = (userId: string) =>
   `/functions/v1/iam/users/${userId}/ban`;
+
+/** 角色列表（GET，admin-only：roles 表 + 授权菜单数）。 */
+export const ROLES_LIST_PATH = '/functions/v1/iam/auth/roles';
+
+/** 角色已授权 code 集合（GET）/ 全量替换授权（PUT；body { permissions: string[] }）。 */
+export const ROLE_PERMISSIONS_PATH = (roleId: number | string) =>
+  `/functions/v1/iam/auth/roles/${roleId}/permissions`;
