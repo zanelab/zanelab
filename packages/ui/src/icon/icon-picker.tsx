@@ -109,7 +109,9 @@ export function IconPicker({
         style={{ positionAnchor: `--${popoverId}` }}
       >
         <div className="flex items-center justify-between">
-          <span className="text-base-content/60 text-xs">{placeholder}</span>
+          <span className="text-base-content/60 text-xs">
+            {placeholder}({iconNames.length})
+          </span>
           {allowEmpty && value && (
             <button
               type="button"
