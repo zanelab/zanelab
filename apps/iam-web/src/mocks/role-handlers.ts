@@ -30,6 +30,8 @@ type RoleRow = { id: number; code: string; name: string; builtIn: boolean };
 const seedRoles: RoleRow[] = [
   { id: 1, code: 'admin', name: '系统管理员', builtIn: true },
   { id: 2, code: 'guest', name: '游客', builtIn: true },
+  // 非内置角色（角色页编辑/删除可用性的测试锚点；授权集合空 = 未授权）
+  { id: 3, code: 'operator', name: '运营', builtIn: false },
 ];
 
 /** 授权集合：admin 持 '*'；guest 初始授权公开菜单（home/iam 树）——模拟「新角色默认授权」 */

@@ -18,13 +18,18 @@ describe('rolesApi（admin 身份）', () => {
     localStorage.removeItem('iam_refresh_token');
   });
 
-  it('list → 种子角色两行，含授权菜单数', async () => {
+  it('list → 种子角色三行，含授权权限数与内置标记', async () => {
     const roles = await rolesApi.list();
-    expect(roles).toHaveLength(2);
+    expect(roles).toHaveLength(3);
     const admin = roles.find((r) => r.code === 'admin');
     expect(admin?.permissionCount).toBe(1); // '*'
+    expect(admin?.builtIn).toBe(true);
     const guest = roles.find((r) => r.code === 'guest');
     expect(guest?.permissionCount).toBe(3); // system:menu/user/role:list
+    expect(guest?.builtIn).toBe(true);
+    const operator = roles.find((r) => r.code === 'operator');
+    expect(operator?.builtIn).toBe(false);
+    expect(operator?.permissionCount).toBe(0);
   });
 
   it('getPermissions → 返回该角色授权权限码集合', async () => {
