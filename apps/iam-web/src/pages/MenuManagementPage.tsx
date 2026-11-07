@@ -335,13 +335,14 @@ export function MenuManagementPage() {
         <tr key={node.id}>
           <td>
             <div
-              className="flex items-center gap-2"
+              className="flex items-center gap-1"
               style={{ paddingLeft: `${depth * 1.5}rem` }}
             >
+              {/* 展开钮占位：叶子节点用等宽空位撑齐，保证名称列垂直对齐 */}
               {hasChildren ? (
                 <button
                   type="button"
-                  className="btn btn-ghost btn-xs px-1"
+                  className="btn btn-ghost btn-square btn-xs size-4 min-h-0 p-0"
                   aria-label={
                     isOpen ? t('iam.menu.collapse') : t('iam.menu.expand')
                   }
@@ -359,7 +360,7 @@ export function MenuManagementPage() {
                   </svg>
                 </button>
               ) : (
-                <span className="inline-block size-3" />
+                <span className="inline-block size-4 shrink-0" />
               )}
               <span className="font-medium">{node.name}</span>
               {node.hidden && (
