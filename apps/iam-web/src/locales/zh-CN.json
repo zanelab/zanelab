@@ -109,7 +109,7 @@
       "title": "角色管理",
       "colName": "角色名称",
       "colCode": "角色编码",
-      "colPermCount": "授权菜单数",
+      "colPermCount": "授权权限数",
       "empty": "暂无角色",
       "treeTitle": "菜单授权",
       "prev": "上一页",
@@ -118,7 +118,23 @@
       "save": "保存",
       "saved": "保存成功",
       "loadFailed": "角色加载失败",
-      "saveFailed": "保存失败"
+      "saveFailed": "保存失败",
+      "colActions": "操作",
+      "colBuiltIn": "内置",
+      "create": "新建角色",
+      "edit": "编辑",
+      "editTitle": "编辑角色",
+      "createTitle": "新建角色",
+      "delete": "删除",
+      "deleteTitle": "删除角色",
+      "deleteConfirm": "确定删除角色「{name}」？该角色的用户绑定与菜单授权将一并清除。",
+      "namePlaceholder": "角色名称",
+      "codePlaceholder": "角色编码（唯一）",
+      "nameRequired": "角色名称不能为空",
+      "codeRequired": "角色编码不能为空",
+      "deleteFailed": "删除失败",
+      "created": "创建成功",
+      "deleted": "删除成功"
     }
   }
 }

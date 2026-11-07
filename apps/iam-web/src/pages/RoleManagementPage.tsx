@@ -58,6 +58,15 @@ export function RoleManagementPage() {
   const [saving, setSaving] = useState(false);
   const [readOnly, setReadOnly] = useState(false);
   const [loadError, setLoadError] = useState('');
+  // 角色新建/编辑弹窗（null = 关闭；editing 非 null = 编辑态）
+  const [formOpen, setFormOpen] = useState(false);
+  const [editing, setEditing] = useState<RoleRecord | null>(null);
+  const [formName, setFormName] = useState('');
+  const [formCode, setFormCode] = useState('');
+  const [formError, setFormError] = useState('');
+  // 删除确认弹窗
+  const [deleteTarget, setDeleteTarget] = useState<RoleRecord | null>(null);
+  const [deleteError, setDeleteError] = useState('');
   // 分页
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 8;
@@ -145,6 +154,74 @@ export function RoleManagementPage() {
     setCheck((prev) => ({ ...prev, checked: new Set(prev.initial) }));
   };
 
+  /** 打开新建/编辑弹窗（editing = 角色则为编辑态）。 */
+  const openForm = (role?: RoleRecord) => {
+    setFormError('');
+    setEditing(role ?? null);
+    setFormName(role?.name ?? '');
+    setFormCode(role?.code ?? '');
+    setFormOpen(true);
+  };
+
+  /** 提交新建/编辑（编辑内置角色被服务端 1019 拒绝）。 */
+  const submitForm = async () => {
+    if (saving) return;
+    const name = formName.trim();
+    if (!name) {
+      setFormError(t('iam.role.nameRequired'));
+      return;
+    }
+    if (!editing && !formCode.trim()) {
+      setFormError(t('iam.role.codeRequired'));
+      return;
+    }
+    setSaving(true);
+    setFormError('');
+    try {
+      if (editing) {
+        await rolesApi.update(editing.id, name);
+      } else {
+        await rolesApi.create(formCode.trim(), name);
+      }
+      setFormOpen(false);
+      showToast(t('iam.role.created'), 'success');
+      await reload();
+    } catch (e) {
+      const msg =
+        e instanceof Error && e.message ? e.message : t('iam.role.saveFailed');
+      if (/401|403|登录|权限/i.test(msg)) {
+        setReadOnly(true);
+        setFormOpen(false);
+      }
+      setFormError(msg);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  /** 提交删除（内置角色服务端 1019 拒绝；成功后若删的是选中角色则清选中态）。 */
+  const submitDelete = async () => {
+    if (!deleteTarget || saving) return;
+    setSaving(true);
+    setDeleteError('');
+    try {
+      await rolesApi.remove(deleteTarget.id);
+      if (selectedRole?.id === deleteTarget.id) setSelectedRole(null);
+      setDeleteTarget(null);
+      showToast(t('iam.role.deleted'), 'success');
+      await reload();
+    } catch (e) {
+      const msg =
+        e instanceof Error && e.message
+          ? e.message
+          : t('iam.role.deleteFailed');
+      if (/401|403|登录|权限/i.test(msg)) setReadOnly(true);
+      setDeleteError(msg);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   /** 保存：收集勾选 code（含 '*' 展开，admin 角色勾选全部时的语义）→ PUT。 */
   const save = async () => {
     if (!selectedRole || saving) return;
@@ -203,12 +280,13 @@ export function RoleManagementPage() {
                   <th>{t('iam.role.colName')}</th>
                   <th>{t('iam.role.colCode')}</th>
                   <th>{t('iam.role.colPermCount')}</th>
+                  {!readOnly && <th>{t('iam.role.colActions')}</th>}
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={3}>
+                    <td colSpan={readOnly ? 3 : 4}>
                       <div className="flex justify-center py-8">
                         <span className="loading loading-spinner loading-lg" />
                       </div>
@@ -217,7 +295,7 @@ export function RoleManagementPage() {
                 ) : pageRoles.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={3}
+                      colSpan={readOnly ? 3 : 4}
                       className="text-base-content/50 py-8 text-center"
                     >
                       {loadError || t('iam.role.empty')}
@@ -232,13 +310,67 @@ export function RoleManagementPage() {
                       }`}
                       onClick={() => void selectRole(role)}
                     >
-                      <td className="font-medium">{role.name}</td>
+                      <td className="font-medium">
+                        {role.name}
+                        {role.builtIn && (
+                          <span className="badge badge-ghost badge-sm ml-1">
+                            {t('iam.role.colBuiltIn')}
+                          </span>
+                        )}
+                      </td>
                       <td className="font-mono text-xs">{role.code}</td>
                       <td>
                         <span className="badge badge-ghost badge-sm">
                           {role.permissionCount}
                         </span>
                       </td>
+                      {!readOnly && (
+                        <td onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              className="btn btn-soft btn-primary btn-xs gap-1"
+                              disabled={role.builtIn}
+                              onClick={() => openForm(role)}
+                            >
+                              <svg
+                                className="size-3.5"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                aria-hidden="true"
+                              >
+                                <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                              </svg>
+                              {t('iam.role.edit')}
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-soft btn-error btn-xs gap-1"
+                              disabled={role.builtIn}
+                              onClick={() => {
+                                setDeleteError('');
+                                setDeleteTarget(role);
+                              }}
+                            >
+                              <svg
+                                className="size-3.5"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                aria-hidden="true"
+                              >
+                                <path d="M3 6h18" />
+                                <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                              </svg>
+                              {t('iam.role.delete')}
+                            </button>
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   ))
                 )}
@@ -308,6 +440,125 @@ export function RoleManagementPage() {
           </div>
         </div>
       </div>
+
+      {/* 新建/编辑角色弹窗（编辑态 code 只读；内置角色行内按钮已禁用，此处兜底） */}
+      {formOpen && (
+        <dialog
+          className="modal modal-open"
+          onClick={(e) => e.target === e.currentTarget && setFormOpen(false)}
+        >
+          <div className="modal-box bg-base-100 max-w-100 rounded-(--page-radius)">
+            <h3 className="text-lg font-semibold">
+              {editing ? t('iam.role.editTitle') : t('iam.role.createTitle')}
+            </h3>
+            <div className="mt-4 flex flex-col gap-3">
+              <label className="flex flex-col gap-1">
+                <span className="text-sm">
+                  <span className="text-error">*</span> {t('iam.role.colName')}
+                </span>
+                <input
+                  type="text"
+                  required
+                  placeholder={t('iam.role.namePlaceholder')}
+                  className="input input-sm bg-base-200 w-full"
+                  value={formName}
+                  onChange={(e) => setFormName(e.target.value)}
+                />
+              </label>
+              {!editing && (
+                <label className="flex flex-col gap-1">
+                  <span className="text-sm">
+                    <span className="text-error">*</span>{' '}
+                    {t('iam.role.colCode')}
+                  </span>
+                  <input
+                    type="text"
+                    required
+                    placeholder={t('iam.role.codePlaceholder')}
+                    className="input input-sm bg-base-200 w-full font-mono"
+                    value={formCode}
+                    onChange={(e) => setFormCode(e.target.value)}
+                  />
+                </label>
+              )}
+              {editing?.builtIn && (
+                <div role="alert" className="alert alert-warning text-sm">
+                  <span>{'内置角色不允许编辑或删除'}</span>
+                </div>
+              )}
+            </div>
+
+            {formError && (
+              <div role="alert" className="alert alert-error mt-3 text-sm">
+                <span>{formError}</span>
+              </div>
+            )}
+
+            <div className="modal-action">
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => setFormOpen(false)}
+              >
+                {t('iam.menu.cancel')}
+              </button>
+              <button
+                type="button"
+                className="btn btn-sm rounded-(--page-radius) bg-(--page-primary) text-white hover:opacity-90"
+                disabled={saving}
+                onClick={() => void submitForm()}
+              >
+                {saving && (
+                  <span className="loading loading-spinner loading-xs" />
+                )}
+                {t('iam.role.save')}
+              </button>
+            </div>
+          </div>
+        </dialog>
+      )}
+
+      {/* 删除确认弹窗 */}
+      {deleteTarget && (
+        <dialog
+          className="modal modal-open"
+          onClick={(e) => e.target === e.currentTarget && setDeleteTarget(null)}
+        >
+          <div className="modal-box bg-base-100 max-w-100 rounded-(--page-radius)">
+            <h3 className="text-lg font-semibold">
+              {t('iam.role.deleteTitle')}
+            </h3>
+            <p className="text-base-content/70 mt-3 text-sm">
+              {t('iam.role.deleteConfirm', { name: deleteTarget.name })}
+            </p>
+            {deleteError && (
+              <div role="alert" className="alert alert-error mt-3 text-sm">
+                <span>{deleteError}</span>
+              </div>
+            )}
+            <div className="modal-action">
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => setDeleteTarget(null)}
+              >
+                {t('iam.menu.cancel')}
+              </button>
+              <button
+                type="button"
+                className="btn btn-error btn-sm"
+                disabled={saving}
+                onClick={() => void submitDelete()}
+              >
+                {saving && (
+                  <span className="loading loading-spinner loading-xs" />
+                )}
+                {t('iam.role.delete')}
+              </button>
+            </div>
+          </div>
+        </dialog>
+      )}
     </div>
   );
 }

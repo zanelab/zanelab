@@ -57,6 +57,9 @@ supabase/
 | `/users/:id/roles` | PUT | `system:user:assign` |
 | `/users/:id/ban` | PUT | `system:user:ban` |
 | `/auth/roles` | GET | `system:role:list` |
+| `/roles` | POST | `system:role:create` |
+| `/roles/:id` | PUT | `system:role:update` |
+| `/roles/:id` | DELETE | `system:role:delete` |
 | `/auth/roles/:id/permissions` | GET | `system:role:list` |
 | `/auth/roles/:id/permissions` | PUT | `system:role:assign` |
 
@@ -94,9 +97,14 @@ admin（权限含 '*'）      → 全量（含 hidden）
 
 | 端点 | 方法 | 鉴权 | 说明 |
 | --- | --- | --- | --- |
-| `/auth/roles` | GET | `system:role:list` | 角色列表（roles 表 + 授权权限码数） |
+| `/auth/roles` | GET | `system:role:list` | 角色列表（roles 表 + 授权权限码数 + `builtIn` 内置标记） |
+| `/roles` | POST | `system:role:create` | 新建角色（`{ code, name }`；code 唯一，重复 1016） |
+| `/roles/:id` | PUT | `system:role:update` | 编辑角色名（`{ name }`）；**内置角色（built_in）→ 1019/400** |
+| `/roles/:id` | DELETE | `system:role:delete` | 删除角色（FK 级联清 user_roles/role_permissions）；**内置角色 → 1019/400** |
 | `/auth/roles/:id/permissions` | GET | `system:role:list` | 该角色已授权 permission 集合（`*` 记入） |
 | `/auth/roles/:id/permissions` | PUT | `system:role:assign` | 全量替换授权（`{ permissions: string[] }`）；值域 = menus 表的 permission 或 `*`；空数组 1018、非法值 1016 |
+
+**内置角色保护**：`roles.built_in`（迁移 0005）标记系统初始化角色（admin/guest），服务端拒绝编辑/删除（1019）；前端行内按钮对内置角色禁用。权限码节点随菜单树（0005 补 `system:role:create/update/delete` 按钮节点）。
 
 **角色授权界面 = 权限树**：右侧树数据源 = `menusApi.list()`（含 permission 字段）；勾选节点收集其 `permission`（空 permission 的公开节点可勾选以联动子树但不产生授权项）；操作权限随按钮层级自动含入。
 

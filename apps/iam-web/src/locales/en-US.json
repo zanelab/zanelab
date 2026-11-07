@@ -118,7 +118,23 @@
       "save": "Save",
       "saved": "Saved",
       "loadFailed": "Failed to load roles",
-      "saveFailed": "Failed to save"
+      "saveFailed": "Failed to save",
+      "colActions": "Actions",
+      "colBuiltIn": "Built-in",
+      "create": "New Role",
+      "edit": "Edit",
+      "editTitle": "Edit Role",
+      "createTitle": "New Role",
+      "delete": "Delete",
+      "deleteTitle": "Delete Role",
+      "deleteConfirm": "Delete role \"{name}\"? Its user bindings and menu grants will be removed.",
+      "namePlaceholder": "Role name",
+      "codePlaceholder": "Role code (unique)",
+      "nameRequired": "Role name is required",
+      "codeRequired": "Role code is required",
+      "deleteFailed": "Failed to delete",
+      "created": "Created",
+      "deleted": "Deleted"
     }
   }
 }

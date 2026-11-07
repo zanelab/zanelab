@@ -49,6 +49,7 @@ const t: Record<string, Record<string, string>> = {
     refreshInvalid: '登录已过期，请重新登录',
     refreshRequired: 'refreshToken 不能为空',
     rolesRequired: '请至少勾选一个授权菜单',
+    roleBuiltIn: '内置角色不允许编辑或删除',
   },
   'en-US': {
     ok: 'ok',
@@ -63,6 +64,7 @@ const t: Record<string, Record<string, string>> = {
     menuNotFound: 'Menu not found',
     typeMismatch:
       'Fields do not match the selected menu type (missing required or invalid)',
+    roleBuiltIn: 'Built-in roles cannot be edited or deleted',
   },
 };
 
@@ -160,6 +162,16 @@ export default {
         }
         if (path.endsWith('/auth/roles')) {
           return await rolesList(req, ctx, lang);
+        }
+        if (path.endsWith('/roles') && req.method === 'POST') {
+          return await rolesCreate(req, ctx, lang);
+        }
+        const roleId = path.match(/\/roles\/(\d+)$/);
+        if (roleId) {
+          if (req.method === 'PUT')
+            return await rolesUpdate(req, ctx, lang, Number(roleId[1]));
+          if (req.method === 'DELETE')
+            return await rolesDelete(req, ctx, lang, Number(roleId[1]));
         }
         const rolePerms = path.match(/\/auth\/roles\/([\w-]+)\/permissions$/);
         if (rolePerms) {
@@ -1006,7 +1018,7 @@ async function rolesList(
 
   const { data: roles, error: rolesErr } = await ctx.supabaseAdmin
     .from('roles')
-    .select('id, code, name')
+    .select('id, code, name, built_in')
     .order('id', { ascending: true });
   if (rolesErr) {
     console.error('[iam] roles query failed:', rolesErr.message);
@@ -1026,14 +1038,169 @@ async function rolesList(
   }
 
   const result: RoleRow[] = (roles ?? []).map(
-    (r: { id: number; code: string; name: string }) => ({
+    (r: {
+      id: number;
+      code: string;
+      name: string;
+      built_in: boolean | null;
+    }) => ({
       id: r.id,
       code: r.code,
       name: r.name,
+      builtIn: !!r.built_in,
       permissionCount: countByRole.get(r.id) ?? 0,
     }),
   );
   return json(lang, result);
+}
+
+// ==================== 角色新建/编辑/删除（require 权限码；内置角色保护） ====================
+
+/** 内置角色（built_in）不可编辑/删除：返回 400 + roleBuiltIn 文案。 */
+async function rejectBuiltInRole(
+  ctx: { supabaseAdmin: SupabaseClient },
+  roleId: number,
+  lang: string,
+): Promise<Response | null> {
+  const { data } = await ctx.supabaseAdmin
+    .from('roles')
+    .select('built_in')
+    .eq('id', roleId)
+    .limit(1);
+  if (data?.[0]?.built_in) {
+    return new Response(
+      JSON.stringify({
+        code: 1019,
+        data: null,
+        msg: msg(lang, 'roleBuiltIn'),
+      }),
+      {
+        status: 400,
+        headers: { ...corsHeaders, 'content-type': 'application/json' },
+      },
+    );
+  }
+  return null;
+}
+
+/** POST /roles —— 新建角色（require system:role:create；code/name 必填，code 唯一）。 */
+async function rolesCreate(
+  req: Request,
+  ctx: { supabase: SupabaseClient; supabaseAdmin: SupabaseClient },
+  lang: string,
+): Promise<Response> {
+  const auth = await requirePermission(ctx, req, lang, 'system:role:create');
+  if (auth instanceof Response) return auth;
+
+  let body: { code?: string; name?: string };
+  try {
+    body = await req.json();
+  } catch {
+    return error(lang, 1001, 'invalidBody');
+  }
+  const code = String(body.code ?? '').trim();
+  const name = String(body.name ?? '').trim();
+  if (!code || !name) return error(lang, 1001, 'invalidBody');
+
+  // code 唯一（DB unique 约束兜底，这里先查给出可读 400）
+  const { data: existing } = await ctx.supabaseAdmin
+    .from('roles')
+    .select('id')
+    .eq('code', code)
+    .limit(1);
+  if (existing?.length) {
+    return new Response(
+      JSON.stringify({
+        code: 1016,
+        data: null,
+        msg: '角色编码已存在',
+      }),
+      {
+        status: 400,
+        headers: { ...corsHeaders, 'content-type': 'application/json' },
+      },
+    );
+  }
+
+  const { data, error: dbErr } = await ctx.supabaseAdmin
+    .from('roles')
+    .insert({ code, name })
+    .select('id, code, name, built_in')
+    .single();
+  if (dbErr) {
+    console.error('[iam] role create failed:', dbErr.message);
+    return error(lang, 500, 'internalError', 500);
+  }
+  return json(lang, {
+    id: data.id,
+    code: data.code,
+    name: data.name,
+    builtIn: !!data.built_in,
+  });
+}
+
+/** PUT /roles/:id —— 编辑角色名（require system:role:update；内置角色 1019 拒绝）。 */
+async function rolesUpdate(
+  req: Request,
+  ctx: { supabase: SupabaseClient; supabaseAdmin: SupabaseClient },
+  lang: string,
+  roleId: number,
+): Promise<Response> {
+  const auth = await requirePermission(ctx, req, lang, 'system:role:update');
+  if (auth instanceof Response) return auth;
+
+  const builtInRej = await rejectBuiltInRole(ctx, roleId, lang);
+  if (builtInRej) return builtInRej;
+
+  let body: { name?: string };
+  try {
+    body = await req.json();
+  } catch {
+    return error(lang, 1001, 'invalidBody');
+  }
+  const name = String(body.name ?? '').trim();
+  if (!name) return error(lang, 1001, 'invalidBody');
+
+  const { data, error: dbErr } = await ctx.supabaseAdmin
+    .from('roles')
+    .update({ name })
+    .eq('id', roleId)
+    .select('id, code, name, built_in')
+    .single();
+  if (dbErr) {
+    console.error('[iam] role update failed:', dbErr.message);
+    return error(lang, 1013, 'menuNotFound', 404);
+  }
+  return json(lang, {
+    id: data.id,
+    code: data.code,
+    name: data.name,
+    builtIn: !!data.built_in,
+  });
+}
+
+/** DELETE /roles/:id —— 删除角色（require system:role:delete；内置角色 1019 拒绝；
+ *  FK 级联清 user_roles/role_permissions）。 */
+async function rolesDelete(
+  req: Request,
+  ctx: { supabase: SupabaseClient; supabaseAdmin: SupabaseClient },
+  lang: string,
+  roleId: number,
+): Promise<Response> {
+  const auth = await requirePermission(ctx, req, lang, 'system:role:delete');
+  if (auth instanceof Response) return auth;
+
+  const builtInRej = await rejectBuiltInRole(ctx, roleId, lang);
+  if (builtInRej) return builtInRej;
+
+  const { data, error: dbErr } = await ctx.supabaseAdmin
+    .from('roles')
+    .delete()
+    .eq('id', roleId)
+    .select('id')
+    .single();
+  if (dbErr || !data) return error(lang, 1013, 'menuNotFound', 404);
+  return json(lang, { id: data.id });
 }
 
 /** 角色 id 解析：'*' 或数字；roles 表不存在 → 404。 */

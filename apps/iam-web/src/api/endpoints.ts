@@ -67,8 +67,15 @@ export const USER_ROLES_PATH = (userId: string) =>
 export const USER_BAN_PATH = (userId: string) =>
   `/functions/v1/iam/users/${userId}/ban`;
 
-/** 角色列表（GET，admin-only：roles 表 + 授权菜单数）。 */
+/** 角色列表（GET，require system:role:list：roles 表 + 授权权限码数 + builtIn 标记）。 */
 export const ROLES_LIST_PATH = '/functions/v1/iam/auth/roles';
+
+/** 角色集合写路径（POST 新建；require system:role:create）。 */
+export const ROLES_COLLECTION_PATH = '/functions/v1/iam/roles';
+
+/** 角色单项写路径（PUT 编辑名 / DELETE 删除——FK 级联清绑定）。 */
+export const ROLES_ITEM_PATH = (roleId: number | string) =>
+  `/functions/v1/iam/roles/${roleId}`;
 
 /** 角色已授权 code 集合（GET）/ 全量替换授权（PUT；body { permissions: string[] }）。 */
 export const ROLE_PERMISSIONS_PATH = (roleId: number | string) =>
