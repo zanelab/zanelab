@@ -357,11 +357,6 @@ export function MenuManagementPage() {
                 <span className="inline-block size-4 shrink-0" />
               )}
               <span className="font-medium">{node.name}</span>
-              {node.hidden && (
-                <span className="badge badge-ghost badge-sm">
-                  {t('iam.menu.hidden')}
-                </span>
-              )}
             </div>
           </td>
           {/* 图标列：默认 icon；hover 有可渲染的 activeIcon 时切换展示 */}
@@ -406,7 +401,27 @@ export function MenuManagementPage() {
             )}
           </td>
           <td>
-            <span className="badge badge-outline badge-sm">{node.type}</span>
+            <span className="badge badge-outline badge-sm">
+              {t(
+                node.type === 'app'
+                  ? 'iam.menu.typeApp'
+                  : node.type === 'menu'
+                    ? 'iam.menu.typeMenu'
+                    : node.type === 'group'
+                      ? 'iam.menu.typeGroup'
+                      : 'iam.menu.typeButton',
+              )}
+            </span>
+          </td>
+          {/* 可见列：hidden=false → 显示（成功色）；hidden=true → 隐藏（警告色） */}
+          <td>
+            <span
+              className={`badge badge-sm ${
+                node.hidden ? 'badge-warning' : 'badge-success'
+              }`}
+            >
+              {t(node.hidden ? 'iam.menu.hidden' : 'iam.menu.visible')}
+            </span>
           </td>
           <td className="text-xs">{node.sort}</td>
           {!readOnly && (
@@ -511,6 +526,7 @@ export function MenuManagementPage() {
               <th>{t('iam.menu.colUri')}</th>
               <th>{t('iam.menu.colPermission')}</th>
               <th>{t('iam.menu.colType')}</th>
+              <th>{t('iam.menu.colVisible')}</th>
               <th>{t('iam.menu.colSort')}</th>
               {!readOnly && (
                 <th className="w-60">{t('iam.menu.colActions')}</th>
@@ -520,7 +536,7 @@ export function MenuManagementPage() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={readOnly ? 7 : 8}>
+                <td colSpan={readOnly ? 8 : 9}>
                   <div className="flex justify-center py-8">
                     <span className="loading loading-spinner loading-lg" />
                   </div>
@@ -529,7 +545,7 @@ export function MenuManagementPage() {
             ) : tree.length === 0 ? (
               <tr>
                 <td
-                  colSpan={readOnly ? 7 : 8}
+                  colSpan={readOnly ? 8 : 9}
                   className="text-base-content/50 py-8 text-center"
                 >
                   {loadError || t('iam.menu.empty')}

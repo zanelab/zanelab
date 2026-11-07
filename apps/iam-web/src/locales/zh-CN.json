@@ -60,7 +60,7 @@
       "deleteFailed": "删除失败",
       "nameCodeRequired": "名称不能为空",
       "typeApp": "应用",
-      "typeGroup": "分组",
+      "typeGroup": "目录",
       "typeMenu": "菜单",
       "typeButton": "按钮",
       "namePlaceholder": "菜单名称",
@@ -83,7 +83,9 @@
       "nameRequired": "菜单名称不能为空",
       "colPermission": "权限码",
       "permissionPlaceholder": "例：system:menu:list（空=公开）",
-      "public": "公开"
+      "public": "公开",
+      "visible": "显示",
+      "colVisible": "可见"
     },
     "user": {
       "title": "用户管理",

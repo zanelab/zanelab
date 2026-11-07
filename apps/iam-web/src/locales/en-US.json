@@ -83,7 +83,9 @@
       "nameRequired": "Menu name is required",
       "colPermission": "Permission",
       "permissionPlaceholder": "e.g. system:menu:list (empty=public)",
-      "public": "public"
+      "public": "public",
+      "visible": "Shown",
+      "colVisible": "Visible"
     },
     "user": {
       "title": "User Management",
