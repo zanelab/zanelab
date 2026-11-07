@@ -38,7 +38,13 @@ describe('RoleManagementPage', () => {
     );
     // 弹窗内树已渲染（镜像 mock 的公开子集：首页 + 系统管理壳）
     expect(screen.getByText('首页')).toBeInTheDocument();
-    // 填表 + 勾选「系统管理」→ 保存
+    // 无权限码节点 checkbox 禁用 + 显示灰态；带码节点可勾选
+    const homeCheckbox = screen
+      .getByText('首页')
+      .closest('label')!
+      .querySelector('input')!;
+    expect(homeCheckbox).toBeDisabled();
+    // 填表 + 勾选带码节点（用户管理 system:user:list）→ 保存
     await user.type(
       screen.getByPlaceholderText('iam.role.namePlaceholder'),
       '审计员',
@@ -47,7 +53,8 @@ describe('RoleManagementPage', () => {
       screen.getByPlaceholderText('iam.role.codePlaceholder'),
       'auditor',
     );
-    await user.click(screen.getByText('系统管理').closest('label')!);
+    // 弹窗树数据源 = menusApi.list()（admin('*') 全量）→ 带码节点在「系统管理」子级
+    await user.click(screen.getByText('用户管理').closest('label')!);
     await user.click(screen.getByText('iam.role.save'));
     // 保存成功 → 弹窗关闭 + 列表刷新出现新角色（mock 授权集合会收到空 permission 集）
     await waitFor(() =>

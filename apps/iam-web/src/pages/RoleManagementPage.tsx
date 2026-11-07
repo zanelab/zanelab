@@ -97,11 +97,14 @@ export function RoleManagementPage() {
     void reload();
   }, [reload]);
 
-  /** 勾选/取消节点 + 子树级联。 */
+  /** 勾选/取消节点 + 子树级联（仅 permission 非空的节点进入勾选集合）。 */
   const toggleNode = (node: MenuItemRecord, shouldCheck: boolean) => {
     setChecked((prev) => {
       const next = new Set(prev);
       for (const id of collectSubtreeIds(node)) {
+        // 无权限码的节点不进勾选集合（提交只收集 permission 非空的数据）
+        const target = flattenNodes(tree).find((n) => n.id === id);
+        if (!target?.permission) continue;
         if (shouldCheck) next.add(id);
         else next.delete(id);
       }
@@ -109,15 +112,16 @@ export function RoleManagementPage() {
     });
   };
 
-  /** 节点三态：自身 checked / 部分子选中 → indeterminate / 否则 unchecked。 */
+  /** 节点三态：自身 checked / 部分子选中 → indeterminate / 否则 unchecked。
+   *  无权限码节点自身不可勾选，但其子树有勾选时父节点仍要显示 indeterminate。 */
   const nodeState = (
     node: MenuItemRecord,
     checkedIds: Set<number>,
   ): 'checked' | 'indeterminate' | 'unchecked' => {
-    if (checkedIds.has(node.id)) return 'checked';
     const children = node.children ?? [];
-    if (children.length === 0) return 'unchecked';
     const anyChecked = flattenNodes(children).some((c) => checkedIds.has(c.id));
+    if (checkedIds.has(node.id)) return 'checked';
+    if (children.length === 0) return 'unchecked';
     return anyChecked ? 'indeterminate' : 'unchecked';
   };
 
@@ -596,17 +600,38 @@ function RoleTree({
               ) : (
                 <span className="inline-block size-4 shrink-0" />
               )}
-              <label className="flex cursor-pointer items-center gap-2 py-0.5">
+              <label
+                className={`flex items-center gap-2 py-0.5 ${
+                  node.permission ? 'cursor-pointer' : 'cursor-not-allowed'
+                }`}
+              >
                 <input
                   type="checkbox"
-                  className="checkbox checkbox-xs checkbox-primary rounded-[4px]"
+                  className={`checkbox checkbox-xs rounded-[4px] ${
+                    node.permission
+                      ? 'checkbox-primary'
+                      : 'text-base-content/30'
+                  }`}
                   checked={state === 'checked'}
+                  disabled={!node.permission}
                   ref={(el) => {
                     if (el) el.indeterminate = state === 'indeterminate';
                   }}
                   onChange={(e) => onToggle(node, e.target.checked)}
                 />
-                <span className="text-sm leading-none">{node.name}</span>
+                <span
+                  className={`text-sm leading-none ${
+                    node.permission ? '' : 'text-base-content/50'
+                  }`}
+                >
+                  {node.name}
+                </span>
+                {/* 权限码（次要色）；无权限码节点不可勾选（提交只收集带码数据） */}
+                {node.permission && (
+                  <span className="text-base-content/40 font-mono text-xs">
+                    {node.permission}
+                  </span>
+                )}
               </label>
             </div>
             {hasChildren && !isCollapsed && (
