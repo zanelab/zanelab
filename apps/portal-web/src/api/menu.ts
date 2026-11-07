@@ -145,6 +145,7 @@ function transformMenu(
     name: raw.name,
     path,
     icon: raw.icon || undefined,
+    activeIcon: raw.active_icon || undefined,
     appName,
 
     // 保留后端节点类型：默认落点计算需区分「应用根」与「菜单/目录」（见 menu-views）

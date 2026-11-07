@@ -31,6 +31,7 @@ export const mockMenus: MenuItem[] = [
     name: '首页',
     path: '/home',
     icon: 'home',
+    activeIcon: 'home-active',
     type: 'menu',
   },
   {
@@ -38,6 +39,7 @@ export const mockMenus: MenuItem[] = [
     name: '系统管理',
     path: '/iam',
     icon: 'system',
+    activeIcon: 'system-active',
     appName: 'iam',
     type: 'app',
     children: [
@@ -99,7 +101,7 @@ const mockRawMenus = [
     type: 'menu',
     sort: 0,
     icon: 'home',
-    active_icon: null,
+    active_icon: 'home-active',
     hidden: false,
     scopes: ['C'],
     children: null,
