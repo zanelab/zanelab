@@ -207,18 +207,23 @@ export const iamMenuHandlers = [
     }),
   ),
 
-  // GET 列表（镜像 Edge Fn menusList）：匿名 → scopes C 子集；登录 → 按权限过滤；admin('*') → 全量
+  // GET 列表（镜像 Edge Fn menusList）：匿名（guest 身份，C+permission 空）→ 公开子集；登录 → 按权限过滤；admin('*') → 全量
   ...pagePaths(MENUS_LIST_PATH).map((path) =>
     http.get(path, async ({ request }) => {
       await delay(200);
       const perms = resolvePermissions(request);
       if (perms.includes('*')) return ok(menus);
       if (perms.length === 0) {
-        // 匿名：hidden=false + scopes 含 C + 非 button（按钮是权限粒度非导航）
+        // 匿名（guest 身份）：hidden=false + scopes 含 C + permission 空 + 非 button
+        // （带 permission 的节点属授权可见性范畴，匿名无码不可见）
         return ok(
           filterTree(
             menus,
-            (n) => !n.hidden && n.scopes.includes('C') && n.type !== 'button',
+            (n) =>
+              !n.hidden &&
+              n.scopes.includes('C') &&
+              n.type !== 'button' &&
+              !n.permission,
           ),
         );
       }

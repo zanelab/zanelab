@@ -31,14 +31,17 @@ beforeEach(() => {
 });
 
 describe('menusApi.list（经本地 http 客户端，无 token = 游客）', () => {
-  it('游客视角：返回游客可见子集（含首页与系统管理，树形结构）', async () => {
+  it('游客视角：只返回公开子集（permission 空 + scopes 含 C；带码节点不可见）', async () => {
     const tree = await menusApi.list();
     expect(Array.isArray(tree)).toBe(true);
-    // 种子数据全部公开（scopes 含 C + hidden=false）→ 游客也看得到，但仍是树
+    // 首页/系统管理 permission 为空 → 可见；三个管理菜单带读码 → 匿名不可见
     const home = tree.find((n) => n.name === '首页');
     expect(home).toBeDefined();
     const iam = tree.find((n) => n.name === '系统管理');
-    expect(iam?.children?.length).toBeGreaterThan(0);
+    expect(iam).toBeDefined();
+    expect(iam?.children?.length ?? 0).toBe(0);
+    const flat = tree.flatMap((n) => [n, ...(n.children ?? [])]);
+    expect(flat.some((n) => n.permission)).toBe(false);
   });
 
   it('admin 视角（server.use 注入头）：返回全量树', async () => {

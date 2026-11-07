@@ -66,7 +66,7 @@ supabase/
 ### 菜单可见性规则（`GET /auth/menus`）
 
 ```
-匿名                    → hidden=false + scopes 含 C + 非按钮（+ 祖先链）
+匿名（guest 身份）      → hidden=false + scopes 含 C + permission 为空 + 非按钮（+ 祖先链）
 登录 + permission 空    → 公开（所有登录用户可见）
 登录 + permission 非空  → 角色授权该码才可见（+ 祖先链）
 admin（权限含 '*'）      → 全量（含 hidden）
@@ -200,7 +200,7 @@ mock 用 MSW，handler 在 `src/mocks/otp-handlers.ts`（OTP）与 `src/mocks/me
 - 发码恒返 success（300ms 模拟延迟）
 - 验码接受任意 6 位数字（测试用 `123456`）
 - 验码成功返回 mock 会话
-- 菜单：内存数据模拟 CRUD；**身份按 `Authorization` 头判定（三级）**—— `Bearer mock-admin`（`*`）→ 全量 + 可写；`Bearer mock-guest`（读码）→ 按 permission 过滤 + 写 403；无头（匿名）→ scopes 含 C 公开子集 + 写 403。独立态切换身份：devtools 里 `localStorage.iam_token = 'mock-admin'`（或 `'mock-guest'`）后刷新。
+- 菜单：内存数据模拟 CRUD；**身份按 `Authorization` 头判定（三级）**—— `Bearer mock-admin`（`*`）→ 全量 + 可写；`Bearer mock-guest`（读码）→ 按 permission 过滤 + 写 403；无头（匿名 = guest 身份）→ scopes 含 C 且 permission 为空的公开子集 + 写 403。独立态切换身份：devtools 里 `localStorage.iam_token = 'mock-admin'`（或 `'mock-guest'`）后刷新。
 
 ### 集成态
 

@@ -544,8 +544,9 @@ async function menusListAll(
  * GET /auth/menus —— 匿名 → 游客可见子集；有效 JWT → 按权限过滤（无码门槛）。
  *
  * 过滤规则（任务 11-06 RBAC：permission 语义权限码）：
- * - 匿名：hidden=false 且 scopes 含 'C' 且 type!=='button'（按钮是权限粒度非导航）
- *   的节点 + 为保持树形完整的祖先链。
+ * - 匿名（无 token 一律按 guest 身份）：hidden=false 且 scopes 含 'C' 且
+ *   **permission 为空** 且 type!=='button'（带 permission 的节点属授权可见性范畴，
+ *   匿名无码不可见）+ 为保持树形完整的祖先链。
  * - 登录非 admin：节点可见 ⇔ hidden=false 且（permission 为空 = 公开 或
  *   permission ∈ 用户权限集）。
  * - admin（权限含 '*'）：全量（含 hidden——管理员要能看到待发布的节点）。
@@ -558,7 +559,9 @@ async function menusList(
   const rows = await fetchAllRows(ctx);
   const user = await resolveUser(ctx, req.headers.get('authorization'));
 
-  // 匿名 → 游客子集
+  // 匿名 → 游客子集（无 token 请求一律按 guest 身份取菜单：scopes 含 C 的
+  // 「公开节点」= permission 为空 + 非 button；带 permission 的节点属于授权
+  // 可见性范畴，匿名/guest 无码即不可见，不能凭 scopes C 混入）
   if (!user) {
     const visible = new Set<number>();
     const keep = (row: MenuRow) => {
@@ -571,7 +574,12 @@ async function menusList(
       }
     };
     for (const row of rows) {
-      if (!row.hidden && row.scopes.includes('C') && row.type !== 'button') {
+      if (
+        !row.hidden &&
+        row.scopes.includes('C') &&
+        row.type !== 'button' &&
+        !row.permission
+      ) {
         keep(row);
       }
     }

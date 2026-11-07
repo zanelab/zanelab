@@ -497,7 +497,7 @@ export function MenuManagementPage() {
           '--page-font': `${prefs.fontSize}px`,
         } as CSSProperties
       }
-      className="text-base-content min-h-screen p-6"
+      className="text-base-content min-h-full p-6"
     >
       {/* 工具栏：标题 + 新增根级 */}
       <div className="mb-4 flex items-center justify-between">

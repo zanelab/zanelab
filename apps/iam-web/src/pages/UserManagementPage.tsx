@@ -123,7 +123,7 @@ export function UserManagementPage() {
           '--page-font': `${prefs.fontSize}px`,
         } as CSSProperties
       }
-      className="text-base-content min-h-screen p-6"
+      className="text-base-content min-h-full p-6"
     >
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-xl font-semibold">{t('iam.user.title')}</h1>
