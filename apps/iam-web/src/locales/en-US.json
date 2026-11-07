@@ -82,7 +82,8 @@
       "typeMismatch": "Fields do not match the selected menu type",
       "nameRequired": "Menu name is required",
       "colPermission": "Permission",
-      "permissionPlaceholder": "e.g. system:menu:list (empty=public)"
+      "permissionPlaceholder": "e.g. system:menu:list (empty=public)",
+      "public": "public"
     },
     "user": {
       "title": "User Management",

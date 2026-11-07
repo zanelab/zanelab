@@ -395,6 +395,16 @@ export function MenuManagementPage() {
             )}
           </td>
           <td className="text-xs">{node.uri ?? '—'}</td>
+          {/* 权限码列：空 = 公开；monospace 次要色展示 */}
+          <td>
+            {node.permission ? (
+              <span className="font-mono text-xs">{node.permission}</span>
+            ) : (
+              <span className="text-base-content/30 text-xs">
+                {t('iam.menu.public')}
+              </span>
+            )}
+          </td>
           <td>
             <span className="badge badge-outline badge-sm">{node.type}</span>
           </td>
@@ -499,6 +509,7 @@ export function MenuManagementPage() {
               <th>{t('iam.menu.colName')}</th>
               <th>{t('iam.menu.colIcon')}</th>
               <th>{t('iam.menu.colUri')}</th>
+              <th>{t('iam.menu.colPermission')}</th>
               <th>{t('iam.menu.colType')}</th>
               <th>{t('iam.menu.colSort')}</th>
               {!readOnly && (
@@ -509,7 +520,7 @@ export function MenuManagementPage() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={readOnly ? 6 : 7}>
+                <td colSpan={readOnly ? 7 : 8}>
                   <div className="flex justify-center py-8">
                     <span className="loading loading-spinner loading-lg" />
                   </div>
@@ -518,7 +529,7 @@ export function MenuManagementPage() {
             ) : tree.length === 0 ? (
               <tr>
                 <td
-                  colSpan={readOnly ? 6 : 7}
+                  colSpan={readOnly ? 7 : 8}
                   className="text-base-content/50 py-8 text-center"
                 >
                   {loadError || t('iam.menu.empty')}

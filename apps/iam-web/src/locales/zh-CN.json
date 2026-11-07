@@ -82,7 +82,8 @@
       "typeMismatch": "字段与所选菜单类型不匹配",
       "nameRequired": "菜单名称不能为空",
       "colPermission": "权限码",
-      "permissionPlaceholder": "例：system:menu:list（空=公开）"
+      "permissionPlaceholder": "例：system:menu:list（空=公开）",
+      "public": "公开"
     },
     "user": {
       "title": "用户管理",
