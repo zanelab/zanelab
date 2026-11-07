@@ -261,6 +261,30 @@ export const BUILTIN_ICONS: Record<string, IconData> = {
   'chevron-down': { paths: ['M6 9L12 15L18 9'] },
   'chevron-left': { paths: ['m15 18-6-6 6-6'] },
   'chevron-right': { paths: ['M9 18L15 12L9 6'] },
+  /** lucide pencil（编辑）。来源：MenuManagementPage.tsx 手写 SVG 收拢 */
+  pencil: { paths: ['M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z'] },
+  /** lucide trash-2（删除）。来源：MenuManagementPage.tsx 手写 SVG 收拢 */
+  'trash-2': {
+    paths: [
+      'M3 6h18',
+      'M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2',
+      'M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6',
+    ],
+  },
+  /** lucide user-plus（iam 用户页分配角色钮）。来源：UserManagementPage.tsx 手写 SVG 收拢 */
+  'user-plus': {
+    paths: [
+      'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2',
+      'M9 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z',
+      'M19 8v6M22 11h-6',
+    ],
+  },
+  /** lucide ban（禁用）。来源：UserManagementPage.tsx 手写 SVG 收拢 */
+  ban: {
+    paths: ['M4.9 4.9l14.2 14.2', 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z'],
+  },
+  /** lucide square-pen（角色编辑）。来源：RoleManagementPage.tsx 手写 SVG 收拢 */
+  'square-pen': { paths: ['M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z'] },
   'chevron-up': { paths: ['M18 15L12 9L6 15'] },
   'chevrons-down': { paths: ['m18 7-6 6-6-6', 'm18 13-6 6-6-6'] },
   'chevrons-left': { paths: ['m11 17-5-5 5-5M18 17l-5-5 5-5'] },

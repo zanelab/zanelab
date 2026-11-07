@@ -348,16 +348,10 @@ export function MenuManagementPage() {
                   }
                   onClick={() => toggleExpand(node.id)}
                 >
-                  <svg
+                  <AppIcon
+                    name="chevron-right"
                     className={`size-3 transition-transform ${isOpen ? 'rotate-90' : ''}`}
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    aria-hidden="true"
-                  >
-                    <path d="m9 6 6 6-6 6" />
-                  </svg>
+                  />
                 </button>
               ) : (
                 <span className="inline-block size-4 shrink-0" />
@@ -414,16 +408,7 @@ export function MenuManagementPage() {
                     className="btn btn-soft btn-info btn-xs gap-1"
                     onClick={() => openCreate(node.id)}
                   >
-                    <svg
-                      className="size-3.5"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      aria-hidden="true"
-                    >
-                      <path d="M12 5v14M5 12h14" />
-                    </svg>
+                    <AppIcon name="plus" className="size-3.5" />
                     {t('iam.menu.addChild')}
                   </button>
                 </Permission>
@@ -433,16 +418,7 @@ export function MenuManagementPage() {
                     className="btn btn-soft btn-primary btn-xs gap-1"
                     onClick={() => openEdit(node)}
                   >
-                    <svg
-                      className="size-3.5"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      aria-hidden="true"
-                    >
-                      <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-                    </svg>
+                    <AppIcon name="pencil" className="size-3.5" />
                     {t('iam.menu.edit')}
                   </button>
                 </Permission>
@@ -455,18 +431,7 @@ export function MenuManagementPage() {
                       setDeleteTarget(node);
                     }}
                   >
-                    <svg
-                      className="size-3.5"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      aria-hidden="true"
-                    >
-                      <path d="M3 6h18" />
-                      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
-                    </svg>
+                    <AppIcon name="trash-2" className="size-3.5" />
                     {t('iam.menu.delete')}
                   </button>
                 </Permission>
@@ -510,16 +475,7 @@ export function MenuManagementPage() {
               className="btn btn-sm gap-2 rounded-(--page-radius) bg-(--page-primary) text-white hover:opacity-90"
               onClick={() => openCreate(null)}
             >
-              <svg
-                className="size-4"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                aria-hidden="true"
-              >
-                <path d="M12 5v14M5 12h14" />
-              </svg>
+              <AppIcon name="plus" className="size-4" />
               {t('iam.menu.create')}
             </button>
           </Permission>
