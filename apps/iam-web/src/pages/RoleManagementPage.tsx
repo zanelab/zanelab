@@ -259,7 +259,7 @@ export function RoleManagementPage() {
           '--page-font': `${prefs.fontSize}px`,
         } as CSSProperties
       }
-      className="text-base-content min-h-screen p-6"
+      className="text-base-content min-h-full p-6"
     >
       <h1 className="text-xl font-semibold">{t('iam.role.title')}</h1>
 
@@ -582,21 +582,23 @@ function RoleTree({
 }) {
   const [collapsed, setCollapsed] = useState<Set<number>>(new Set());
   return (
-    <>
+    <ul className="flex flex-col gap-0.5">
       {nodes.map((node) => {
         const state = nodeState(node, check);
         const hasChildren = !!node.children?.length;
         const isCollapsed = collapsed.has(node.id);
         return (
-          <div key={node.id}>
+          <li key={node.id}>
             <div
-              className="flex items-center gap-2 py-0.5"
+              className="flex items-center gap-1"
               style={{ paddingLeft: `${depth * 1.25}rem` }}
             >
-              {hasChildren && (
+              {/* 展开钮占位：叶子节点用等宽空位撑齐，保证 checkbox 列垂直对齐 */}
+              {hasChildren ? (
                 <button
                   type="button"
-                  className="btn btn-ghost btn-xs px-1"
+                  className="btn btn-ghost btn-square btn-xs size-4 min-h-0 p-0"
+                  aria-label={isCollapsed ? 'expand' : 'collapse'}
                   onClick={() =>
                     setCollapsed((prev) => {
                       const next = new Set(prev);
@@ -617,18 +619,20 @@ function RoleTree({
                     <path d="m9 6 6 6-6 6" />
                   </svg>
                 </button>
+              ) : (
+                <span className="inline-block size-4 shrink-0" />
               )}
-              <label className="flex cursor-pointer items-center gap-2">
+              <label className="flex cursor-pointer items-center gap-2 py-0.5">
                 <input
                   type="checkbox"
-                  className="checkbox checkbox-xs checkbox-primary"
+                  className="checkbox checkbox-xs checkbox-primary rounded-[4px]"
                   checked={state === 'checked'}
                   ref={(el) => {
                     if (el) el.indeterminate = state === 'indeterminate';
                   }}
                   onChange={(e) => onToggle(node, e.target.checked)}
                 />
-                <span className="text-sm">{node.name}</span>
+                <span className="text-sm leading-none">{node.name}</span>
               </label>
             </div>
             {hasChildren && !isCollapsed && (
@@ -640,9 +644,9 @@ function RoleTree({
                 nodeState={nodeState}
               />
             )}
-          </div>
+          </li>
         );
       })}
-    </>
+    </ul>
   );
 }
