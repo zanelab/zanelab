@@ -1,6 +1,7 @@
 import { delay, http, HttpResponse } from 'msw';
 import {
   MENUS_LIST_PATH,
+  MENUS_ALL_PATH,
   MENUS_COLLECTION_PATH,
   MENUS_ITEM_PATH,
   INTEGRATION_PREFIX,
@@ -196,6 +197,16 @@ function attach(tree: MenuItemRecord[], node: MenuItemRecord): boolean {
 }
 
 export const iamMenuHandlers = [
+  // GET 管理专用全量树（镜像 Edge Fn menusListAll）：require system:menu:list
+  ...pagePaths(MENUS_ALL_PATH).map((path) =>
+    http.get(path, async ({ request }) => {
+      await delay(200);
+      if (!can(resolvePermissions(request), 'system:menu:list'))
+        return fail(1011, '没有执行此操作的权限', 403);
+      return ok(menus);
+    }),
+  ),
+
   // GET 列表（镜像 Edge Fn menusList）：匿名 → scopes C 子集；登录 → 按权限过滤；admin('*') → 全量
   ...pagePaths(MENUS_LIST_PATH).map((path) =>
     http.get(path, async ({ request }) => {

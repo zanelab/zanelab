@@ -48,7 +48,8 @@ supabase/
 
 | 端点 | 方法 | 权限码 |
 | --- | --- | --- |
-| `/auth/menus` | GET | 无码门槛（匿名走 scopes 含 C 公开子集；登录按 permission 过滤） |
+| `/auth/menus` | GET | 无码门槛（匿名走 scopes 含 C 公开子集；登录按 permission 过滤——壳菜单/导航用） |
+| `/menus/all` | GET | `system:menu:list`（管理专用全量树：含 hidden 与 button——菜单管理页数据源） |
 | `/menus` | POST | `system:menu:create` |
 | `/menus/:id` | PUT | `system:menu:update` |
 | `/menus/:id` | DELETE | `system:menu:delete` |
@@ -72,7 +73,8 @@ admin（权限含 '*'）      → 全量（含 hidden）
 
 | 端点 | 方法 | 鉴权 | 说明 |
 | --- | --- | --- | --- |
-| `/auth/menus` | GET | 匿名可调 | 无/无效 JWT → 游客可见子集（见上「可见性规则」）；有效 JWT → 按权限过滤；admin（权限含 `*`）→ 全量 |
+| `/auth/menus` | GET | 匿名可调 | 无/无效 JWT → 游客可见子集（见上「可见性规则」）；有效 JWT → 按权限过滤；admin（权限含 `*`）→ 全量。**壳菜单/导航数据源** |
+| `/menus/all` | GET | `system:menu:list` | **菜单管理专用全量树**（含 hidden 与 button——管理页要看到待发布节点与按钮权限码）；无 JWT → 1010/401，无码 → 1011/403 |
 | `/menus` | POST | `system:menu:create` | 无 JWT → 1010/401；无码 → 1011/403；**类型联动校验违例 → 1014/400**；`permission` 由请求体携带（选填，空 = 公开） |
 | `/menus/:id` | PUT | `system:menu:update` | 更新（缺省字段沿用行值后再校验；permission 可改） |
 | `/menus/:id` | DELETE | `system:menu:delete` | 删除（FK 级联子树；id 不存在 → 1013/404） |

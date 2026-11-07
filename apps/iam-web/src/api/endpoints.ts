@@ -39,6 +39,13 @@ export const OTP_VERIFY_PATH = '/functions/v1/iam/auth/otp/verify';
  */
 export const MENUS_LIST_PATH = '/functions/v1/iam/auth/menus';
 
+/**
+ * 菜单管理专用全量树（GET，require system:menu:list：含 hidden 与 button）。
+ * 菜单管理页数据源——/auth/menus 是「按用户权限过滤的树」（壳菜单/导航用），
+ * 管理页要看到全量（含待发布/按钮节点），两者职责不同故分端点。
+ */
+export const MENUS_ALL_PATH = '/functions/v1/iam/menus/all';
+
 /** 菜单集合写路径（POST 新建；仅 admin，Edge Fn requireAdmin 把关）。 */
 export const MENUS_COLLECTION_PATH = '/functions/v1/iam/menus';
 

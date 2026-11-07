@@ -136,6 +136,10 @@ export default {
         if (path.endsWith('/auth/logout')) {
           return await authLogout(req, lang);
         }
+        if (path.endsWith('/menus/all')) {
+          // 管理专用全量树：放在 /menus 前缀判断之前，避免被 endsWith('/menus') 误吞
+          return await menusListAll(req, ctx, lang);
+        }
         if (path.endsWith('/auth/menus')) {
           return await menusList(req, ctx, lang);
         }
@@ -504,6 +508,24 @@ async function fetchAllRows(ctx: {
     .order('sort', { ascending: true });
   if (error) throw new Error(`[iam] menus query failed: ${error.message}`);
   return (data ?? []) as MenuRow[];
+}
+
+/**
+ * GET /menus/all —— 菜单管理专用：登录 + system:menu:list 权限码 → 全量树
+ * （含 hidden 与 button——管理页要看到待发布节点与按钮权限码；与 /auth/menus
+ * 的「按用户权限过滤」不同，这里是「能进菜单管理的人看全量」）。
+ * 无 JWT → 401；无 system:menu:list → 403（requirePermission 统一语义）。
+ */
+async function menusListAll(
+  req: Request,
+  ctx: { supabase: SupabaseClient; supabaseAdmin: SupabaseClient },
+  lang: string,
+): Promise<Response> {
+  const auth = await requirePermission(ctx, req, lang, 'system:menu:list');
+  if (auth instanceof Response) return auth;
+
+  const rows = await fetchAllRows(ctx);
+  return json(lang, toTree(rows));
 }
 
 /**

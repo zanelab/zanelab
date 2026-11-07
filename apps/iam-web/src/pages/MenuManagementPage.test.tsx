@@ -12,19 +12,23 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: tStable }),
 }));
 
-// MSW 生命周期由 src/test/setup.ts 统一管理
+// MSW 生命周期由 src/test/setup.ts 统一管理；页面数据源是 /menus/all（require
+// system:menu:list）——渲染类用例也须持 admin token，否则 403 只读空树。
 afterEach(() => resetMenuMock());
 
 describe('MenuManagementPage', () => {
   it('渲染种子菜单树（首页 + 系统管理及其子级，缩进行可见）', async () => {
+    localStorage.setItem('iam_token', 'mock-admin');
     render(<MenuManagementPage />);
     await waitFor(() => expect(screen.getByText('首页')).toBeInTheDocument());
     expect(screen.getByText('系统管理')).toBeInTheDocument();
     // 子级默认收起——展开后才出现
     expect(screen.queryByText('菜单管理')).not.toBeInTheDocument();
+    localStorage.removeItem('iam_token');
   });
 
   it('展开父节点显示子级；再点收起', async () => {
+    localStorage.setItem('iam_token', 'mock-admin');
     const user = userEvent.setup();
     render(<MenuManagementPage />);
     await waitFor(() =>
@@ -40,6 +44,7 @@ describe('MenuManagementPage', () => {
     // 收起
     await user.click(screen.getByRole('button', { name: 'iam.menu.collapse' }));
     expect(screen.queryByText('菜单管理')).not.toBeInTheDocument();
+    localStorage.removeItem('iam_token');
   });
 
   it('新增菜单：填表提交后列表刷新出现新节点', async () => {

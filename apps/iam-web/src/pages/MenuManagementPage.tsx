@@ -16,7 +16,8 @@ import { AppIcon, BUILTIN_ICONS, useIconStore, IconPicker } from '@zanelab/ui';
 /*
  * 菜单管理页 —— iam 首个业务域（任务 11-03，design DD5）。
  *
- * - 数据流：mount 拉 menusApi.list() → buildTree → 树形表格；CRUD 成功后**重拉**
+ * - 数据流：mount 拉 menusApi.listAll()（管理专用全量树，require
+ *   system:menu:list）→ buildTree → 树形表格；CRUD 成功后**重拉**
  *   （树形 + 级联删除下乐观更新复杂度不值当，design 已定）。
  * - 权限：写操作被 403/401 后置为只读（readOnly state），不再重试；游客/未登录
  *   首屏只见可见子集（服务端 DD3 判定），操作列隐藏。
@@ -152,7 +153,7 @@ export function MenuManagementPage() {
     setLoading(true);
     setLoadError('');
     try {
-      const rows = await menusApi.list();
+      const rows = await menusApi.listAll();
       setFlat(rows.flatMap((n) => flattenRow(n)));
     } catch (e) {
       // toast 只提示一次（防双弹）：集成态走宿主 props.http，其拦截器链已对

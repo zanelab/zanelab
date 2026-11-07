@@ -14,6 +14,7 @@ import { getProps } from '../props';
 import { post, get, put, del } from '../utils/http';
 import {
   MENUS_LIST_PATH,
+  MENUS_ALL_PATH,
   MENUS_COLLECTION_PATH,
   MENUS_ITEM_PATH,
 } from './endpoints';
@@ -100,6 +101,23 @@ function mapActiveIcon(nodes: RawMenuNode[]): MenuItemRecord[] {
 }
 
 export const menusApi = {
+  /**
+   * 菜单管理专用全量树：GET {prefix}{MENUS_ALL_PATH}（require system:menu:list，
+   * 含 hidden/button 的全量；401/403 → 页面后置只读）。
+   */
+  async listAll(): Promise<MenuItemRecord[]> {
+    let res: unknown;
+    try {
+      res = await get(`${apiPrefix()}${MENUS_ALL_PATH}`);
+    } catch (e) {
+      throw toError(e);
+    }
+    const data = normalize<MenuItemRecord[]>(res);
+    if (Array.isArray(data)) return mapActiveIcon(data);
+    const envelope = res as { msg?: string } | undefined;
+    throw new Error(envelope?.msg);
+  },
+
   /**
    * 菜单树：GET {prefix}{MENUS_LIST_PATH}。
    *
