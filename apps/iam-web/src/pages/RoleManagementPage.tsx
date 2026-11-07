@@ -176,7 +176,17 @@ export function RoleManagementPage() {
       if (editing) {
         role = await rolesApi.update(editing.id, name);
       } else {
-        role = await rolesApi.create(formCode.trim(), name);
+        // 幂等新建：code 已存在（如上一步建角色成功但授权保存失败后重试）→
+        // 改走更新，继续完成授权保存，不再让用户撞「编码已存在」
+        try {
+          role = await rolesApi.create(formCode.trim(), name);
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : '';
+          if (!/已存在|1016/.test(msg)) throw e;
+          const existing = roles.find((r) => r.code === formCode.trim());
+          if (!existing) throw e;
+          role = await rolesApi.update(existing.id, name);
+        }
       }
       // 授权随表单提交：新建（要授权）或编辑（全量替换语义，空集合 = 清空授权）
       if (!editing || perms.length > 0 || checked.size > 0) {
@@ -241,7 +251,7 @@ export function RoleManagementPage() {
         {!readOnly && (
           <button
             type="button"
-            className="btn btn-soft btn-primary btn-sm gap-1"
+            className="btn btn-primary btn-sm gap-1"
             onClick={() => void openForm()}
           >
             <svg
@@ -273,7 +283,9 @@ export function RoleManagementPage() {
               <th>{t('iam.role.colName')}</th>
               <th>{t('iam.role.colCode')}</th>
               <th>{t('iam.role.colPermCount')}</th>
-              {!readOnly && <th>{t('iam.role.colActions')}</th>}
+              {!readOnly && (
+                <th className="w-50">{t('iam.role.colActions')}</th>
+              )}
             </tr>
           </thead>
           <tbody>
