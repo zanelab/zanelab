@@ -209,34 +209,67 @@ export function UserManagementPage() {
                   </td>
                   {!readOnly && (
                     <td>
-                      <div className="flex gap-1">
+                      <div className="flex items-center gap-1">
                         <button
                           type="button"
-                          className="btn btn-ghost btn-xs"
+                          className="btn btn-soft btn-primary btn-xs gap-1"
                           onClick={() => {
                             setFormError('');
                             setEditTarget(user);
                             setEditingRoles(user.roles);
                           }}
                         >
+                          <svg
+                            className="size-3.5"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            aria-hidden="true"
+                          >
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                            <circle cx="9" cy="7" r="4" />
+                            <path d="M19 8v6M22 11h-6" />
+                          </svg>
                           {t('iam.user.assignRoles')}
                         </button>
                         {isBanned(user) ? (
                           <button
                             type="button"
-                            className="btn btn-ghost btn-xs"
+                            className="btn btn-soft btn-success btn-xs gap-1"
                             disabled={saving}
                             onClick={() => void toggleBan(user, false)}
                           >
+                            <svg
+                              className="size-3.5"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              aria-hidden="true"
+                            >
+                              <path d="M20 6 9 17l-5-5" />
+                            </svg>
                             {t('iam.user.enable')}
                           </button>
                         ) : (
                           <button
                             type="button"
-                            className="btn btn-ghost btn-xs text-error"
+                            className="btn btn-soft btn-error btn-xs gap-1"
                             disabled={saving}
                             onClick={() => void toggleBan(user, true)}
                           >
+                            <svg
+                              className="size-3.5"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              aria-hidden="true"
+                            >
+                              <circle cx="12" cy="12" r="10" />
+                              <path d="m4.9 4.9 14.2 14.2" />
+                            </svg>
                             {t('iam.user.disable')}
                           </button>
                         )}
