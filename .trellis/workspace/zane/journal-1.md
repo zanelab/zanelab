@@ -268,3 +268,28 @@ apikey-interceptor 任务的评审驱动续批：a576eae 按 X_* 评审——请
 ### Status
 
 [OK] **Completed**
+
+
+## Session 11: AppIcon 下沉收尾：BUILTIN_ICONS 精简 + 图标键对齐 + PR #5
+<!-- trellis-session: v=2 fp=e9eb7361a8124797 -->
+
+**Date**: 2026-11-08
+**Task**: AppIcon 下沉收尾：BUILTIN_ICONS 精简 + 图标键对齐 + PR #5
+**Branch**: `feat/iam-api-rbac`
+
+### Summary
+
+完成任务 11-06-app-icon-shared 收尾：BUILTIN_ICONS 精简至引用集（288→67 键，保留种子/代码/测试引用的 home/system/key/shield 等 8 键），应用侧图标键对齐（pencil→edit、trash-2→trash、refresh-cw→refresh、world-clock→timezone），pack.json 新增 users/menus/role 六图标，config.js 关闭偏好设置入口，spec 组件规范对齐 packages/ui 路径。trellis-check 全绿（tsc/lint/portal 179 测试/iam 42 测试/双端 build）。推送 feat/iam-api-rbac 并创建 PR #5（64 提交：IAM RBAC 全栈 + 图标体系下沉）。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `d8a6e34` | feat(@zanelab/ui): BUILTIN_ICONS 精简至引用集，键名对齐 refresh/timezone/trash |
+| `ed4f516` | feat(@zanelab/portal-web): 运行时图标包新增 users/menus/role 六图标 |
+| `8af8318` | chore(@zanelab/portal-web): 运行时配置关闭偏好设置入口 |
+| `908d5ec` | docs(task): 图标体系规范对齐 packages/ui 新位置 |
+
+### Status
+
+[OK] **Completed**
