@@ -443,7 +443,7 @@ export function MenuManagementPage() {
                     className="btn btn-soft btn-primary btn-xs gap-1"
                     onClick={() => openEdit(node)}
                   >
-                    <AppIcon name="pencil" className="size-3.5" />
+                    <AppIcon name="edit" className="size-3.5" />
                     {t('iam.menu.edit')}
                   </button>
                 </Permission>
@@ -456,7 +456,7 @@ export function MenuManagementPage() {
                       setDeleteTarget(node);
                     }}
                   >
-                    <AppIcon name="trash-2" className="size-3.5" />
+                    <AppIcon name="trash" className="size-3.5" />
                     {t('iam.menu.delete')}
                   </button>
                 </Permission>

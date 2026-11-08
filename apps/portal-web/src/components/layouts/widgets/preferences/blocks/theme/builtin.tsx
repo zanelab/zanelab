@@ -52,7 +52,6 @@ const BUILTIN_THEME_PRESETS: BuiltinThemePreset[] = [
   { color: '', type: 'custom' },
 ];
 
-/** user-round-pen（自定义主题色；原 strokeWidth 1.5，收拢统一为 2 —— 已拍板） */
 const UserRoundPenIcon = () => (
   <AppIcon name="user-round-pen" className="size-5" />
 );

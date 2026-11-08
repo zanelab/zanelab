@@ -106,7 +106,7 @@ describe('近形键互不等值（刻意不合并）', () => {
     ['system', 'sun-moon'],
     ['pin', 'pin-filled'],
     ['pin-off', 'pin-off-filled'],
-    ['refresh-cw', 'rotate-cw'],
+    ['refresh', 'rotate-cw'],
   ];
 
   it.each(cases)('%s ≠ %s', (a, b) => {

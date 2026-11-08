@@ -54,7 +54,7 @@ export function TimezoneButton({ className = '' }: { className?: string }) {
         title={t('widgets.timezone.title')}
         onClick={() => setOpen(true)}
       >
-        <AppIcon name="world-clock" className="text-foreground size-4" />
+        <AppIcon name="timezone" className="text-foreground size-4" />
       </button>
 
       {open &&
