@@ -1,0 +1,2 @@
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "评审清单——检查是否引入硬编码凭据、双份维护；MSW 集成测试的断言方式"}
+{"file": ".trellis/spec/frontend/index.md", "reason": "核心不变式——「接口地址从运行时配置读取」对 apiKey 同构（运行时配置而非编译期 env）的判断依据"}

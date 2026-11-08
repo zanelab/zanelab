@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { usePreferencesStore } from '../../../../stores/preferences-store';
 import { useLayoutStore } from '../../../../stores/layout-store';
 import { switchThemeMode } from '../../../../utils/theme-transition';
-import { AppIcon } from '../../../icons/app-icon';
+import { AppIcon } from '@zanelab/ui';
 import { ThemeButton } from './theme-button';
 
 type ThemeMode = 'auto' | 'dark' | 'light';

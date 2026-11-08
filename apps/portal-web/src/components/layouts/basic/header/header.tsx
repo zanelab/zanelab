@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { usePreferencesStore } from '../../../../stores/preferences-store';
 import { useTabbarStore } from '../../../../stores/tabbar-store';
 import { usePreferencesButtonPosition } from '../../hooks/use-preferences';
-import { AppIcon } from '../../../icons/app-icon';
+import { AppIcon } from '@zanelab/ui';
 import { GlobalSearch } from '../../widgets/global-search/global-search';
 import { LanguageToggle } from '../../widgets/language-toggle';
 import { Notification } from '../../widgets/notification/notification';

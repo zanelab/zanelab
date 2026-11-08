@@ -30,9 +30,7 @@ describe('loadConfig', () => {
     expect(cfg.system.logo).toBe(DEFAULT_CONFIG.system.logo);
     expect(cfg.layout.theme).toBe('light');
     expect(cfg.layout.layout).toBe(DEFAULT_CONFIG.layout.layout);
-    expect(cfg.auth.loginPage.layout).toBe(
-      DEFAULT_CONFIG.auth.loginPage.layout,
-    );
+    expect(cfg.auth.loginPath).toBe(DEFAULT_CONFIG.auth.loginPath);
     expect(cfg.api.baseURL).toBe('/api');
     expect(cfg.api.menusEndpoint).toBe(DEFAULT_CONFIG.api.menusEndpoint);
     expect(errorSpy).not.toHaveBeenCalled();
@@ -60,6 +58,23 @@ describe('loadConfig', () => {
     window.__APP_CONFIG__ = { route: { homePath: 42 } };
     expect(loadConfig()).toEqual(DEFAULT_CONFIG);
     expect(errorSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('api.apiKey 合法 → 透传（拦截器注入 apikey 头的数据源）', () => {
+    window.__APP_CONFIG__ = {
+      api: { apiKey: 'sb_publishable_test' },
+    };
+    const cfg = loadConfig();
+    expect(cfg.api.apiKey).toBe('sb_publishable_test');
+    expect(errorSpy).not.toHaveBeenCalled();
+  });
+
+  it('api.apiKey 缺省 → undefined（不注入、不报错、不回退）', () => {
+    window.__APP_CONFIG__ = { api: { baseURL: '/gateway' } };
+    const cfg = loadConfig();
+    expect(cfg.api.apiKey).toBeUndefined();
+    expect(cfg.api.baseURL).toBe('/gateway');
+    expect(errorSpy).not.toHaveBeenCalled();
   });
 
   it('i18n.packUrls 合法 → 透传（语言包懒加载 URL）', () => {

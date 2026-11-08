@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { TinyColor } from '@ctrl/tinycolor';
 
 import { convertToHsl } from '@zanelab/utils';
-import { AppIcon } from '../../../../../icons/app-icon';
+import { AppIcon } from '@zanelab/ui';
 
 /** 等价 reference BuiltinThemePreset（@core/preferences constants.ts:3-7） */
 interface BuiltinThemePreset {
@@ -52,7 +52,6 @@ const BUILTIN_THEME_PRESETS: BuiltinThemePreset[] = [
   { color: '', type: 'custom' },
 ];
 
-/** user-round-pen（自定义主题色；原 strokeWidth 1.5，收拢统一为 2 —— 已拍板） */
 const UserRoundPenIcon = () => (
   <AppIcon name="user-round-pen" className="size-5" />
 );

@@ -6,7 +6,7 @@ import { ThemeProvider } from './components/theme-provider';
 import { ToastRegion } from '@zanelab/ui';
 import { App } from './App';
 import { applyConfigPreferences } from './stores/preferences-store';
-import { initIcons } from './stores/icon-store';
+import { initIcons } from '@zanelab/ui';
 import {
   setupHostState,
   restoreSession,
@@ -54,7 +54,7 @@ async function bootstrap() {
     ...cfgPrefs,
     app: {
       layout: appConfig.layout.layout,
-      authPageLayout: appConfig.auth.loginPage.layout,
+      // authPageLayout 不再从 config 映射（loginPage 配置已移除）——store 缺省兜底
       ...cfgApp,
     },
     theme: { mode: appConfig.layout.theme, ...cfgTheme },
@@ -72,7 +72,10 @@ async function bootstrap() {
 
   // 运行时图标注册表（09-08-icon-registry）：config.js 内联 icons 与
   // iconPackUrl JSON 在渲染前注册；异步注册不阻塞菜单渲染（store 驱动补渲染）
-  void initIcons();
+  void initIcons({
+    icons: appConfig.icons,
+    iconPackUrl: appConfig.iconPackUrl,
+  });
 
   // MSW mock：dev-only，由 .env 的 VITE_USE_MOCK 控制（生产构建 DEV=false 恒不启用）
   if (import.meta.env.DEV && import.meta.env.VITE_USE_MOCK === 'true') {

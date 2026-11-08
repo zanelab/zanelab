@@ -1,5 +1,5 @@
 import type { MouseEventHandler, ReactNode } from 'react';
-import { useIconStore } from '../../stores/icon-store';
+import { useIconStore } from './icon-store';
 import { BUILTIN_ICONS } from './builtin-icons';
 import type { IconData } from '@zanelab/types';
 

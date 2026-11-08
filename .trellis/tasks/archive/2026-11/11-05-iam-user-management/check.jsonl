@@ -1,0 +1,2 @@
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "测试策略与评审清单——用户管理用例设计对应"}
+{"file": ".trellis/spec/frontend/index.md", "reason": "核心不变式——独立运行性、路径不硬编码在新页面仍成立"}

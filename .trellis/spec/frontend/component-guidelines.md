@@ -8,8 +8,8 @@
 - 只使用当前 daisyUI 类名 + Tailwind 工具类；daisyUI 没有的组件用 Tailwind 拼，能不用自定义 CSS 就不用（daisyui usage 规则）。
 - 颜色只用 daisyUI **语义色**（`primary`、`base-100`、`text-base-content` 等），不要在 daisyUI 颜色上用 `dark:`，也不要用 Tailwind 固定色当文字色——主题由 `data-theme` 驱动（daisyui colors 规则）。
 - 用默认变体：没要求就不要 `btn btn-primary`；`primary` 每页只用于最重要的一个元素（usage 规则 12）。
-- 后端菜单 `icon` 字段只是**标识符**：一律经单一入口 `<AppIcon name={...}/>`（`src/components/icons/app-icon.tsx`）解析，不要直接把字符串当图标渲染。解析顺序：运行时注册表（config.js `icons` / `iconPackUrl` JSON / `window.__registerIcons`，`src/stores/icon-store.ts`）→ 内置表（`builtin-icons.ts`）→ `svg:` 前缀直通（标识符即 path data，多段用 `|` 分隔）→ null（未命中无图标）。**只收 path-data（`{ viewBox?, paths: string[] }`），永不收任意 SVG 文本**（XSS 边界）。菜单组件的双态 icon 用 `renderMenuIcon(icon, className)`（string 解析 / ReactNode 原样）；增改图标改配置或远端 JSON 即可，免重编译。
-- **新增 UI 图标一律入 `BUILTIN_ICONS` 经 `<AppIcon name/>` 渲染，不留内联 SVG**（09-08-icon-consolidation）。图标本身需要交互（如 tabbar 关闭/图钉）用 AppIcon 的 `onClick` 透传；尺寸用 `size-N` className，不用 width/height 属性。近形字形刻意不合并（`home`≠`home-outline`、`moon`≠`moon-star`、`system`≠`sun-moon`、`pin`≠`pin-filled`、`pin-off`≠`pin-off-filled`、`refresh-cw`≠`rotate-cw`）。**保留内联 SVG 白名单**（机制无法表达，勿收拢）：`icons/app-icon.tsx`（渲染器本体）、`theme-toggle/theme-button.tsx`（mask+CSS 动画）、`preferences/icons/` 8 个布局预览插画（多色 104×66）、`authentication/` brand/slogan 品牌插画、`tabs-chrome.tsx` 装饰角（7×7 fill 过渡）、`color-toggle.tsx`（实心色点/Radix 勾）、`menu/menu.tsx` 横三点（fill 实心）。
+- 图标体系已下沉共享包（11-06-app-icon-shared）：渲染器 `<AppIcon>`（`packages/ui/src/icon/app-icon.tsx`）、内置表 `BUILTIN_ICONS` 与 `IconPicker`（`packages/ui/src/icon/`）、运行时注册表（`packages/ui/src/icon/icon-store.ts`）都由 `@zanelab/ui` 导出，portal/iam 两 app 共用，app 内不要再建 icons 组件目录。后端菜单 `icon` 字段只是**标识符**：一律经单一入口 `<AppIcon name={...}/>` 解析，不要直接把字符串当图标渲染。解析顺序：运行时注册表（config.js `icons` / `iconPackUrl` JSON / `window.__registerIcons`）→ 内置表（`BUILTIN_ICONS`）→ `svg:` 前缀直通（标识符即 path data，多段用 `|` 分隔）→ null（未命中无图标）。**只收 path-data（`{ viewBox?, paths: string[] }`），永不收任意 SVG 文本**（XSS 边界）。菜单组件的双态 icon 用 `renderMenuIcon(icon, className)`（string 解析 / ReactNode 原样）；增改图标改配置或远端 JSON 即可，免重编译。
+- **新增 UI 图标一律入 `BUILTIN_ICONS` 经 `<AppIcon name/>` 渲染，不留内联 SVG**（09-08-icon-consolidation）。图标本身需要交互（如 tabbar 关闭/图钉）用 AppIcon 的 `onClick` 透传；尺寸用 `size-N` className，不用 width/height 属性。近形字形刻意不合并（`home`≠`home-outline`、`moon`≠`moon-star`、`system`≠`sun-moon`、`pin`≠`pin-filled`、`pin-off`≠`pin-off-filled`、`refresh`≠`rotate-cw`）。**保留内联 SVG 白名单**（机制无法表达，勿收拢）：`packages/ui/src/icon/app-icon.tsx`（渲染器本体）、portal-web `theme-toggle/theme-button.tsx`（mask+CSS 动画）、`preferences/icons/` 8 个布局预览插画（多色 104×66）、`authentication/` brand/slogan 品牌插画、`tabs-chrome.tsx` 装饰角（7×7 fill 过渡）、`color-toggle.tsx`（实心色点/Radix 勾）、`menu/menu.tsx` 横三点（fill 实心）。
 
 ## 通用约定
 
@@ -59,6 +59,13 @@ interface PermissionProps {
 - `mode='hide'`：无权限渲染 `fallback`（默认 null）。
 - `mode='disabled'`：无权限时 `React.cloneElement(children, { disabled: true })`。目标元素是带 `btn` 的原生 `<button>/<a>`；具体禁用实现（原生 `disabled` 属性 / `btn-disabled` 类 / `aria-disabled`）按 daisyui `button` 指南执行。
 - 判断依据是 `state.menu.permissions`（后端菜单提取 + 外部合并的权限码，见 [状态管理](./state-management.md)）；无 `permission`（空）视为放行。
+
+### 权限码同源（RBAC 任务 11-06）
+
+- **权限码 = 接口鉴权锚点**：菜单节点上的 `permission`（语义码 `模块:资源:操作`，如 `system:user:list`）既是后端 `requirePermission(perm)` 的比对值，也是前端 `Permission`/路由守卫的显隐依据——**前端隐藏与后端强制用同一份码**，禁止前端另造一套码集合。
+- **菜单节点挂 permission**：目录/菜单节点 = 进入权限、按钮节点 = 操作权限、`permission` 空 = 公开（所有登录用户可见）；admin 通配 `*`。值域是数据（菜单节点的字段值），不是代码常量表——新增操作 = 建一个 button 节点填 permission，不改鉴权代码。
+- **前端只是体验优化，后端才强制**：`Permission` 隐藏按钮不替代后端 `requirePermission`；独立态（宿主未注入 permissions）一律渲染，写操作靠接口 403 兜底。
+- iam 子应用自建 `src/components/Permission.tsx`（`<Permission code mode="hide|disabled">`，读 `props.permissions`），与基座 `Permission`（读 `state.menu.permissions`）同语义、不同数据源——跨应用不互引，按各自 props/store 取码。
 
 ## 侧边栏与布局
 

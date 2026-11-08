@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { bootstrapSession, watchGlobalLogout } from './register';
 import { handleLogout } from '../utils/auth';
@@ -62,8 +62,10 @@ describe('登出 → 清状态 + 跳转（§5.3）', () => {
     await bootstrapSession('mock-access-token', 'mock-refresh-token');
     expect(useMenuStore.getState().menus.length).toBeGreaterThan(0);
 
-    const navigated: string[] = [];
-    const stopWatch = watchGlobalLogout((path) => navigated.push(path));
+    // 注入 mock redirect 断言跳转目标（真实整页跳转 window.location.replace
+    // 在 jsdom 里不可 redefine，由 App 层传参注入）
+    const redirected: string[] = [];
+    const stopWatch = watchGlobalLogout((path) => redirected.push(path));
 
     handleLogout();
 
@@ -72,9 +74,7 @@ describe('登出 → 清状态 + 跳转（§5.3）', () => {
     expect(useAuthStore.getState().token).toBe('');
     expect(useMenuStore.getState().menus).toEqual([]);
 
-    await waitFor(() => {
-      expect(navigated).toEqual([appConfig.auth.loginPath]);
-    });
+    expect(redirected).toEqual([appConfig.auth.loginPath]);
     stopWatch();
   });
 });

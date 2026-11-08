@@ -1,5 +1,5 @@
 import type { MenuRecordRaw } from '@zanelab/types';
-import { renderMenuIcon } from '../icons/app-icon';
+import { renderMenuIcon } from '@zanelab/ui';
 
 export interface NormalMenuProps {
   activePath?: string;

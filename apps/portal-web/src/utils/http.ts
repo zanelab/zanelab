@@ -11,7 +11,7 @@
  *   reLogin 码/msg 正则 → notify + handleLogout；其余 envelope 失败 → biz 码 i18n notify；
  *   HTTP 层错误原样放行（401 交给认证拦截器，403/5xx 交给错误提示拦截器）
  * - authenticateResponseInterceptor：HTTP 401 单飞刷新（fetch 实现，Out of Scope 不变），
- *   重放写 TOKEN_HEADER；刷新失败 → handleLogout + reject BizCodeError('401')（保持
+ *   重放写 Authorization（preset 缺省）；刷新失败 → handleLogout + reject BizCodeError('401')（保持
  *   isSessionExpiredError 语义，micro/register.ts 消费）
  * - errorMessageResponseInterceptor：403/5xx + 网络/超时 notify（保持旧 error
  *   分支行为：403 forbidden、5xx serverError、无 response 的断网/超时提示
@@ -36,7 +36,6 @@ import i18n from '../locales/i18n';
 import { useAuthStore } from '../stores/auth-store';
 import { handleLogout } from './auth';
 import { buildLegacyHeaders } from './session-headers';
-import { TOKEN_HEADER } from '../constants/auth';
 
 // ==================== 业务策略（portal 特定） ====================
 
@@ -133,13 +132,22 @@ async function refreshToken(): Promise<string> {
   );
   const body = (await res.json()) as {
     code: number | string;
-    data: { token: string };
+    data: { token: string; refreshToken?: string };
     msg?: string;
     message?: string;
   };
   if (!isSuccessCode(body.code) || !body.data?.token) {
     throw new Error(
       body.msg ?? body.message ?? i18n.t('common.http.refreshFailed'),
+    );
+  }
+  // GoTrue 轮换语义（refreshEndpoint 切 iam /auth/refresh 后）：refresh_token 一次性，
+  // 响应下发的新 refreshToken 必须覆盖本地，否则下一次刷新必失败。
+  // 旧后端不轮换（无 refreshToken 字段）→ 可选字段缺省时保持旧值不变。
+  if (body.data.refreshToken) {
+    localStorage.setItem(
+      appConfig.auth.refreshTokenKey,
+      body.data.refreshToken,
     );
   }
   return body.data.token;
@@ -221,17 +229,18 @@ function createRequestClient(
     ...options,
   });
 
-  // 请求拦截器：raw token 注入 TOKEN_HEADER（token 非空才 set——保持 auth.ts
-  // logout fire-and-forget 特例可用）+ legacy headers（含 x-lang/端标识）
+  // 请求拦截器：公共头集中装配（buildLegacyHeaders——Authorization Bearer 凭据、
+  // x-lang、XHR 固定头；token 非空才带，保持 auth.ts logout fire-and-forget 特例）
+  // + apikey（config.apiKey 非空才 set——云 Supabase 网关要求；iam 集成态经
+  // props.http 走本拦截器，故此处注入即覆盖子应用，vite proxy 不再重复注入）
   client.addRequestInterceptor({
     fulfilled: (config) => {
-      const token = useAuthStore.getState().token;
-      if (token) {
-        config.headers.set(TOKEN_HEADER, token);
-      }
       const extraHeaders = buildLegacyHeaders();
       for (const [key, value] of Object.entries(extraHeaders)) {
         config.headers.set(key, value);
+      }
+      if (appConfig.api.apiKey) {
+        config.headers.set('apikey', appConfig.api.apiKey);
       }
       return config;
     },
@@ -267,7 +276,6 @@ function createRequestClient(
       },
       enableRefreshToken: true,
       formatToken: (t) => t,
-      tokenHeaderName: TOKEN_HEADER,
     }),
   );
   client.addResponseInterceptor(

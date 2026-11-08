@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BUILTIN_ICONS } from './builtin-icons';
+import { BUILTIN_ICONS } from '@zanelab/ui';
 
 function pathsOf(name: string): string[] {
   const icon = BUILTIN_ICONS[name];
@@ -106,7 +106,7 @@ describe('近形键互不等值（刻意不合并）', () => {
     ['system', 'sun-moon'],
     ['pin', 'pin-filled'],
     ['pin-off', 'pin-off-filled'],
-    ['refresh-cw', 'rotate-cw'],
+    ['refresh', 'rotate-cw'],
   ];
 
   it.each(cases)('%s ≠ %s', (a, b) => {

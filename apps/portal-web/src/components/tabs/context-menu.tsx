@@ -6,7 +6,7 @@ import {
   type ReactNode,
 } from 'react';
 import type { IContextMenuItem } from './types';
-import { AppIcon } from '../icons/app-icon';
+import { AppIcon } from '@zanelab/ui';
 
 interface ContextMenuProps {
   /** 菜单项（接收 handlerData 返回菜单列表） */

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import {
   Navigate,
   useLocation,
@@ -16,7 +16,6 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { useLayoutStore } from '@/stores/layout-store';
 import { useAuthStore } from '@/stores/auth-store';
 import { useMenuStore } from '@/stores/menu-store';
-import { useSessionStore, getCurrentTenant } from '@/stores/session-store';
 import { buildMenuRoutes, NotFoundPage } from '@/router/generateRoutes';
 import { registerRoutes } from '@/router/route-meta';
 import { appConfig } from '@/config';
@@ -37,7 +36,7 @@ import {
   hasMenuPath,
 } from '@/utils/menu-views';
 import type { DropdownMenuEntry } from '@/utils/menu-views';
-import { AppIcon } from '@/components/icons/app-icon';
+import { AppIcon } from '@zanelab/ui';
 import type { UserDropdownMenu } from '@/components/layouts/widgets/user-dropdown/user-dropdown';
 import type { MenuItem } from '@/types';
 
@@ -61,12 +60,10 @@ function LayoutShell() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const { t, i18n } = useTranslation();
-  const language = i18n.language;
+  const { t } = useTranslation();
   const menus = useMenuStore((state) => state.menus);
   const user = useAuthStore((state) => state.user);
   const token = useAuthStore((state) => state.token);
-  const { tenantList } = useSessionStore();
 
   // 修改密码弹窗开关（入口在用户下拉菜单，见 accountMenus）
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
@@ -77,10 +74,6 @@ function LayoutShell() {
     user?.username ||
     cache.get<{ username?: string }>('UserInfo')?.username ||
     '';
-
-  // 从 session store 获取当前租户名称（getCurrentTenant 有 cache fallback 逻辑）
-  const currentTenant = getCurrentTenant(tenantList);
-  const tenantDisplay = currentTenant?.tenantName || '';
 
   useEffect(() => {
     // 菜单就绪后把 path/title 注册进 route-meta（tabbar/面包屑消费）——
@@ -133,22 +126,22 @@ function LayoutShell() {
     }));
 
   // 账号相关菜单（迁移自旧项目 layouts/PaLayout/Avatar.tsx + PassWordForm.tsx）：
-  // 「修改密码」打开改密弹窗。
-  // 文案在 useMemo 内取，需以 language 为依赖才会随语言重算。
-  const accountMenus = useMemo<UserDropdownMenu[]>(
-    () => [
-      {
-        text: t('widgets.userDropdown.changePassword'),
-        icon: <AppIcon name="key" className="size-4" />,
-        handler: () => setChangePasswordOpen(true),
-      },
-    ],
-    [t, language],
-  );
+  // 「修改密码」已注释——改密走旧后端端点（/sys/auth/user/{id}/change/pwd），
+  // 登录切 iam 子应用后该端点不在新链路（恢复需 iam 侧提供改密端点）。
+  // const accountMenus = useMemo<UserDropdownMenu[]>(
+  //   () => [
+  //     {
+  //       text: t('widgets.userDropdown.changePassword'),
+  //       icon: <AppIcon name="key" className="size-4" />,
+  //       handler: () => setChangePasswordOpen(true),
+  //     },
+  //   ],
+  //   [t, language],
+  // );
 
   const dropdownMenus = [
     ...toUserDropdownMenus(collectDropdownMenus(menus)),
-    ...accountMenus,
+    // ...accountMenus,
   ];
 
   return useRoutes([
@@ -165,7 +158,6 @@ function LayoutShell() {
                 <UserDropdown
                   avatar=""
                   text={displayName || 'Admin'}
-                  description={tenantDisplay}
                   // 悬停展开，延迟 200ms 兼顾锚点→面板穿越与收起手感
                   trigger="hover"
                   hoverDelay={200}
@@ -272,7 +264,6 @@ function NotFoundOrFallback() {
 // ── App：认证页不走守卫（否则未登录重定向到 login 后守卫仍挂载，
 // Navigate 每次渲染都触发 → 无限导航循环）；受保护区由 RouteGuard 包裹 ──
 export function App() {
-  const navigate = useNavigate();
   const location = useLocation();
 
   // 进入方式：'POP' = 手输 URL / 刷新 / 书签 / 前进后退；'PUSH'|'REPLACE' = 应用内跳转
@@ -285,7 +276,10 @@ export function App() {
   // 仅取订阅副作用。
   useTranslation();
 
-  useEffect(() => watchGlobalLogout((path) => navigate(path)), [navigate]);
+  useEffect(
+    () => watchGlobalLogout((path) => window.location.replace(path)),
+    [],
+  );
 
   // 裸渲染仅限「免鉴权 ∩ 认证页」（iam 登录页等）；免鉴权内容页（home）
   // 带壳渲染，登录前后容器位置不变。已登录回退到登录页转 AuthRedirect。

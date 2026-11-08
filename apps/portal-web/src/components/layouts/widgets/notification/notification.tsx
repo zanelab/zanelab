@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { NotificationItem } from './types';
 import { AnchoredPortal } from '@zanelab/ui';
-import { AppIcon } from '../../../icons/app-icon';
+import { AppIcon } from '@zanelab/ui';
 
 interface NotificationProps {
   /** 显示圆点 */

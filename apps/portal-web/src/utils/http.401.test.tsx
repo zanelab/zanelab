@@ -6,7 +6,6 @@ import { ToastRegion } from '@zanelab/ui';
 import { useAuthStore, initialAuthState } from '../stores/auth-store';
 import { useMenuStore, initialMenuState } from '../stores/menu-store';
 import { server } from '../mocks/server';
-import { TOKEN_HEADER } from '../constants/auth';
 
 afterEach(() => {
   cleanup();
@@ -24,7 +23,7 @@ describe('401 单飞刷新', () => {
 
     let refreshCalls = 0;
     server.use(
-      http.post('/sys/auth/refresh', () => {
+      http.post('/iam/functions/v1/iam/auth/refresh', () => {
         refreshCalls++;
         return HttpResponse.json({
           code: 0,
@@ -33,7 +32,9 @@ describe('401 单飞刷新', () => {
         });
       }),
       http.get('/api/protected', ({ request }) => {
-        const token = request.headers.get(TOKEN_HEADER);
+        const token = request.headers
+          .get('authorization')
+          ?.replace(/^Bearer /, '');
         if (token === 'expired-token') {
           return new HttpResponse(null, { status: 401 });
         }

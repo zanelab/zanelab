@@ -5,8 +5,7 @@ import { useMenuStore } from '../stores/menu-store';
 import { usePreferencesStore } from '../stores/preferences-store';
 import { clearStoredTokens, handleLogout } from '../utils/auth';
 import { isSessionExpiredError } from '../utils/http';
-import { cache } from '@zanelab/utils';
-import { LEGACY_TOKEN_KEY } from '../constants/auth';
+import { cache, notify } from '@zanelab/utils';
 import { fetchMenus } from '../api/menu';
 import { isAuthPath } from '../router/auth-path';
 import type { UserInfo } from '../types';
@@ -28,7 +27,7 @@ function containerId(appName: string, container?: string): string {
  * appName 对齐）。
  *
  * 旧项目兼容存储（迁移自 Micro-public Login/handleRedirect 链路）：
- * - cache_AILab-Token / cache_UserInfo：子应用共享 token 与用户信息
+ * - cache_UserInfo：子应用共享用户信息（旧 token key 已退役——iam 不消费）
  */
 export async function bootstrapSession(
   token: string,
@@ -41,8 +40,8 @@ export async function bootstrapSession(
     localStorage.setItem(appConfig.auth.refreshTokenKey, refreshToken);
   useAuthStore.getState().setAuth({ token, refreshToken, user });
 
-  // 旧项目兼容存储（cache_ 前缀，子应用经 localStorage 共享）
-  cache.set(LEGACY_TOKEN_KEY, token);
+  // 用户信息共享存储（cache_ 前缀，子应用经 localStorage 共享）；
+  // 旧 token key（cache_AILab-Token）不再写入——iam 子应用不消费，链路已退役
   if (user) cache.set('UserInfo', user);
 
   // 登录后拉取用户权限和菜单（旧项目 handleRedirect → getUserPer 链路）
@@ -60,7 +59,6 @@ export async function bootstrapSession(
  */
 export async function restoreSession(token: string): Promise<void> {
   useAuthStore.getState().setToken(token);
-  cache.set(LEGACY_TOKEN_KEY, token);
   // 从 cache 恢复用户信息（刷新后 auth store 的 user 为 null）
   const cachedUser = cache.get<UserInfo>('UserInfo');
   if (cachedUser) useAuthStore.getState().setUser(cachedUser);
@@ -179,10 +177,28 @@ export function setupMicroApps() {
       getHostState,
       onHostStateChange,
       onLoginSuccess,
+      // 子应用 toast 上抛通道：错误/警告统一进宿主 ToastRegion（notify 模块级
+      // 暂存队列天然兜住 ToastRegion 未挂载的 boot 阶段）
+      onNotify: (
+        message: string,
+        level?: 'error' | 'warning' | 'success' | 'info',
+      ) => {
+        if (level === 'warning') notify.warning(message);
+        else if (level === 'success') notify.success(message);
+        else if (level === 'info') notify.info(message);
+        else notify.error(message);
+      },
 
       // 路由挂载前缀显式传递（与 activeRule 对齐）：
       // - Vite 子应用（vite-plugin-qiankun）读 props.basename
       basename: cfg.activeRule,
+
+      // 基座运行时资源（config.js icons / iconPackUrl / i18n.packUrls）：
+      // 子应用独立 bundle 拿不到宿主 config，mount 时经 setupHostAssets 自注册
+      // 图标 / 注入语言包 URL（与 setupLocale 同模式的资源接线）。
+      icons: appConfig.icons,
+      iconPackUrl: appConfig.iconPackUrl,
+      i18n: { packUrls: appConfig.i18n.packUrls },
     },
   }));
   if (apps.length === 0) return;
@@ -400,13 +416,18 @@ export function setupHostState() {
 }
 
 /**
- * App 顶层挂载一次：global-logout 事件 → 跳登录页（§5.3）。
+ * App 顶层挂载一次：global-logout 事件 → 整页跳登录页（§5.3）。
  * 注意：事件由 handleLogout 派发（清理已完成），此处**只导航**——
  * 若在这里再调 handleLogout 会再次派发同一事件 → 无限循环。
- * 返回清理函数（测试用）。
+ *
+ * redirect 由调用方注入（App 传 window.location.replace）：登出/会话失效要
+ * 穿越 layout↔auth 两套 React 树，SubAppLayer 常驻容器在整树切换时被 React
+ * 卸载重建，而 qiankun 的 single-spa 只响应 popstate/hashchange，不响应客户端
+ * pushState → 子应用不会重挂载到新容器，DOM 孤悬成白屏。整页跳转与启动期
+ * redirectToLogin 同语义，彻底重建容器与子应用。返回清理函数（测试用）。
  */
-export function watchGlobalLogout(navigate: (path: string) => void) {
-  const handler = () => navigate(appConfig.auth.loginPath);
+export function watchGlobalLogout(redirect: (path: string) => void) {
+  const handler = () => redirect(appConfig.auth.loginPath);
   window.addEventListener('global-logout', handler);
   return () => window.removeEventListener('global-logout', handler);
 }

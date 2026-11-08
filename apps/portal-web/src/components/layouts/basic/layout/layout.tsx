@@ -1,6 +1,6 @@
 import { useMemo, useCallback, useEffect, useRef, useState } from 'react';
 import { useLayout } from '../../hooks/use-layout';
-import { AppIcon } from '../../../icons/app-icon';
+import { AppIcon } from '@zanelab/ui';
 import { LayoutSidebar } from '../sidebar';
 import { LayoutHeaderCore } from '../header';
 import { LayoutContentCore } from '../content';

@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/frontend/http-api-guidelines.md", "reason": "接口鉴权契约——requirePermission 语义与错误码；操作权限码作为接口授权的锚点（前端只隐藏、后端强制）"}
+{"file": ".trellis/spec/frontend/microfrontend-guidelines.md", "reason": "props.permissions 下发链——iam Permission 组件的数据源；菜单节点挂 permission 的契约"}
+{"file": ".trellis/spec/frontend/type-safety.md", "reason": "MenuItemRecord 加 permission 字段——契约变更与跨 app 类型复制注释规范"}
+{"file": ".trellis/spec/frontend/directory-structure.md", "reason": "iam 新建 Permission 组件的落位；迁移 0002 的编号约定"}

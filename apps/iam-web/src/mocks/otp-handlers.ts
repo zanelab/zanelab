@@ -48,7 +48,37 @@ const pagePaths = (path: string): string[] => [
   `${INTEGRATION_PREFIX}${path}`,
 ];
 
+// 会话刷新（独立态 401 单飞的数据源）：有效 refresh_token → 双 token 轮换；
+// 失效 → 1004/401（前端单飞失败 → 跳登录）。与 Edge Fn /auth/refresh 同语义。
+const REFRESH_PATH_MOCK = '/functions/v1/iam/auth/refresh';
+const refreshHandlers = pagePaths(REFRESH_PATH_MOCK).map((path) =>
+  http.post(path, async ({ request }) => {
+    await delay(200);
+    const body = (await request.json().catch(() => ({}))) as {
+      refreshToken?: string;
+    };
+    // mock 语义：refresh_token = 'mock-iam-refresh-token' 有效（登录/上次刷新下发值）
+    if (body.refreshToken !== 'mock-iam-refresh-token')
+      return fail(1004, '登录已过期，请重新登录', 401);
+    return ok({
+      token: 'mock-iam-access-token-rotated',
+      refreshToken: 'mock-iam-refresh-token',
+    });
+  }),
+);
+
+// 登出（独立态/集成态共用）：GoTrue signOut，mock 恒成功
+const LOGOUT_PATH = '/functions/v1/iam/auth/logout';
+const logoutHandlers = pagePaths(LOGOUT_PATH).map((path) =>
+  http.post(path, async () => {
+    await delay(150);
+    return ok({ success: true });
+  }),
+);
+
 export const iamOtpHandlers = [
+  ...refreshHandlers,
+  ...logoutHandlers,
   // 步骤 1 发码：模拟 GoTrue signInWithOtp（恒 success，防枚举同款语义）
   ...pagePaths(OTP_SEND_PATH).map((path) =>
     http.post(path, async ({ request }) => {

@@ -5,6 +5,8 @@ export interface MenuItem {
   id: number;
   name: string; // 菜单名（展示用，含中文；i18nKey 未命中时的回退原文）
   icon?: string;
+  /** 激活态图标（app/menu 类型成对使用；缺省 = 无激活态切换） */
+  activeIcon?: string;
   path: string;
   appName?: string; // 'portal' / 缺省 = host 本地页；否则 = 子应用注册键（config.microApps）
   permission?: string; // 权限码，如 'system:user:list'

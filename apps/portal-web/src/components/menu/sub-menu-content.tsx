@@ -1,5 +1,5 @@
 import { useMenuContext } from './context';
-import { AppIcon, renderMenuIcon } from '../icons/app-icon';
+import { AppIcon, renderMenuIcon } from '@zanelab/ui';
 
 interface SubMenuContentProps {
   icon?: string | React.ReactNode;

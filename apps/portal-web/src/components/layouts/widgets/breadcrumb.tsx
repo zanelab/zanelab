@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import { getMatchedRouteMetas } from '../../../router/route-meta';
 import { menuTitle } from '../../../locales/i18n';
-import { AppIcon, renderMenuIcon } from '../../icons/app-icon';
+import { AppIcon, renderMenuIcon } from '@zanelab/ui';
 
 type BreadcrumbStyleType = 'background' | 'normal';
 

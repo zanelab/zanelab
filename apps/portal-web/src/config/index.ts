@@ -20,24 +20,15 @@ export const DEFAULT_CONFIG: AppConfig = {
     loginPath: '/login',
     tokenKey: 'portal_token',
     refreshTokenKey: 'portal_refresh_token',
-    loginPage: {
-      layout: 'panel-right',
-      showCodeLogin: true,
-      showQrcodeLogin: true,
-      showThirdPartyLogin: true,
-      showRegister: true,
-      showForgetPassword: true,
-      showRememberMe: true,
-      showColorToggle: true,
-      showLayoutToggle: true,
-    },
   },
   api: {
     baseURL: '',
-    menusEndpoint: '/api/user/menus',
-    loginEndpoint: '/sys/auth/login',
-    logoutEndpoint: '/sys/auth/logout',
-    refreshEndpoint: '/sys/auth/refresh',
+    // 端点已切 iam Edge Fn（任务 11-06）；与 public/config.js 保持一致
+    menusEndpoint: '/iam/functions/v1/iam/auth/menus',
+    logoutEndpoint: '/iam/functions/v1/iam/auth/logout',
+    refreshEndpoint: '/iam/functions/v1/iam/auth/refresh',
+    // apiKey 留空（默认）= 不注入 apikey 头；接云 Supabase 时在 config.js 配置
+    apiKey: undefined,
   },
   route: {
     homePath: '/home',

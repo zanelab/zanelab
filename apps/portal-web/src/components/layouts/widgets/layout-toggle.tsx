@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { usePreferencesStore } from '../../../stores/preferences-store';
-import { AppIcon } from '../../icons/app-icon';
+import { AppIcon } from '@zanelab/ui';
 import type { AuthPageLayoutType } from '@zanelab/types';
 
 interface LayoutOption {

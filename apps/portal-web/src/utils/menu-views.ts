@@ -107,6 +107,7 @@ export function toShellMenus(menus: MenuItem[]): MenuRecordRaw[] {
       path: menu.path,
       name: menuTitle(menu),
       icon: menu.icon,
+      activeIcon: menu.activeIcon,
       children: menu.children ? toShellMenus(menu.children) : undefined,
     }))
     .filter((menu) => menu.children?.length || menu.path);

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AppIcon } from '../../icons/app-icon';
+import { AppIcon } from '@zanelab/ui';
 
 interface BackTopProps {
   /** 距离底部距离 */

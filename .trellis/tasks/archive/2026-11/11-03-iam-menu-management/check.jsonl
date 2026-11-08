@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/frontend/index.md", "reason": "核心不变式——独立运行性、接口路径不硬编码、apps 间不互引三条在新页面/新表后仍须成立"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "测试策略（纯函数优先/组件测权限语义/MSW 集成测试）与评审清单——R6 的测试覆盖设计直接对应该文件"}
+{"file": ".trellis/spec/frontend/type-safety.md", "reason": "zod 推导与类型单一来源——MenuItemRecord 自有定义（对齐 RawMenuItem）是否违反「不双份维护」需按边界判断（跨 app 契约类型 vs 业务类型）"}
+{"file": ".trellis/spec/frontend/env-config-guidelines.md", "reason": "本任务大概率不新增 env 变量——若涉及（如本地栈连接串），须按分层判据处理"}

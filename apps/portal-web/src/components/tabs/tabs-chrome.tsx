@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 import type { FC } from 'react';
 import type { TabConfig, TabDefinition, TabsProps } from './types';
 import { ContextMenu } from './context-menu';
-import { AppIcon, renderMenuIcon } from '../icons/app-icon';
+import { AppIcon, renderMenuIcon } from '@zanelab/ui';
 
 export const TabsChrome: FC<TabsProps> = (props) => {
   const {

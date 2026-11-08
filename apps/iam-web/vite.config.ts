@@ -60,15 +60,24 @@ export default defineConfig(({ mode }) => {
       // 请求到不了这里；关掉 mock 才由本代理转发。
       // 注意 target 是 Supabase 基址（不含 /functions/v1），路径原样转发、不 rewrite
       // ——与 portal 侧不同（那条要剥掉 /iam 前缀）。
-      proxy: proxyTarget
-        ? {
-            '/functions/v1': {
-              target: proxyTarget,
-              changeOrigin: true,
-              secure: false,
-            },
-          }
-        : undefined,
+      proxy: {
+        ...(proxyTarget
+          ? {
+              '/functions/v1': {
+                target: proxyTarget,
+                changeOrigin: true,
+                secure: false,
+              },
+            }
+          : {}),
+        // 独立态图标包：pack.json 部署在宿主 portal 的 public（本应用无），
+        // 反代到宿主 dev server 让 IconPicker/AppIcon 在 :8081 也能拿到全量图标。
+        // 生产集成态与宿主同源、直接命中宿主静态文件，不走此代理。
+        '/icons/pack.json': {
+          target: 'http://localhost:5173',
+          changeOrigin: true,
+        },
+      },
     },
     preview: {
       host: '0.0.0.0',
@@ -78,6 +87,16 @@ export default defineConfig(({ mode }) => {
       headers: {
         'Access-Control-Allow-Origin': '*',
       },
+    },
+
+    // vitest（任务 11-03 引入测试栈，配置对齐 portal-web）：
+    // jsdom 环境 + MSW node server（src/test/setup.ts 起 stop）。
+    // 注意：只测页面组件与纯函数，不测 main.tsx（qiankun 入口在 jsdom 下
+    // 与 vite-plugin-qiankun 的 window 注入冲突）。
+    test: {
+      environment: 'jsdom',
+      setupFiles: ['./src/test/setup.ts'],
+      include: ['src/**/*.test.{ts,tsx}'],
     },
   };
 });

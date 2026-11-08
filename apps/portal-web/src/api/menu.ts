@@ -2,22 +2,25 @@ import http from '../utils/http';
 import { appConfig } from '../config';
 import type { MenuItem } from '../types';
 
-// ── 旧后端菜单原始字段类型（/user/menu/tree 返回结构） ──
+// ── 菜单原始字段类型（iam Edge Fn GET /auth/menus 返回结构，任务 11-06 切换后） ──
 
 interface RawMenuItem {
   id: number;
-  pid: number;
-  code: string;
-  parent: string;
+  pid: number | null;
+  /** 语义权限码（system:menu:list）；空 = 公开 */
+  permission: string | null;
   name: string;
-  component: string;
+  /** app 节点 = 子应用注册键（home/iam，与 config.microApps 键一致）；menu = 本地组件路径 */
+  component: string | null;
   uri: string | null;
   type: 'app' | 'menu' | 'button' | 'group';
   sort: number;
   icon: string | null;
+  /** 激活态图标（暂未消费，字段对齐 iam 契约） */
+  active_icon: string | null;
   hidden: boolean;
-  scopes: string[];
-  menuType: number; // 0=目录 1=菜单 2=按钮
+  /** 适用范围：A=管理端 C=客户端（含 C 即游客可见） */
+  scopes: ('A' | 'C')[];
   children?: RawMenuItem[] | null;
 }
 
@@ -100,12 +103,13 @@ function transformMenu(
   noPrefix = false,
 ): MenuItem | null {
   // button 类型 → 只取权限码，不生成菜单/路由
+  // （权限码 = 语义 permission（system:user:add），任务 11-06 RBAC 重构）
   if (raw.type === 'button') {
     return {
       id: raw.id,
       name: raw.name,
       path: '', // 无 path → toShellMenus/buildMenuRoutes 自然跳过
-      permission: raw.uri || raw.code || undefined,
+      permission: raw.permission || undefined,
     };
   }
 
@@ -114,10 +118,11 @@ function transformMenu(
   let appName: string | undefined;
 
   if (raw.type === 'app') {
-    // 顶层 app 节点：component 是子应用名，path 用 /{component}
-    const appNameVal = raw.component || raw.uri || raw.name;
+    // 顶层 app 节点：component = 子应用注册键（Q1 约定，home/iam）；uri = 应用默认
+    // 落点路由（必填，如 /iam）。appName 取 component（注册键），path 取 uri。
+    const appNameVal = raw.component || firstSegment(raw.uri) || raw.name;
     appName = appNameVal;
-    path = `/${appNameVal}`;
+    path = uri.startsWith('/') ? uri : `/${uri}`;
   } else {
     // menu/group 节点：uri 拼到 app 前缀下
     const normalized = uri.startsWith('/') ? uri : `/${uri}`;
@@ -140,6 +145,7 @@ function transformMenu(
     name: raw.name,
     path,
     icon: raw.icon || undefined,
+    activeIcon: raw.active_icon || undefined,
     appName,
 
     // 保留后端节点类型：默认落点计算需区分「应用根」与「菜单/目录」（见 menu-views）

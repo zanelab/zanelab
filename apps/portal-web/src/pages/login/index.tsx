@@ -14,6 +14,11 @@ import { findFirstNavigablePath } from '@/utils/menu-views';
 /**
  * 登录页（C3）：表单提交接真实链路 authApi.login →
  * bootstrapSession（存 token、拉菜单、menuSlice.setMenus）→ 回跳 from 来源。
+ *
+ * 【状态：非默认登录链路】登录已由 iam 子应用承载（config.auth.loginPath 指向
+ * /iam/login），本页面仅作为 loginPath 指回本地时的兜底路由存在；loginPage 部署期
+ * 配置与 api.loginEndpoint 已随 schema 移除（authApi.login 的端点不再由 config 提供，
+ * 字段保留以便将来恢复本页时再定）。
  */
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -25,14 +30,10 @@ export default function LoginPage() {
   // from 优先取 URL 参数，否则取菜单树第一个可访问路径，兜底 homePath
   const from = searchParams.get('from') || '';
 
-  // 右上工具栏（AuthPageLayout 的 Toolbar）显隐：颜色/布局由 config.auth.loginPage
-  // 控制（部署期可关，免重编译）；语言/主题沿用原有 preferences.widget 开关（Toolbar 内判定）
-  const { loginPage } = config.auth;
-  const toolbarList: ToolbarType[] = [];
-  if (loginPage.showColorToggle) toolbarList.push('color');
-  toolbarList.push('language');
-  if (loginPage.showLayoutToggle) toolbarList.push('layout');
-  toolbarList.push('theme');
+  // 右上工具栏（AuthPageLayout 的 Toolbar）显隐：loginPage 配置已随 schema 移除
+  // （登录走 iam 子应用，本页面仅作 loginPath 兜底），字段改用内置常量；
+  // 语言/主题沿用原有 preferences.widget 开关（Toolbar 内判定）
+  const toolbarList: ToolbarType[] = ['color', 'language', 'layout', 'theme'];
 
   return (
     <AuthPageLayout
@@ -44,12 +45,13 @@ export default function LoginPage() {
     >
       <AuthenticationLogin
         loading={loading}
-        showCodeLogin={config.auth.loginPage.showCodeLogin}
-        showQrcodeLogin={config.auth.loginPage.showQrcodeLogin}
-        showThirdPartyLogin={config.auth.loginPage.showThirdPartyLogin}
-        showRegister={config.auth.loginPage.showRegister}
-        showForgetPassword={config.auth.loginPage.showForgetPassword}
-        showRememberMe={config.auth.loginPage.showRememberMe}
+        // 表单开关改内置常量（见上：loginPage 配置已移除，本页非默认登录链路）
+        showCodeLogin
+        showQrcodeLogin
+        showThirdPartyLogin
+        showRegister
+        showForgetPassword
+        showRememberMe
         onSubmit={async (values: { username?: string; password?: string }) => {
           setLoading(true);
           try {

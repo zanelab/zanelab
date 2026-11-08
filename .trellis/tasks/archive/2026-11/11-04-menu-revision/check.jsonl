@@ -1,0 +1,2 @@
+{"file": ".trellis/spec/frontend/index.md", "reason": "核心不变式——接口路径不硬编码（endpoints 常量）、独立运行性在新表单下仍成立"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "测试策略与评审清单——类型联动用例设计对应该文件；禁用模式核查"}

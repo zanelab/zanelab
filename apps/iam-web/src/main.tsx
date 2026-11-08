@@ -5,9 +5,17 @@ import {
   qiankunWindow,
 } from 'vite-plugin-qiankun/dist/helper';
 import { App } from './App';
+import { ToastRegion, initIcons } from '@zanelab/ui';
 // 独立运行态唯一样式来源（集成态样式由宿主注入，见 index.css 头注释）
 import './index.css';
-import { setupI18n, setLocale } from './locales/i18n';
+import { setupI18n, setLocale, injectMessagePacks } from './locales/i18n';
+// props 契约与状态（类型 + getProps/setProps）——从本文件抽出（任务 11-03，
+// api 层的 import 链不再经过 qiankun 入口，见 props.ts 头注释）
+import { getProps, setProps, type PltProps } from './props';
+
+// 供本文件既有引用（setupLocale 签名等）：re-export 保持对外形状不变
+export type { PltProps, SubAppPreferences, HostHttpClient } from './props';
+export { getProps } from './props';
 
 let root: Root | null = null;
 
@@ -30,83 +38,31 @@ function setupLocale(props: PltProps) {
   });
 }
 
-/** 宿主下发的偏好外观子集（getter，每次 mount 取最新值）。
- * 跨应用契约按形状对齐宿主 SubAppPreferences（apps/portal-web/src/micro/register.ts），不 import。 */
-export interface SubAppPreferences {
-  mode: 'light' | 'dark' | 'auto';
-  colorPrimary: string;
-  colorDestructive: string;
-  colorSuccess: string;
-  colorWarning: string;
-  radius: string; // rem 数值字符串，如 '0.5'
-  fontSize: number;
-  colorGrayMode: boolean;
-  colorWeakMode: boolean;
-  locale: string;
-}
-
 /**
- * 宿主共享 http 通道的结构化子集（D2：window.__http = RequestClient 只读代理）。
- *
- * 宿主类型是 packages/utils 的 RequestClient（@zanelab/utils）；iam 不引其全量
- * （跨包类型依赖收敛），按消费面在此声明同形子集——方法签名与 RequestClient
- * 公开方法对齐（get/post/put/delete/upload/download/postSSE/requestSSE），
- * index signature 保留宿主后续扩展字段透传。
+ * 接线基座下发的运行时资源（config.js icons / iconPackUrl / i18n.packUrls）：
+ * - 图标：props.icons（内联包）注册进本应用 store + props.iconPackUrl（远端包）。
+ *   qiankun 里宿主与子应用是独立 bundle、独立 store 实例，宿主的 initIcons
+ *   进不了子应用，子应用必须自注册（幂等，复 mount 重复注册同键只是覆盖同值）。
+ * - 语言包：props.i18n.packUrls 注入 locales/i18n 的懒加载表；初始语言的包
+ *   由 setupI18n 内部触发，运行期切语言由 setLocale 触发。
+ * 独立态（无宿主）：不调用——图标用内置表 + VITE_ICON_PACK_URL 兜底，语言包
+ * 无外部来源（packUrls 空 → 懒加载 no-op）。
  */
-export interface HostHttpClient {
-  get: <T = unknown>(url: string, config?: unknown) => Promise<T>;
-  post: <T = unknown>(
-    url: string,
-    data?: unknown,
-    config?: unknown,
-  ) => Promise<T>;
-  put: <T = unknown>(
-    url: string,
-    data?: unknown,
-    config?: unknown,
-  ) => Promise<T>;
-  delete: <T = unknown>(url: string, config?: unknown) => Promise<T>;
-  upload: <T = unknown>(
-    url: string,
-    data: Record<string, unknown> & { file: Blob | File },
-    config?: unknown,
-  ) => Promise<T>;
-  download: <T = unknown>(url: string, config?: unknown) => Promise<T>;
-  [key: string]: unknown;
-}
-
-export interface PltProps {
-  container?: HTMLElement;
-  setHasRender?: (v: boolean) => void;
-
-  getHostState?: () => Record<string, unknown>;
-
-  /** 宿主下发的偏好外观子集（getter，每次 mount 取最新值） */
-  preferences?: SubAppPreferences;
-
-  onHostStateChange?: (
-    cb: (state: Record<string, unknown>, prev: Record<string, unknown>) => void,
-    fireImmediately?: boolean,
-  ) => () => void;
-  onLoginSuccess?: (params: {
-    token: string;
-    refreshToken?: string;
-    user?: {
-      id?: number | string;
-      username?: string;
-      nickname?: string;
-      [key: string]: unknown;
-    };
-  }) => Promise<void>;
-  /** 宿主共享 http 通道（RequestClient 只读代理，见 HostHttpClient） */
-  http?: HostHttpClient;
-  [key: string]: unknown;
-}
-
-let savedProps: PltProps = {};
-
-export function getProps(): PltProps {
-  return savedProps;
+function setupHostAssets(props: PltProps) {
+  const icons = props.icons;
+  const iconPackUrl = props.iconPackUrl as string | undefined;
+  const hasIcons = !!icons && Object.keys(icons).length > 0;
+  const hasPackUrl = typeof iconPackUrl === 'string' && iconPackUrl !== '';
+  if (hasIcons || hasPackUrl) {
+    void initIcons({
+      ...(hasIcons ? { icons } : {}),
+      ...(hasPackUrl ? { iconPackUrl } : {}),
+    });
+  }
+  const packUrls = props.i18n?.packUrls;
+  if (packUrls && typeof packUrls === 'object') {
+    injectMessagePacks(packUrls);
+  }
 }
 
 function render(props: PltProps) {
@@ -116,6 +72,8 @@ function render(props: PltProps) {
   root.render(
     <BrowserRouter basename={basename}>
       <App />
+      {/* 独立态 toast 渲染（集成态经 props.onNotify 上抛宿主，见 utils/notify.ts） */}
+      <ToastRegion />
     </BrowserRouter>,
   );
   props.setHasRender?.(true);
@@ -141,14 +99,15 @@ renderWithQiankun({
     console.log('[iam] bootstrap');
   },
   mount(props) {
-    savedProps = props as PltProps;
+    setProps(props as PltProps);
     console.log('[iam] mount', props.basename);
-    setupLocale(savedProps); // i18n 初始化/复挂载对齐 + 语言订阅（React 渲染前）
+    setupLocale(getProps()); // i18n 初始化/复挂载对齐 + 语言订阅（React 渲染前）
+    setupHostAssets(getProps()); // 基座运行时资源：icons/iconPackUrl + i18n.packUrls
     // 集成态也要启动 worker：mock 拦截点在页面 origin 的 SW（见函数注释）
     if (import.meta.env.DEV && import.meta.env.VITE_USE_MOCK === 'true') {
       void startMockWorker();
     }
-    render(savedProps);
+    render(getProps());
   },
   update() {},
   unmount() {
@@ -157,7 +116,7 @@ renderWithQiankun({
     unsubscribeLocale = null;
     root?.unmount();
     root = null;
-    savedProps = {};
+    setProps({});
   },
 });
 
@@ -172,6 +131,13 @@ if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
   // mock 启动独立分支同样调用（幂等，见 startMockWorker 注释）。
   void (async () => {
     setupI18n();
+    // 独立态图标注册表：pack.json 在宿主 public，独立 :8081 直开无此文件 →
+    // initIcons 静默降级（只内置表）；本机联调可用 VITE_ICON_PACK_URL 覆盖。
+    void initIcons({
+      iconPackUrl:
+        (import.meta.env.VITE_ICON_PACK_URL as string | undefined) ??
+        '/icons/pack.json',
+    });
     if (import.meta.env.DEV && import.meta.env.VITE_USE_MOCK === 'true') {
       await startMockWorker();
     }

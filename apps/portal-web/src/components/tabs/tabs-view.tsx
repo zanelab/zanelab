@@ -3,7 +3,7 @@ import type { FC } from 'react';
 import type { TabsProps } from './types';
 import { TabsChrome } from './tabs-chrome';
 import { Tabs } from './tabs';
-import { AppIcon } from '../icons/app-icon';
+import { AppIcon } from '@zanelab/ui';
 import { useTabsDrag } from './use-tabs-drag';
 import { useTabsViewScroll } from './use-tabs-view-scroll';
 

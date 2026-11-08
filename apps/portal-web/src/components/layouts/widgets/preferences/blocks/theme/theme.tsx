@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { AppIcon } from '../../../../../icons/app-icon';
+import { AppIcon } from '@zanelab/ui';
 import { SwitchItem } from '../switch-item';
 
 const SunIcon = () => <AppIcon name="sun" className="mx-9 size-5" />;

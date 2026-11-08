@@ -1,14 +1,12 @@
 import { delay, http, HttpResponse } from 'msw';
 import type { MenuItem } from '../types';
-import { TOKEN_HEADER } from '../constants/auth';
 
 // MSW mock 契约（docs/技术方案.md §4/§10，父级 design §4）。
-// MVP 无后端：这些 handler 让 host 的登录/菜单链路可独立运行。
 // 统一响应体 { code, data, msg }，code===0 为成功。
 //
-// 登录参数已迁移为旧项目契约 { loginChanel, email, password, code }，
-// 密码经 encryptPassword 加密（base64 或 SM4-ECB）。mock 侧 base64 解码
-// 校验明文；SM4 密文 atob 会抛错 → 放行（dev 模式仅验证 UI 流程）。
+// 端点已切 iam Edge Fn（任务 11-06）：menu/refresh/logout 的 mock 路径跟随
+// config.js 新端点（/iam/functions/v1/iam/auth/*），body 契约对齐 iam。
+// 登录 handler（/sys/auth/login）已废弃——登录走 iam OTP，authApi.login 无消费者。
 //
 // 注意：本 worker 只登记**宿主自身**的 mock 路由。子应用（iam）接口的
 // mock 不在这里——宿主调子应用接口一律经配置代理转发到子应用自己的
@@ -33,6 +31,7 @@ export const mockMenus: MenuItem[] = [
     name: '首页',
     path: '/home',
     icon: 'home',
+    activeIcon: 'home-active',
     type: 'menu',
   },
   {
@@ -40,6 +39,7 @@ export const mockMenus: MenuItem[] = [
     name: '系统管理',
     path: '/iam',
     icon: 'system',
+    activeIcon: 'system-active',
     appName: 'iam',
     type: 'app',
     children: [
@@ -85,71 +85,68 @@ export const mockMenus: MenuItem[] = [
 ];
 
 /**
- * 旧后端原始菜单格式（/user/menu/tree 返回结构）。
+ * 菜单原始格式（iam Edge Fn GET /auth/menus 返回结构，任务 11-06 切换后）。
  * fetchMenus 内 transformMenu 转换为项目 MenuItem 格式。
- * 结构与 mockMenus 一致，用原始字段名（uri/type/menuType 数字）。
+ * 新契约要点：无 parent/menuType；scopes = A/C；permission = 语义权限码（菜单=进入码、按钮=操作码、空=公开）；
+ * app 的 component = 子应用注册键（home/iam）、uri = 默认落点路由。
  */
 const mockRawMenus = [
   {
     id: 1,
-    pid: 0,
-    code: 'home',
-    parent: 'root',
+    pid: null,
+    permission: null,
     name: '首页',
-    component: '',
+    component: null,
     uri: '/home',
     type: 'menu',
     sort: 0,
     icon: 'home',
+    active_icon: 'home-active',
     hidden: false,
-    scopes: ['O'],
-    menuType: 1,
+    scopes: ['C'],
     children: null,
   },
   {
     id: 3,
-    pid: 0,
-    code: 'iam',
-    parent: 'root',
+    pid: null,
+    permission: null,
     name: '系统管理',
     component: 'iam',
-    uri: 'iam',
+    uri: '/iam',
     type: 'app',
     sort: 3,
     icon: 'system',
+    active_icon: 'system-active',
     hidden: false,
-    scopes: ['O'],
-    menuType: 0,
+    scopes: ['C'],
     children: [
       {
         id: 31,
         pid: 3,
-        code: 'users',
-        parent: 'iam',
+        permission: 'system:user:list',
         name: '用户管理',
-        component: '',
+        component: null,
         uri: '/users',
         type: 'menu',
         sort: 1,
         icon: null,
+        active_icon: null,
         hidden: false,
-        scopes: ['O'],
-        menuType: 1,
+        scopes: ['C'],
         children: [
           {
             id: 311,
             pid: 31,
-            code: 'user_list',
-            parent: 'users',
+            permission: 'system:user:list',
             name: '查看',
-            component: 'USER_LIST',
-            uri: 'system:user:list',
+            component: null,
+            uri: null,
             type: 'button',
             sort: 1,
             icon: null,
+            active_icon: null,
             hidden: false,
-            scopes: ['O'],
-            menuType: 2,
+            scopes: ['A'],
             children: null,
           },
         ],
@@ -157,32 +154,30 @@ const mockRawMenus = [
       {
         id: 32,
         pid: 3,
-        code: 'menus',
-        parent: 'iam',
+        permission: 'system:menu:list',
         name: '菜单管理',
-        component: '',
+        component: null,
         uri: '/menus',
         type: 'menu',
         sort: 2,
         icon: null,
+        active_icon: null,
         hidden: false,
-        scopes: ['O'],
-        menuType: 1,
+        scopes: ['C'],
         children: [
           {
             id: 321,
             pid: 32,
-            code: 'menu_list',
-            parent: 'menus',
+            permission: 'system:menu:list',
             name: '查看',
-            component: 'MENU_LIST',
-            uri: 'system:menu:list',
+            component: null,
+            uri: null,
             type: 'button',
             sort: 1,
             icon: null,
+            active_icon: null,
             hidden: false,
-            scopes: ['O'],
-            menuType: 2,
+            scopes: ['A'],
             children: null,
           },
         ],
@@ -190,17 +185,16 @@ const mockRawMenus = [
       {
         id: 33,
         pid: 3,
-        code: 'roles',
-        parent: 'iam',
+        permission: 'system:role:list',
         name: '角色管理',
-        component: '',
+        component: null,
         uri: '/roles',
         type: 'menu',
         sort: 3,
         icon: null,
+        active_icon: null,
         hidden: false,
-        scopes: ['O'],
-        menuType: 1,
+        scopes: ['C'],
         children: null,
       },
     ],
@@ -244,29 +238,32 @@ export const handlers = [
     });
   }),
 
-  // 登出
-  http.post('/sys/auth/logout', () =>
-    HttpResponse.json({ code: 0, data: null, msg: 'ok' }),
+  // 登出（端点切 iam /auth/logout——GoTrue signOut；mock 恒成功）
+  http.post('/iam/functions/v1/iam/auth/logout', () =>
+    HttpResponse.json({ code: 0, data: { success: true }, msg: 'ok' }),
   ),
 
-  // Token 刷新
-  http.post('/sys/auth/refresh', async ({ request }) => {
+  // Token 刷新（端点切 iam /auth/refresh——GoTrue 轮换，双 token 下发；
+  // 宿主 refreshToken 函数据此覆盖本地 refreshToken）
+  http.post('/iam/functions/v1/iam/auth/refresh', async ({ request }) => {
     const body = (await request.json()) as { refreshToken?: string };
     if (body.refreshToken === 'mock-refresh-token') {
       return HttpResponse.json({
         code: 0,
-        data: { token: 'mock-access-token-2' },
+        data: {
+          token: 'mock-access-token-2',
+          refreshToken: 'mock-refresh-token',
+        },
         msg: 'ok',
       });
     }
-    return HttpResponse.json({ code: 10001, data: null, msg: '刷新令牌无效' });
+    return HttpResponse.json({ code: 1004, data: null, msg: '登录已过期' });
   }),
 
   // 菜单：按身份返回——无 token → 公开子集（home）；有 token → 全量。
-  // 登记路径 = DEFAULT_CONFIG.api.menusEndpoint（'/api/user/menus'），
-  // fetchMenus 经 appConfig 取端点，配置即契约。
-  http.get('/api/user/menus', ({ request }) => {
-    const token = request.headers.get(TOKEN_HEADER);
+  // 登记路径 = config.js 的 menusEndpoint（切 iam /auth/menus 后）。
+  http.get('/iam/functions/v1/iam/auth/menus', ({ request }) => {
+    const token = request.headers.get('authorization')?.replace(/^Bearer /, '');
     return HttpResponse.json({
       code: 0,
       data: token ? mockRawMenus : mockPublicRawMenus,
@@ -277,7 +274,7 @@ export const handlers = [
   // 需登录态的示例端点：无 token → 401。仅供手动 dev 演练（curl/控制台 fetch）；
   // http.401.test 的用例全部 server.use 覆写自建行为，不依赖此基线 handler。
   http.get('/api/protected', ({ request }) => {
-    const token = request.headers.get(TOKEN_HEADER);
+    const token = request.headers.get('authorization')?.replace(/^Bearer /, '');
     if (!token) {
       return new HttpResponse(null, { status: 401 });
     }

@@ -8,7 +8,7 @@
  * 前缀：集成态从 props.basename（= activeRule '/iam'）派生，独立态（props 缺省）
  * 为空 —— 请求直落本 dev server，不打死不存在的宿主路径（独立运行性硬约定）。
  */
-import { getProps } from '../main';
+import { getProps } from '../props';
 import { post } from '../utils/http';
 import { OTP_SEND_PATH, OTP_VERIFY_PATH } from './endpoints';
 
@@ -63,10 +63,15 @@ function extractMsg(error: unknown): string | undefined {
     | {
         response?: { data?: { msg?: string } };
         data?: { msg?: string };
+        /** RequestClient.request 的 catch 对 4xx 直接重抛 error.response.data
+         * （envelope 本体）——msg 就在顶层（request-client.ts 的 throw 形态） */
+        msg?: string;
         message?: string;
       }
     | undefined;
-  return e?.response?.data?.msg ?? e?.data?.msg ?? e?.message ?? undefined;
+  return (
+    e?.response?.data?.msg ?? e?.data?.msg ?? e?.msg ?? e?.message ?? undefined
+  );
 }
 
 /** 失败统一上抛：Error(msg)；msg 取不到 → 无 message 的 Error（页面落 i18n 兜底）。 */

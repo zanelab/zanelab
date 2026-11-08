@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 7
-- **Last Active**: 2026-11-02
+- **Total Sessions**: 11
+- **Last Active**: 2026-11-08
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~193 | Active |
+| `journal-1.md` | ~295 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,10 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 11 | 2026-11-08 | AppIcon 下沉收尾：BUILTIN_ICONS 精简 + 图标键对齐 + PR #5 | `d8a6e34`, `ed4f516`, `8af8318`, `908d5ec` | `feat/iam-api-rbac` |
+| 10 | 2026-11-05 | 请求头集中化 + loginPage/loginEndpoint 移除 + 旧会话链路退役 + toast 防双弹 | `a576eae`, `8f2e4e1`, `4ab5995`, `b73d818` | `feat/apikey-interceptor` |
+| 9 | 2026-11-05 | 菜单修订 + Edge Fn 类型检查 + 请求头集中化 + apiKey 拦截器化 | `e390e65`, `daf12e4`, `5cf9438`, `f9b29df`, `40cc8cd`, `b4500c1`, `a576eae`, `8f2e4e1` | `feat/apikey-interceptor` |
+| 8 | 2026-11-04 | iam 菜单管理全栈落地 + 登录页输入组件升级 | `5a1ac7a`, `1a0d4d5` | `feat/iam-menu-management` |
 | 7 | 2026-11-02 | env 体系模板化 + apikey 注入 + iam 登录页三连修 | `2e06079`, `c764572`, `d23250a`, `8105842`, `4a91260` | `feat/env-restructure` |
 | 6 | 2026-11-01 | iam-web 接口层收敛 + OTP 401 契约修正 | `0f763a0`, `d464056`, `193a4cf` | `feat/iam-web-api-layer` |
 | 5 | 2026-10-31 | portal-web useMock 迁到 dev-only env + iam-web api 层规划 | `f17cffe`, `90cf84a`, `ab90995` | `feat/use-mock-dev-env` |

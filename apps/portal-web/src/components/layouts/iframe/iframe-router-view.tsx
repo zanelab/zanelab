@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { usePreferencesStore } from '../../../stores/preferences-store';
 import { useTabbarStore } from '../../../stores/tabbar-store';
 import { getRouteMeta } from '../../../router/route-meta';
-import { AppIcon } from '../../icons/app-icon';
+import { AppIcon } from '@zanelab/ui';
 
 interface IFrameRoute {
   fullPath?: string;

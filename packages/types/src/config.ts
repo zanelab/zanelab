@@ -15,41 +15,18 @@ export const AuthConfigSchema = z.object({
   loginPath: z.string(),
   tokenKey: z.string(),
   refreshTokenKey: z.string(),
-
-  /** 登录页 UI 开关（部署期可调，免重编译） */
-  loginPage: z
-    .object({
-      layout: z.enum(['panel-center', 'panel-left', 'panel-right']),
-      showCodeLogin: z.boolean(),
-      showQrcodeLogin: z.boolean(),
-      showThirdPartyLogin: z.boolean(),
-      showRegister: z.boolean(),
-      showForgetPassword: z.boolean(),
-      showRememberMe: z.boolean(),
-      /** 登录页右上「切换主题色」按钮显隐 */
-      showColorToggle: z.boolean().default(true),
-      /** 登录页右上「切换面板布局」按钮显隐 */
-      showLayoutToggle: z.boolean().default(true),
-    })
-    .default({
-      layout: 'panel-right',
-      showCodeLogin: true,
-      showQrcodeLogin: true,
-      showThirdPartyLogin: true,
-      showRegister: true,
-      showForgetPassword: true,
-      showRememberMe: true,
-      showColorToggle: true,
-      showLayoutToggle: true,
-    }),
+  // loginPage 配置已移除：登录由 iam 子应用承载（config.auth.loginPath 指向其路由），
+  // portal 内置登录页不再是默认链路（详见 pages/login/index.tsx 头注释）。
 });
 
 export const ApiConfigSchema = z.object({
   baseURL: z.string(),
   menusEndpoint: z.string(),
-  loginEndpoint: z.string(),
+  // loginEndpoint 已移除：登录走 iam 子应用（OTP），portal 不再持有旧密码登录端点
   logoutEndpoint: z.string().optional(),
   refreshEndpoint: z.string().optional(),
+  /** Supabase publishable key（请求拦截器注入 apikey 头；留空 = 不注入） */
+  apiKey: z.string().optional(),
 });
 
 export const RouteConfigSchema = z.object({
