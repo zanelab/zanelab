@@ -6,13 +6,16 @@
  *
  *   <stage>/                ← portal dist 全量（宿主：index.html/config.js/assets/icons/…）
  *   <stage>/iam/            ← iam dist 全量（--base=/iam/ 构建后资产在 iam/assets/）
- *   <stage>/home/           ← home dist 全量
+ *   <stage>/apps/home/      ← home dist 全量（**不放 stage/home/**：activeRule 是 /home，
+ *                              目录放根会让 Pages 把 SPA 路由 /home 当目录 301 到 /home/，
+ *                              刷新时 home/index.html 独立态整页替换宿主——2026-11-09 实测。
+ *                              挪进 /apps/ 深路径后 /home 走 404.html 兜底回宿主）
  *   <stage>/404.html        ← portal index.html 副本（GH Pages 对未知路径回 404.html 且 URL 不变
  *                              → SPA 深链接 /iam/login 落宿主由 qiankun/路由接管）
  *   <stage>/.nojekyll       ← 跳过 Jekyll 处理
  *   <stage>/CNAME           ← 不由本脚本产出；push 脚本从目标仓库保留（域名解析依赖）
  *
- * 前置：三个 app 已构建完成（workflow 里 iam/home 以 --base=/iam/、--base=/home/ 构建）。
+ * 前置：三个 app 已构建完成（workflow 里 iam 以 --base=/iam/、home 以 --base=/apps/home/ 构建）。
  *
  * 用法：
  *   node scripts/deploy/assemble.mjs [--stage <dir>] [--check]
@@ -95,7 +98,7 @@ function main() {
       `${stage}/404.html`,
       `${stage}/.nojekyll`,
       `${stage}/iam/index.html`,
-      `${stage}/home/index.html`,
+      `${stage}/apps/home/index.html`,
     ]) {
       if (!existsSync(p)) fail(`stage 缺少 ${p}`);
     }
@@ -106,13 +109,13 @@ function main() {
     ) {
       fail('iam index.html 资产引用未带 /iam/ 前缀——构建时漏了 --base=/iam/');
     }
-    const homeIndex = readFileSync(`${stage}/home/index.html`, 'utf8');
+    const homeIndex = readFileSync(`${stage}/apps/home/index.html`, 'utf8');
     if (
-      !homeIndex.includes("'/home/assets/") &&
-      !homeIndex.includes('"/home/assets/')
+      !homeIndex.includes("'/apps/home/assets/") &&
+      !homeIndex.includes('"/apps/home/assets/')
     ) {
       fail(
-        'home index.html 资产引用未带 /home/ 前缀——构建时漏了 --base=/home/',
+        'home index.html 资产引用未带 /apps/home/ 前缀——构建时漏了 --base=/apps/home/',
       );
     }
     const portalIndex = readFileSync(`${stage}/index.html`, 'utf8');
@@ -129,7 +132,8 @@ function main() {
 
   cpSync(DIST.portal, stage, { recursive: true });
   cpSync(DIST.iam, `${stage}/iam`, { recursive: true });
-  cpSync(DIST.home, `${stage}/home`, { recursive: true });
+  // home 不放 stage/home/（activeRule /home 会被 Pages 目录化 301，见头注释）
+  cpSync(DIST.home, `${stage}/apps/home`, { recursive: true });
   copyFileSync(`${stage}/index.html`, `${stage}/404.html`);
   writeFileSync(`${stage}/.nojekyll`, '');
 

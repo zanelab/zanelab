@@ -64,8 +64,12 @@ jobs:
       - name: Build iam (assets isolated under /iam/)
         run: pnpm --filter @zanelab/iam-web exec vite build --base=/iam/
 
-      - name: Build home (assets isolated under /home/)
-        run: pnpm --filter @zanelab/home-web exec vite build --base=/home/
+      # home 产物放 /apps/home/（--base 同步）：activeRule 是 /home，产物若在
+      # 根级 home/ 目录，Pages 会把 SPA 路由 /home 当目录 301 到 /home/ 并命中
+      # home/index.html——集成态刷新时子应用独立态整页替换宿主（2026-11-09 实测）。
+      # 挪深路径后 /home 无文件匹配 → 404.html 兜底 → 宿主接管。
+      - name: Build home (assets isolated under /apps/home/)
+        run: pnpm --filter @zanelab/home-web exec vite build --base=/apps/home/
 
       - name: Assemble site
         run: node scripts/deploy/assemble.mjs
@@ -76,7 +80,7 @@ jobs:
             --config stage-pages/config.js \
             --api-base-url "${{ vars.SUPABASE_URL }}" \
             --api-key "${{ vars.SUPABASE_API_KEY }}" \
-            --entry-iam /iam/ --entry-home /home/ \
+            --entry-iam /iam/ --entry-home /apps/home/ \
             --iam-props-api-prefix '' \
             --strip-api-prefix /iam
 
