@@ -222,9 +222,12 @@ function createRequestClient(
   baseURL: string,
   options?: RequestClientOptions,
 ): RequestClient {
+  // withCredentials 不设（axios 默认 false）：鉴权走 Authorization Bearer + apikey
+  // 头（localStorage token，无 cookie 依赖）；跨源直连 Supabase 时网关回
+  // ACAO:* 与 credentials include 模式互斥（浏览器硬规范）——设 true 会让所有
+  // 直连请求被 CORS 预检拒绝（2026-11-09 线上实测）。
   const client = new RequestClient({
     baseURL,
-    withCredentials: true,
     timeout: 60_000, // 保持现行 portal 超时（vben 默认 10s 不适用旧后端）
     ...options,
   });
