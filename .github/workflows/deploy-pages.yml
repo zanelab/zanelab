@@ -74,15 +74,22 @@ jobs:
       - name: Assemble site
         run: node scripts/deploy/assemble.mjs
 
+      # 部署标识：tag 触发（GITHUB_REF_TYPE==tag）用 tag 名（v1.0.2），
+      # dispatch 等无 tag 场景用 UTC 时间戳——config.js version 与
+      # index.html/404.html 的 config.js ?v= 同源，发布可读、缓存必然失效
       - name: Patch config.js for production (Supabase direct connect)
         run: |
+          DEPLOY_VERSION="${GITHUB_REF_NAME:-$(date -u +%Y-%m-%dT%H:%M:%SZ)}"
+          [ "${GITHUB_REF_TYPE:-}" = "tag" ] || DEPLOY_VERSION="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           node scripts/deploy/patch-config.mjs \
             --config stage-pages/config.js \
             --api-base-url "${{ vars.SUPABASE_URL }}" \
             --api-key "${{ vars.SUPABASE_API_KEY }}" \
             --entry-iam /iam/ --entry-home /apps/home/ \
             --iam-props-api-prefix '' \
-            --strip-api-prefix /iam
+            --strip-api-prefix /iam \
+            --deploy-version "$DEPLOY_VERSION" \
+            --html-dir stage-pages
 
       - name: Verify assembled layout
         run: node scripts/deploy/assemble.mjs --check
