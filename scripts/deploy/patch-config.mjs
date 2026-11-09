@@ -10,16 +10,21 @@
  * 改写项（全部是部署值，非开发开关——见 spec/frontend/env-config-guidelines.md）：
  * - api.baseURL        → Supabase 云基址（host axios 实例拼 baseURL + 完整端点直连）
  * - api.apiKey         → Supabase publishable key（浏览器本就可见，经 http 拦截器注入 apikey 头）
+ * - api.*Endpoint 剥 /iam 前缀 → 端点 '/iam/functions/v1/...' 的 /iam 是 dev 代理
+ *   路由工件（portal dev 代理剥前缀转发）；直连 Supabase 时无此前缀，原样请求
+ *   404（2026-11-09 实测）——--strip-api-prefix 指定要剥的前缀，命中即剥
  * - microApps.iam.entry / microApps.home.entry → 同源子目录（'/iam/'、'/home/'）
  * - microApps.iam.props.apiPrefix → ''（集成态 iam api 层不再拼 /iam 前缀，
  *   宿主端点已含完整路径；空串显式传给 apiPrefix()，basename 回退被跳过）
  *
- * 幂等：对已改写的 config 再跑一遍输出不变（entry/apiPrefix 取值覆盖式写入）。
+ * 幂等：对已改写的 config 再跑一遍输出不变（entry/apiPrefix 取值覆盖式写入；
+ * strip 幂等——端点已无该前缀时不再命中）。
  *
  * 用法：
  *   node scripts/deploy/patch-config.mjs --config <path> \
  *     --api-base-url <url> --api-key <key> \
  *     --entry-iam /iam/ --entry-home /home/ --iam-props-api-prefix '' \
+ *     --strip-api-prefix /iam \
  *     [--out <path>] [--dry-run]
  */
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -89,8 +94,21 @@ function evalObject(objSrc) {
 }
 
 /**
+ * 剥端点前缀（--strip-api-prefix）：api.*Endpoint（menus/logout/refresh）值头的
+ * 前缀。端点的 /iam 是 dev 代理路由工件；直连 Supabase 时请求应从 /functions/v1
+ * 开始，带头部前缀会 404。只剥串首、只对 api 下的 *Endpoint 字段；未命中原样返回
+ * （幂等）。
+ */
+function stripEndpointPrefix(endpoint, prefix) {
+  if (typeof endpoint !== 'string' || !prefix) return endpoint;
+  return endpoint.startsWith(prefix)
+    ? endpoint.slice(prefix.length) || endpoint
+    : endpoint;
+}
+
+/**
  * 改写配置对象（纯函数，供幂等性测试）。
- * 只动四组部署值；未提供的参数对应字段保持原样。
+ * 只动部署值组；未提供的参数对应字段保持原样。
  */
 export function patchConfig(cfg, opts) {
   const next = structuredClone(cfg);
@@ -99,6 +117,14 @@ export function patchConfig(cfg, opts) {
   }
   if (opts.apiKey !== undefined) {
     next.api = { ...next.api, apiKey: opts.apiKey };
+  }
+  if (opts.stripApiPrefix && next.api) {
+    const api = { ...next.api };
+    for (const key of Object.keys(api)) {
+      if (key === 'baseURL' || key === 'apiKey') continue; // 非端点字段不动
+      api[key] = stripEndpointPrefix(api[key], opts.stripApiPrefix);
+    }
+    next.api = api;
   }
   if (opts.entryIam !== undefined && next.microApps?.iam) {
     next.microApps.iam = { ...next.microApps.iam, entry: opts.entryIam };
@@ -163,6 +189,7 @@ function main() {
     entryIam: args['entry-iam'],
     entryHome: args['entry-home'],
     iamPropsApiPrefix: args['iam-props-api-prefix'],
+    stripApiPrefix: args['strip-api-prefix'],
   });
   const output = serializeConfig(patched);
 
