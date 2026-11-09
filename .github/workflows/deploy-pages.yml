@@ -39,7 +39,14 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
+      # persist-credentials: false —— checkout 默认会把本仓库 GITHUB_TOKEN 写进
+      # http.https://github.com/.extraheader，git push 时该头与 push-pages.mjs
+      # URL 内嵌的 GIT_TOKEN 生成的 Authorization 同名冲突（duplicate header /
+      # 顺序取先），导致推送认证被 GITHUB_TOKEN 顶掉 → 403 denied to zanelab。
+      # 本 workflow 的 push 靠脚本 URL 内嵌凭据，关闭持久化（2026-11-09 实测踩坑）。
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - uses: pnpm/action-setup@v4
 
