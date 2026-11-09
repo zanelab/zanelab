@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/frontend/index.md", "reason": "核心不变式：接口地址从运行时配置读取不硬编码；config.js 层级判据——patch 脚本改写的是部署值而非开发开关"}
+{"file": ".trellis/spec/frontend/microfrontend-guidelines.md", "reason": "qiankun props 契约（basename/http/getter 语义）——apiPrefix 新 prop 必须与既有 props 契约一致"}
+{"file": ".trellis/spec/frontend/http-api-guidelines.md", "reason": "Axios 封装与 baseURL 组合约定——iam apiPrefix 参数化的行为边界"}
+{"file": ".trellis/spec/frontend/directory-structure.md", "reason": "scripts/ 目录归属约定——deploy 脚本放 scripts/deploy/"}

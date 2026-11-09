@@ -1,0 +1,82 @@
+# GitHub Pages 发布流程（任务 11-08-github-pages-release）
+#
+# 触发：push tag v*（生产发布）或手动 workflow_dispatch。
+# 流程：构建三 app → iam/home 注入 --base（资产隔离到 /iam/assets、/home/assets，
+#       三端同名 assets 不互相覆盖）→ 组装站点目录（portal 根 + iam/ + home/ +
+#       404.html SPA 兜底 + .nojekyll）→ patch-config 直连 Supabase → push 到
+#       zanelab.github.io main（用户站点 = 根路径 https://zanelab.github.io/，
+#       CNAME zanelab.vip 同步生效；保留目标仓库 CNAME/README）。
+#
+# ─── 一次性准备（owner 操作，缺一项首跑必失败）────────────────────────────
+# 1. Fine-grained PAT：GitHub → Settings → Developer settings → Personal access
+#    tokens (fine-grained) → Generate：
+#      - Repository access: Only select repositories → zanelab/zanelab.github.io
+#      - Permissions → Repository permissions → Contents: Read and write
+#    注意过期时间（90 天/自定义），到期前需轮换。
+# 2. gh secret set GIT_TOKEN -R zanelab/zanelab   ← 上一步的 PAT
+# 3. gh variable set SUPABASE_URL -R zanelab/zanelab --body "https://<project-ref>.supabase.co"
+# 4. gh variable set SUPABASE_API_KEY -R zanelab/zanelab --body "<publishable key>"
+#    （两者均为浏览器可见值——publishable 语义、现 config.js 已含同值，故用 variable 非 secret）
+#
+# 回滚：revert zanelab.github.io 仓库的部署提交（Pages 从 main 重建）。
+# ────────────────────────────────────────────────────────────────────────────
+name: deploy-pages
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-pages
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build portal (host, root base)
+        run: pnpm --filter @zanelab/portal-web build
+
+      - name: Build iam (assets isolated under /iam/)
+        run: pnpm --filter @zanelab/iam-web exec vite build --base=/iam/
+
+      - name: Build home (assets isolated under /home/)
+        run: pnpm --filter @zanelab/home-web exec vite build --base=/home/
+
+      - name: Assemble site
+        run: node scripts/deploy/assemble.mjs
+
+      - name: Patch config.js for production (Supabase direct connect)
+        run: |
+          node scripts/deploy/patch-config.mjs \
+            --config stage-pages/config.js \
+            --api-base-url "${{ vars.SUPABASE_URL }}" \
+            --api-key "${{ vars.SUPABASE_API_KEY }}" \
+            --entry-iam /iam/ --entry-home /home/ \
+            --iam-props-api-prefix ''
+
+      - name: Verify assembled layout
+        run: node scripts/deploy/assemble.mjs --check
+
+      - name: Push to zanelab.github.io
+        env:
+          GIT_TOKEN: ${{ secrets.GIT_TOKEN }}
+        run: >-
+          node scripts/deploy/push-pages.mjs --stage stage-pages --message "deploy: ${GITHUB_REF_NAME:-manual} (${GITHUB_SHA::7})"

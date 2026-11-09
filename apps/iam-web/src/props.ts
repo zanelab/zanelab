@@ -78,6 +78,13 @@ export interface PltProps {
   }) => Promise<void>;
   /** 宿主共享 http 通道（RequestClient 只读代理，见 HostHttpClient） */
   http?: HostHttpClient;
+  /**
+   * 集成态显式 API 前缀（部署期直连 Supabase 时由部署 config.js 传 ''：宿主共享
+   * 实例的 endpoint 已含完整路径，再拼 basename 派生前缀会双前缀 404）。
+   * **空串合法**——解析按 `typeof === 'string'` 判定而非真值（见 api/prefix.ts）；
+   * 未传回退 props.basename 派生，dev 的宿主 config.js 不传该键、行为不变。
+   */
+  apiPrefix?: string;
   /** 宿主通知通道：子应用把 toast 消息上抛给宿主 ToastRegion 渲染（缺省 = 独立态本地渲染） */
   onNotify?: (
     message: string,

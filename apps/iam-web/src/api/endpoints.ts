@@ -4,8 +4,9 @@
  * 为什么必须零依赖：mock worker 在独立 bundle 里 import 本模块
  * （src/mocks/otp-handlers.ts）。一旦引入 ../main 的 getProps()，整个应用入口
  * 模块会被拖进 worker bundle，并可能形成循环依赖。
- * 运行时的 API 前缀**不走常量**：src/api/auth.ts 从 props.basename 派生
- * （独立运行性要求，见下）；INTEGRATION_PREFIX 只服务 mock。
+ * 运行时的 API 前缀**不走常量**：src/api/prefix.ts 从 props.apiPrefix（显式，
+ * 部署直连时传 ''）/ props.basename（回退派生，独立运行性要求，见下）解析；
+ * INTEGRATION_PREFIX 只服务 mock。
  */
 
 /**

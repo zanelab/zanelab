@@ -8,8 +8,8 @@
  * 数据源：Supabase auth.users（Edge Fn 经 supabaseAdmin 查询，publishable 不可见）
  * + user_roles/roles 角色聚合。写操作（角色分配/禁用）admin-only。
  */
-import { getProps } from '../props';
 import { get, put } from '../utils/http';
+import { apiPrefix } from './prefix';
 import { USERS_LIST_PATH, USER_ROLES_PATH, USER_BAN_PATH } from './endpoints';
 
 /** 用户行（Edge Fn /auth/users 出参）。 */
@@ -23,10 +23,7 @@ export interface UserRecord {
   roles: string[];
 }
 
-/** 集成态 basename('/iam') → 代理前缀 '/iam'；独立态（缺省）→ ''（同 auth/menus 域）。 */
-function apiPrefix(): string {
-  return (getProps().basename as string | undefined)?.replace(/\/$/, '') ?? '';
-}
+/** 前缀解析在 api/prefix.ts 单点（显式 props.apiPrefix 优先 → basename 派生）。 */
 
 /** 双形态读值（解包优先，envelope 兜底）——与 auth/menus 域同一助手语义。 */
 function normalize<T>(res: unknown): T | undefined {
