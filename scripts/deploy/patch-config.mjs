@@ -16,15 +16,23 @@
  * - microApps.iam.entry / microApps.home.entry → 同源子目录（'/iam/'、'/home/'）
  * - microApps.iam.props.apiPrefix → ''（集成态 iam api 层不再拼 /iam 前缀，
  *   宿主端点已含完整路径；空串显式传给 apiPrefix()，basename 回退被跳过）
+ * - version → 部署标识（--deploy-version，tag 优先回退 ISO 时间戳）：仓库内是
+ *   手写死值；部署期改写让它随发版变化，可读地对应具体发布
+ * - index.html / 404.html 的 <script src="/config.js"> 注入 ?v=<同版本>
+ *   （--html-dir）：GH Pages 对根级静态文件给 cache-control: max-age=14400
+ *   （4h），config.js 改了用户最长 4h 拿旧部署配置——URL 带上每次部署唯一的
+ *   v 参数使缓存自然失效（GH Pages 响应头不可配，query 是唯一手段）
  *
- * 幂等：对已改写的 config 再跑一遍输出不变（entry/apiPrefix 取值覆盖式写入；
- * strip 幂等——端点已无该前缀时不再命中）。
+ * 幂等：对已改写的 config 再跑一遍输出不变（entry/apiPrefix/version 取值覆盖式
+ * 写入；strip 幂等——端点已无该前缀时不再命中；html 注入按"已是 ?v="跳过——
+ * 同版本重跑不重复追加）。
  *
  * 用法：
  *   node scripts/deploy/patch-config.mjs --config <path> \
  *     --api-base-url <url> --api-key <key> \
  *     --entry-iam /iam/ --entry-home /home/ --iam-props-api-prefix '' \
  *     --strip-api-prefix /iam \
+ *     --deploy-version v1.0.1 --html-dir <stage-dir> \
  *     [--out <path>] [--dry-run]
  */
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -138,7 +146,39 @@ export function patchConfig(cfg, opts) {
     else props.apiPrefix = opts.iamPropsApiPrefix;
     next.microApps.iam = { ...next.microApps.iam, props };
   }
+  if (opts.deployVersion !== undefined) {
+    next.version = opts.deployVersion;
+  }
   return next;
+}
+
+/**
+ * 给 HTML 的 config.js 引用注入缓存失效参数（--html-dir + --deploy-version）。
+ * GH Pages 对静态文件给 max-age=14400，config.js 改动后用户最长 4h 拿旧值；
+ * src 带 ?v=<部署标识> 后每次部署 URL 唯一，缓存自然失效。index.html 与
+ * 404.html（宿主兜底副本，同源同引用）都要注。已注过的引用原地更新 v 值
+ * （同版本重跑无写入——幂等）。
+ */
+export function injectHtmlCacheBust(htmlDir, version) {
+  if (!version) return [];
+  const changed = [];
+  // 一个正则同时覆盖「无 v」「有旧 v」两种形态：src="/config.js" 或 src="/config.js?v=xxx"
+  const re = /(<script\s+src="\/config\.js)(?:\?v=[^"]*)?(">)/g;
+  for (const name of ['index.html', '404.html']) {
+    const p = `${htmlDir}/${name}`;
+    let html;
+    try {
+      html = readFileSync(p, 'utf8');
+    } catch {
+      continue; // 404.html 可能不存在（独立跑 patch），跳过
+    }
+    const updated = html.replace(re, `$1?v=${version}$2`);
+    if (updated !== html) {
+      writeFileSync(p, updated);
+      changed.push(name);
+    }
+  }
+  return changed;
 }
 
 /** 序列化：config.js 是给运维/人读的运行时配置，保持无引号键 + 单引号字符串（与仓库现文件风格一致） */
@@ -157,7 +197,7 @@ function main() {
   const args = parseArgs(process.argv.slice(2));
   if (args._.length > 0 || !args.config) {
     console.error(
-      "用法: node scripts/deploy/patch-config.mjs --config <path> --api-base-url <url> --api-key <key> --entry-iam /iam/ --entry-home /home/ --iam-props-api-prefix '' [--out <path>] [--dry-run]",
+      "用法: node scripts/deploy/patch-config.mjs --config <path> --api-base-url <url> --api-key <key> --entry-iam /iam/ --entry-home /home/ --iam-props-api-prefix '' --strip-api-prefix /iam --deploy-version <tag|timestamp> --html-dir <stage> [--out <path>] [--dry-run]",
     );
     process.exit(2);
   }
@@ -183,6 +223,10 @@ function main() {
   const objSrc = extractObjectSource(raw);
   const cfg = evalObject(objSrc);
 
+  // 部署标识：显式传入优先；缺省回退当前 UTC 时间戳（手动触发等无 tag 场景）
+  const deployVersion =
+    args['deploy-version'] ?? new Date().toISOString().replace(/\.\d+Z$/, 'Z');
+
   const patched = patchConfig(cfg, {
     apiBaseUrl: args['api-base-url'],
     apiKey: args['api-key'],
@@ -190,6 +234,7 @@ function main() {
     entryHome: args['entry-home'],
     iamPropsApiPrefix: args['iam-props-api-prefix'],
     stripApiPrefix: args['strip-api-prefix'],
+    deployVersion,
   });
   const output = serializeConfig(patched);
 
@@ -202,10 +247,21 @@ function main() {
     console.log(`[patch-config] 无变化（幂等命中）: ${outPath}`);
     // 幂等命中时也落一份输出文件（CI 组装链可能依赖 --out 存在），内容与输入一致
     if (outPath !== configPath) writeFileSync(outPath, output);
-    return;
+  } else {
+    writeFileSync(outPath, output);
+    console.log(`[patch-config] 已写入: ${outPath}`);
   }
-  writeFileSync(outPath, output);
-  console.log(`[patch-config] 已写入: ${outPath}`);
+
+  // HTML 缓存失效注入（config.js ?v=<部署标识>；index.html + 404.html）
+  if (args['html-dir']) {
+    const changed = injectHtmlCacheBust(
+      resolve(args['html-dir']),
+      deployVersion,
+    );
+    console.log(
+      `[patch-config] html 注入 ?v=${deployVersion}: ${changed.length ? changed.join(', ') : '无变化（幂等命中）'}`,
+    );
+  }
 }
 
 if (
