@@ -233,7 +233,7 @@ function createRequestClient(
   });
 
   // 请求拦截器：公共头集中装配（buildLegacyHeaders——Authorization Bearer 凭据、
-  // x-lang、XHR 固定头；token 非空才带，保持 auth.ts logout fire-and-forget 特例）
+  // Accept-Language；token 非空才带，保持 auth.ts logout fire-and-forget 特例）
   // + apikey（config.apiKey 非空才 set——云 Supabase 网关要求；iam 集成态经
   // props.http 走本拦截器，故此处注入即覆盖子应用，vite proxy 不再重复注入）
   client.addRequestInterceptor({
