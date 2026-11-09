@@ -49,7 +49,8 @@ const RESEND_SECONDS = 60;
 //   集成态请求带 /iam 代理前缀 → 宿主 vite proxy 剥前缀转发到本 dev server
 //   → 本应用 worker（mock）或 Edge Fn（真实）拦截
 // - 独立态：props.basename 缺省 → 无前缀，请求直落本 dev server
-// 前缀从 props.basename（= activeRule）派生，与路由 basename 同源，不另设配置。
+// 前缀解析在 api/prefix.ts 单点：显式 props.apiPrefix（部署直连时传 ''，空串
+// 合法）优先，未传回退 props.basename（= activeRule）派生，与路由 basename 同源。
 export function LoginPage() {
   const props = getProps();
   // i18n：文案键见 locales/zh-CN.json iam.*；语言切换由基座 props 驱动

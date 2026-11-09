@@ -10,8 +10,8 @@
  * （apps/portal-web/src/api/menu.ts:8-25，字段语义以其注释为准）。
  * 宿主 fetchMenus 将来切数据源时 transformMenu 无需改动。
  */
-import { getProps } from '../props';
 import { post, get, put, del } from '../utils/http';
+import { apiPrefix } from './prefix';
 import {
   MENUS_LIST_PATH,
   MENUS_ALL_PATH,
@@ -53,10 +53,7 @@ export interface MenuInput {
   scopes?: ('A' | 'C')[];
 }
 
-/** 集成态 basename('/iam') → 代理前缀 '/iam'；独立态（缺省）→ ''（同 api/auth.ts）。 */
-function apiPrefix(): string {
-  return (getProps().basename as string | undefined)?.replace(/\/$/, '') ?? '';
-}
+/** 前缀解析在 api/prefix.ts 单点（显式 props.apiPrefix 优先 → basename 派生）。 */
 
 /** 双形态读值（解包优先，envelope 兜底）——与 auth 域同一助手语义。 */
 function normalize<T>(res: unknown): T | undefined {

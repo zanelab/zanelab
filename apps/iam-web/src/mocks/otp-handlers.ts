@@ -40,7 +40,7 @@ const fail = (code: number, msg: string, status = 400) =>
 
 /** 页面级请求路径：与 api 层**同源**（import src/api/endpoints.ts 常量，不逐字
  * 复刻——路径漂移在结构上不可能再发生）。
- * 两种形态都登记：集成态页面 fetch 带 /iam 前缀（apiPrefix 从 basename 派生，
+ * 两种形态都登记：集成态页面 fetch 带 /iam 前缀（api/prefix.ts 从 basename 派生，
  * SW 拦截发生在宿主 proxy rewrite **之前**，handler 必须按页面级完整路径登记）；
  * 独立态无前缀——独立运行性（:8081 直开）才有 mock 可拦。 */
 const pagePaths = (path: string): string[] => [

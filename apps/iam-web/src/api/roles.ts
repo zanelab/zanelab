@@ -4,8 +4,8 @@
  * 形态与其它域一致：命名空间对象，URL 拼装 + 响应归一化 + 错误语义；路径常量进
  * endpoints.ts。鉴权头由传输层注入，本层不感知身份（角色端点 admin-only，403 透出）。
  */
-import { getProps } from '../props';
 import { get, put, post, del } from '../utils/http';
+import { apiPrefix } from './prefix';
 import {
   ROLES_LIST_PATH,
   ROLES_COLLECTION_PATH,
@@ -24,9 +24,7 @@ export interface RoleRecord {
   permissionCount: number;
 }
 
-function apiPrefix(): string {
-  return (getProps().basename as string | undefined)?.replace(/\/$/, '') ?? '';
-}
+/** 前缀解析在 api/prefix.ts 单点（显式 props.apiPrefix 优先 → basename 派生）。 */
 
 function normalize<T>(res: unknown): T | undefined {
   return ((res as { data?: T } | undefined)?.data ?? res) as T | undefined;

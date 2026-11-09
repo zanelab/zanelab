@@ -7,9 +7,10 @@
  *
  * 前缀：集成态从 props.basename（= activeRule '/iam'）派生，独立态（props 缺省）
  * 为空 —— 请求直落本 dev server，不打死不存在的宿主路径（独立运行性硬约定）。
+ * 部署期直连时由 props.apiPrefix 显式覆盖（含空串），解析在 api/prefix.ts 单点。
  */
-import { getProps } from '../props';
 import { post } from '../utils/http';
+import { apiPrefix } from './prefix';
 import { OTP_SEND_PATH, OTP_VERIFY_PATH } from './endpoints';
 
 /** 登录会话（领域对象：envelope / 解包后的 data 形态差异在本层收敛）。 */
@@ -39,10 +40,7 @@ interface OtpVerifyPayload {
   };
 }
 
-/** 集成态 basename('/iam') → 代理前缀 '/iam'；独立态（缺省）→ ''（不重复剥前缀）。 */
-function apiPrefix(): string {
-  return (getProps().basename as string | undefined)?.replace(/\/$/, '') ?? '';
-}
+/** 前缀解析在 api/prefix.ts 单点（显式 props.apiPrefix 优先 → basename 派生）。 */
 
 /**
  * 双形态读值（解包优先，envelope 兜底）：宿主/本地拦截器成功时已解包 envelope
