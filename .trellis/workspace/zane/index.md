@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 11
-- **Last Active**: 2026-11-08
+- **Total Sessions**: 12
+- **Last Active**: 2026-11-09
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~295 | Active |
+| `journal-1.md` | ~319 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 12 | 2026-11-09 | GitHub Pages 发布流程：tag 触发构建 + 目录布局 + Supabase 直连（PR #6） | `5107e5b`, `d52312b`, `4710d20` | `feat/github-pages-release` |
 | 11 | 2026-11-08 | AppIcon 下沉收尾：BUILTIN_ICONS 精简 + 图标键对齐 + PR #5 | `d8a6e34`, `ed4f516`, `8af8318`, `908d5ec` | `feat/iam-api-rbac` |
 | 10 | 2026-11-05 | 请求头集中化 + loginPage/loginEndpoint 移除 + 旧会话链路退役 + toast 防双弹 | `a576eae`, `8f2e4e1`, `4ab5995`, `b73d818` | `feat/apikey-interceptor` |
 | 9 | 2026-11-05 | 菜单修订 + Edge Fn 类型检查 + 请求头集中化 + apiKey 拦截器化 | `e390e65`, `daf12e4`, `5cf9438`, `f9b29df`, `40cc8cd`, `b4500c1`, `a576eae`, `8f2e4e1` | `feat/apikey-interceptor` |

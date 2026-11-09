@@ -293,3 +293,27 @@ apikey-interceptor 任务的评审驱动续批：a576eae 按 X_* 评审——请
 ### Status
 
 [OK] **Completed**
+
+
+## Session 12: GitHub Pages 发布流程：tag 触发构建 + 目录布局 + Supabase 直连（PR #6）
+<!-- trellis-session: v=2 fp=c69cff05f919479f -->
+
+**Date**: 2026-11-09
+**Task**: GitHub Pages 发布流程：tag 触发构建 + 目录布局 + Supabase 直连（PR #6）
+**Branch**: `feat/github-pages-release`
+
+### Summary
+
+完成任务 11-08-github-pages-release：打 tag v* 由 GH Actions 构建三 app 推送到 zanelab.github.io 用户站点仓库（根路径部署，CNAME zanelab.vip 保留）。关键决策：用户站点仓库方案取代项目站点子路径（零 base 改造）；iam/home 构建期 --base=/iam/、/home/ 隔离三端 assets；API 浏览器直连 Supabase（网关 CORS 实测放行 GET/POST/PUT/PATCH/DELETE），唯一代码改动是 iam apiPrefix 参数化（显式 props.apiPrefix 空串合法，四域收敛 api/prefix.ts 单点，单测 9 例）。新增 patch-config/assemble/push-pages 三脚本 + deploy-pages.yml（幂等、fail-fast、CNAME 保留、敏感值零硬编码）。验证：三端 tsc + 全仓 build/test/lint 绿；patch 幂等两遍一致；push 模拟 bare 仓验证；组装产物本地 HTTP 冒烟含 404 回退深链接。合并后 owner 需一次性配置 GIT_TOKEN secret + SUPABASE_URL/API_KEY variables（清单在 workflow 头注释）。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `5107e5b` | feat(@zanelab/iam-web): API 前缀参数化——显式 props.apiPrefix 优先 |
+| `d52312b` | feat(project): GitHub Pages 发布流程（组装/改写/推送脚本 + workflow） |
+| `4710d20` | chore(task): 记录 github-pages-release 任务工件 |
+
+### Status
+
+[OK] **Completed**
