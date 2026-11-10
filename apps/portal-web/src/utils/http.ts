@@ -112,6 +112,30 @@ function onSessionExpired(code: unknown, backendMsg?: string) {
   handleLogout();
 }
 
+/** 刷新失败的归类：会话失效（清登录态）vs 网络/服务瞬断（保态，401 拦截器兜底） */
+export type RefreshErrorKind = 'invalid' | 'network';
+
+/**
+ * 刷新失败的语义分类（bootstrap 启动期主动刷新消费，401 单飞路径不区分）：
+ * - invalid：HTTP 401/403、业务码非 0（refresh token 失效/被轮换废弃）、
+ *   响应体解析失败（网关返回了明确响应）→ refresh token 不可用，应清登录态
+ * - network：fetch 抛错（断网/DNS/超时/连接拒绝）、HTTP 5xx → 瞬时故障，
+ *   保留本地态继续启动，后续请求由 401 拦截器兜底
+ */
+export function classifyRefreshError(err: unknown): RefreshErrorKind {
+  if (err instanceof TypeError) return 'network'; // fetch 网络层失败
+  if (axios.isAxiosError?.(err)) return 'network';
+  const status = (err as { status?: number }).status;
+  if (typeof status === 'number') {
+    return status >= 500 ? 'network' : 'invalid'; // 401/403/4xx → invalid
+  }
+  return 'invalid'; // 业务码非 0 / 响应体异常（fetch 已拿到响应）
+}
+
+/**
+ * 用 refresh token 换新 access token（GoTrue 轮换语义）。
+ * 401 单飞拦截器与 bootstrap 启动期主动刷新共用。
+ */
 async function refreshToken(): Promise<string> {
   const refreshTokenValue = localStorage.getItem(
     appConfig.auth.refreshTokenKey,
@@ -130,6 +154,17 @@ async function refreshToken(): Promise<string> {
       body: JSON.stringify({ refreshToken: refreshTokenValue }),
     },
   );
+  // 401/403 → refresh token 已失效（附带 status 供 classifyRefreshError 归类）
+  if (res.status === 401 || res.status === 403) {
+    const err = new Error(`refresh rejected: ${res.status}`);
+    (err as { status?: number }).status = res.status;
+    throw err;
+  }
+  if (res.status >= 500) {
+    const err = new Error(`refresh server error: ${res.status}`);
+    (err as { status?: number }).status = res.status;
+    throw err;
+  }
   const body = (await res.json()) as {
     code: number | string;
     data: { token: string; refreshToken?: string };
@@ -153,7 +188,9 @@ async function refreshToken(): Promise<string> {
   return body.data.token;
 }
 
-function onTokenRefreshed(token: string) {
+export { refreshToken };
+
+export function onTokenRefreshed(token: string) {
   localStorage.setItem(appConfig.auth.tokenKey, token);
   useAuthStore.getState().setToken(token);
 }
