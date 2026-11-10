@@ -6,6 +6,12 @@ import { ThemeProvider } from './components/theme-provider';
 import { ToastRegion } from '@zanelab/ui';
 import { App } from './App';
 import { applyConfigPreferences } from './stores/preferences-store';
+import {
+  classifyRefreshError,
+  onTokenRefreshed,
+  refreshToken,
+} from './utils/http';
+import { handleLogout } from './utils/auth';
 import { initIcons } from '@zanelab/ui';
 import {
   setupHostState,
@@ -95,8 +101,38 @@ async function bootstrap() {
   setupMicroApps();
 
   const savedToken = localStorage.getItem(appConfig.auth.tokenKey);
+  const savedRefreshToken = localStorage.getItem(
+    appConfig.auth.refreshTokenKey,
+  );
   if (savedToken) {
-    await restoreSession(savedToken);
+    if (savedRefreshToken && appConfig.api.refreshEndpoint) {
+      // 有 refresh token → 启动期主动轮换（本地 access token 可能早已过期，
+      // restoreSession 直接拿旧 token 拉菜单必 401 跳登录——先换新再恢复）。
+      try {
+        const token = await refreshToken();
+        onTokenRefreshed(token);
+        await restoreSession(token);
+      } catch (e) {
+        const kind = classifyRefreshError(e);
+        if (kind === 'invalid') {
+          // refresh token 确认失效 → 清登录态，落未登录形态（公开菜单）
+          console.warn('[bootstrap] refresh token 已失效，清除本地登录态');
+          handleLogout();
+          await loadPublicMenus();
+        } else {
+          // 网络/服务瞬断 → 保留旧 token 继续恢复（401 拦截器后续兜底）
+          console.warn(
+            '[bootstrap] 刷新请求网络失败，以本地 token 恢复会话:',
+            e,
+          );
+          await restoreSession(savedToken);
+        }
+      }
+    } else {
+      // 无 refresh token（旧会话/旧后端）：保持现状，靠 restoreSession 的
+      // 401 链路兜底
+      await restoreSession(savedToken);
+    }
   } else {
     // 未登录：拉公开菜单子集（后端按匿名返回，如 home），
     // 让壳的侧边栏/NavigateHome 在登录前就有落点。
