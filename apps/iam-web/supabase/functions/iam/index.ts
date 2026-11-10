@@ -14,7 +14,9 @@
 // admin 即角色默认持 '*' 通配。无 JWT → 1010/401；无该权限码 → 1011/403。
 // 菜单 GET 匿名不拒绝：无/无效 JWT 时返回游客可见子集（scopes 含 C）。
 //
-// 语言：前端通过 Accept-Language header 传 locale（zh-CN / en-US），缺省 zh-CN。
+// 语言：前端封装在 x-client-info 头的 lang= 字段（'lang=zh_CN'；网关 CORS
+// 白名单机制见 detectLang 注释），本地/直连兼容 accept-language 头；无信号
+// 缺省 en-US（/zh/i 检测，与既有行为一致）。
 // envelope { code, data, msg } 对齐 portal http.ts 解包；code 0 = 成功。
 // jsr: 导入由 Deno 运行时解析；本地 tsc（校验用）解析不了 jsr 前缀，前置 expect-error。
 // 修改本文件后以 `tsc -p supabase/functions/tsconfig.json` 做类型检查（不含 jsr 模块内部）。
@@ -72,7 +74,23 @@ function msg(lang: string, key: string): string {
   return t[lang]?.[key] ?? t['zh-CN'][key] ?? key;
 }
 
+/**
+ * 语言识别（三级回退）：
+ * 1. x-client-info 头的 lang= 字段（k=v 逗号对，如 'lang=zh_CN'）——**主通道**：
+ *    Supabase 平台网关 CORS 预检白名单固定（accept-language 不在内、项目级
+ *    不可配置），XHR 显式 set 的头会进预检 Request-Headers 被拒（2026-11-10
+ *    线上实测）；x-client-info 在白名单内，前端把语言封装进它传递
+ * 2. accept-language 头（本地 supabase serve / 非浏览器调用兼容）
+ * 3. 无任何信号 → en-US（/zh/i 检测不命中，与既有行为一致）
+ * 取值只做 /zh/i 包含检测（zh_CN / zh-CN / zh 均命中 zh-CN）。
+ */
 function detectLang(req: Request): string {
+  const clientInfo = req.headers.get('x-client-info') ?? '';
+  const langPair = clientInfo
+    .split(',')
+    .map((kv) => kv.trim())
+    .find((kv) => kv.startsWith('lang='));
+  if (langPair) return /zh/i.test(langPair) ? 'zh-CN' : 'en-US';
   const h = req.headers.get('accept-language') ?? '';
   return /zh/i.test(h) ? 'zh-CN' : 'en-US';
 }
