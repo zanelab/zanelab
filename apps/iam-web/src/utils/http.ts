@@ -2,7 +2,7 @@
  * iam-web http 兼容封装（独立运行环境兜底）。
  *
  * 集成态：透传宿主 props.http（RequestClient 只读代理，拦截器含解包/token/notify/401 单飞）。
- * 独立态：用 @zanelab/utils RequestClient + 最小拦截器链自建（Accept-Language +
+ * 独立态：用 @zanelab/utils RequestClient + 最小拦截器链自建（x-client-info lang= +
  * apikey(.env 配置时) + Authorization Bearer + envelope 解包 + 401 单飞刷新重放——
  * 刷新数据源 = Edge Fn 的 POST /auth/refresh（GoTrue 会话轮换），刷新失败才跳登录页）。
  *
@@ -115,9 +115,12 @@ function getLocalHttp(): HostHttpClient {
   });
   client.addRequestInterceptor({
     fulfilled: (config) => {
-      // 语言对齐宿主/独立态偏好（子应用无本地语言真相源）
+      // 语言对齐宿主/独立态偏好（子应用无本地语言真相源）。封装进 x-client-info
+      // （网关白名单内）：Accept-Language 显式 set 会进 CORS 预检 Request-Headers
+      // 被 Supabase 网关拒绝（白名单固定无它，2026-11-10 线上实测）；edge fn
+      // detectLang 解析 lang= 字段，/zh/i 检测两种格式都命中
       const locale = (props.preferences?.locale as string) ?? 'zh-CN';
-      config.headers.set('Accept-Language', locale);
+      config.headers.set('x-client-info', `lang=${locale.replace('-', '_')}`);
       // 独立态直连云 Supabase 时需 publishable key（.env 配了才注入；本地
       // supabase start 无鉴权可不填）。集成态由宿主 dev proxy 注入，不走此分支。
       const apiKey = import.meta.env.VITE_API_KEY as string | undefined;
