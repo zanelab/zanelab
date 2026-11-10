@@ -13,6 +13,7 @@ import {
   setupMicroApps,
   loadPublicMenus,
 } from './micro/register';
+import { systemName } from './locales/i18n';
 // i18n 运行时副作用初始化（React 渲染前；09-09-i18n）
 import './locales/i18n';
 import './index.css';
@@ -56,6 +57,10 @@ async function bootstrap() {
       layout: appConfig.layout.layout,
       // authPageLayout 不再从 config 映射（loginPage 配置已移除）——store 缺省兜底
       ...cfgApp,
+      // 导航栏 Logo 文字（preferences.app.name，store 缺省 '' 不渲染）缺省回落
+      // 系统名（config.js system.name/nameEn 按语言解析）——两链路此前无数据
+      // 通道，部署后 Logo 旁无标题（2026-11-10 线上实测）。显式配置仍最优先。
+      name: (cfgApp.name as string | undefined) ?? systemName(),
     },
     theme: { mode: appConfig.layout.theme, ...cfgTheme },
     // layout.fixedHeader / showBreadcrumb 的落点（此前两字段只进 schema、无消费方，
