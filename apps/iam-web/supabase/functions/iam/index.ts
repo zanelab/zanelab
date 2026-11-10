@@ -79,11 +79,22 @@ function detectLang(req: Request): string {
 
 // ==================== 响应工具 ====================
 
+/**
+ * CORS 头（附加在**函数自己的响应**上）。
+ *
+ * ⚠️ 预检（OPTIONS）不由本函数应答：Supabase 平台网关在 Edge Runtime 前拦截
+ * OPTIONS 并按**网关固定白名单**回 204（authorization / x-client-info /
+ * apikey / content-type / x-retry-count / traceparent / tracestate / baggage，
+ * 项目级不可配置）。本表的 allow-headers 改动**不影响预检**——前端若要发
+ * 白名单外的自定义头，必须换成白名单内的等价头（如 x-lang → Accept-Language，
+ * 2026-11-10 线上踩坑）。本表对正式请求响应的跨源读取授权仍然必要
+ * （ACAO:* 与前端无凭据模式配合）。
+ */
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers':
-    'authorization, x-client-info, apikey, content-type, accept-language',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'authorization, apikey, content-type, accept-language',
+  'Access-Control-Allow-Methods': 'GET, PUT, POST, PATCH, DELETE, OPTIONS',
 };
 
 function json<T>(
@@ -118,6 +129,8 @@ export default {
       req: Request,
       ctx: { supabase: SupabaseClient; supabaseAdmin: SupabaseClient },
     ) => {
+      // 兜底分支：预检正常情况下到不了这里（平台网关先行拦答，见 corsHeaders
+      // 注释）；保留以防网关策略变化时函数仍能自洽应答
       if (req.method === 'OPTIONS') {
         return new Response('ok', { headers: corsHeaders });
       }
