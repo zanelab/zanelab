@@ -1,0 +1,5 @@
+{"file": ".trellis/tasks/11-14-skills-marketplace-refactor/research/reference-skillry-marketplace.md", "reason": "核对结构对齐的唯一基准：差异清单 18 项与结构骨架。检查时逐项对照 AC4 的 ①–⑧，确认卡片无容器、缩略图 16:9 满铺无假浏览器装饰、右上媒体类型圆标、底部压边统计、标题行头像组、复选框方角、侧栏 4 分组、栅格 1440 下 4 列。"}
+{"file": ".trellis/tasks/11-14-listing-area/design.md", "reason": "核对两件事：(1) 实现是否按「转译表」用 daisyUI 语义色而非照抄参考站的 text-black/40、bg-[#f4ff71] 等固定色；(2) 固定色是否只出现在「深色压边 + 白色统计文字」这一处显式豁免内，没有扩散。"}
+{"file": ".trellis/tasks/11-14-listing-area/prd.md", "reason": "AC1–AC10 逐条验收；重点核对 AC5（无固定色/无 dark:，豁免除外）、AC7（筛选与排序行为契约不变）、AC9（空态仍渲染）、AC10（token 块与 portal 逐行无差异）、以及 Out of Scope 三条不要被误实现。"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "评审清单依据：检查新增/修改的类名是否只用 daisyUI 语义色、是否误用了 dark: 前缀或 Tailwind 固定色、primary 是否仍只出现一次（免费徽章）、新增图标是否走了 BUILTIN_ICONS + AppIcon 而非内联 SVG、侧栏是否仍是 daisyUI drawer。"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "按单元测试约定与禁用模式汇总核查测试改写质量：确认改的是选择器与文案断言、而不是把行为契约断言改到通过；并检查是否引入禁用模式。"}

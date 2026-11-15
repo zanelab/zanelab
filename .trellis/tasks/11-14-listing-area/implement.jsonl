@@ -1,0 +1,6 @@
+{"file": ".trellis/tasks/11-14-skills-marketplace-refactor/research/reference-skillry-marketplace.md", "reason": "参考站渲染后 DOM 的完整结构骨架、逐项差异清单与色板备查表；本次改动是「结构对齐参考站、色板换成 daisyUI 语义色」，一切结构细节以本文档为准。含用户指定节点的解析结果（它就是 div.lg:flex）。"}
+{"file": ".trellis/tasks/11-14-listing-area/design.md", "reason": "参考站类名 → daisyUI 语义类名的逐项转译表（这是本次改动最容易做错的地方）、daisyUI 组件选型依据、以及唯一允许出现固定色的显式豁免（深色压边 + 白色统计文字）。"}
+{"file": ".trellis/tasks/11-14-listing-area/prd.md", "reason": "本任务的 R1–R12 需求、AC1–AC10 验收标准与 Out of Scope（尤其是不实现桌面收起侧栏、不实现加载更多、不实现卡片详情路由三条）。"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "强约束来源：颜色只用 daisyUI 语义色且不得用 dark: 或 Tailwind 固定色当文字色（:9）、侧栏必须用 daisyUI drawer 组装（:70-85）、写 JSX 前先加载 daisyui 技能（:5-8）、primary 每页只用一次（:10）、新增图标一律入 BUILTIN_ICONS 经 AppIcon 渲染不留内联 SVG（:11-12）、反面模式（:110-115）。"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "测试策略与代码评审清单、禁用模式汇总；本次要同步更新 marketplace.test.tsx 并保留行为契约断言，需按此规范的单元测试约定（vitest + React Testing Library）与评审清单自查。"}
+{"file": ".trellis/spec/frontend/directory-structure.md", "reason": "样式与主题一节（:117）说明 Tailwind 4 + daisyUI 5 的样式入口与 token 归属约定，用于确认「不改 index.css token 块」这一约束的边界。"}
