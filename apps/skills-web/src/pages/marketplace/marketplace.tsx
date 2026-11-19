@@ -1,36 +1,54 @@
 import { useMemo, useState } from 'react';
 import { AppIcon } from '@zanelab/ui';
 import { SKILLS, type SkillItem, type SkillSort } from './data';
-import { filterSkills, sortSkills, toggleFilter } from './filters';
+import {
+  filterSkills,
+  searchSkills,
+  sortSkills,
+  toggleFilter,
+} from './filters';
 import { FilterSidebar } from './filter-sidebar';
 import { SortTabs } from './sort-tabs';
 import { SkillCard } from './skill-card';
+import { CategoryMenu } from './toolbar/category-menu';
+import { SearchInput } from './toolbar/search-input';
+import { UploadButton } from './toolbar/upload-button';
+import { Permission } from '../../components/permission';
 
 /**
  * Agent Skills 市场页（skills-web 首页，布局对齐参考稿）：
  * 单一 daisyUI drawer 承载筛选侧栏——桌面 lg:drawer-open 常驻（可收起）、小屏经
  * 「筛选」按钮开启 drawer 覆盖层（组件规范 §侧边栏与布局的标准形态）。
- * 结果列：标题 / 副标题 / 排序胶囊 / 卡片网格。
+ *
+ * 标题区两行（R1/R2）：第一行标题块（h1 + 计数徽章 + 副标题）独占；第二行是控件区
+ * ——左栏 筛选 → 搜索 → 分类，右栏 排序胶囊 → 上传 skills。
+ * 分类下拉打开时控件行整体 `relative z-50`（遮罩 z-40 挂在 body，见 category-menu.tsx）：
+ * 遮罩压暗页面其余部分而控件行保持可见可点（AC7），且弹层因此以控件行为定位基准。
+ *
+ * 结果列：筛选（组内 OR、组间 AND）→ 搜索（子串，与筛选 AND）→ 排序，全部是
+ * filters.ts 的纯函数；数据为静态种子（data.ts）。
  * 计数口径统一为**总数**（对齐参考稿「620 个 Skills」）——标题徽章与小屏确认按钮
- * 同显总数；筛选后的结果反馈只由卡片网格承载（已去 chips，无 N/M 计数）。
+ * 同显总数；筛选/搜索后的结果反馈只由卡片网格承载（已去 chips，无 N/M 计数）。
  * 侧栏结构：`drawer-side` 的唯一子元素就是 `FilterSidebar` 的 aside（不再套外层
  * aside，避免重复 landmark / 分层声明宽度导致的横向溢出）。
  * drawer 的 `drawer-open` **只由 `filtersCollapsed` 静态决定**，绝不因小屏开合而追加：
  * 小屏若在打开时也套上 `drawer-open`，daisyUI 会把 `.drawer-side` 从覆盖层
  * （fixed/grid/width:100%）翻成内联列（sticky/block/width:auto），内容被挤窄、
  * 遮罩变透明并产生横向溢出；小屏开合只交给受控的 `drawer-toggle`。
- * 筛选组内 OR、组间 AND；排序纯前端。数据为静态种子（data.ts）。
  */
 export function MarketplacePage() {
   const [active, setActive] = useState<Record<string, string[]>>({});
   const [sort, setSort] = useState<SkillSort>('recommended');
+  const [query, setQuery] = useState('');
   const [drawerOpen, setDrawerOpen] = useState(false);
   // 桌面端收起筛选侧栏。纯页面内 state：不持久化（localStorage / store 都不用）。
   const [filtersCollapsed, setFiltersCollapsed] = useState(false);
+  // 分类下拉的开合归页面持有：控件行的 z 序（见上）依赖它
+  const [categoryOpen, setCategoryOpen] = useState(false);
 
   const visible: SkillItem[] = useMemo(
-    () => sortSkills(filterSkills(SKILLS, active), sort),
-    [active, sort],
+    () => sortSkills(searchSkills(filterSkills(SKILLS, active), query), sort),
+    [active, query, sort],
   );
 
   const activeCount = Object.values(active).reduce((n, v) => n + v.length, 0);
@@ -50,7 +68,8 @@ export function MarketplacePage() {
         />
         <div className="drawer-content min-w-0">
           <main className="px-4 pt-4 pb-16 sm:px-6 lg:px-8">
-            <header className="mb-5 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+            <header className="mb-5">
+              {/* R1：标题块独占一行 */}
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
                   <h1 className="text-base-content text-xl font-semibold tracking-tight sm:text-2xl">
@@ -67,38 +86,59 @@ export function MarketplacePage() {
                 </p>
               </div>
 
-              <div className="flex w-full min-w-0 items-center gap-2 sm:w-auto">
-                {/* 小屏：筛选按钮（打开 drawer 覆盖层）；桌面侧栏常驻，隐藏 */}
-                <button
-                  type="button"
-                  className="btn btn-outline btn-sm gap-1.5 lg:hidden"
-                  onClick={() => setDrawerOpen(true)}
-                >
-                  筛选
-                  {activeCount > 0 ? (
-                    <span className="badge badge-neutral badge-xs">
-                      {activeCount}
-                    </span>
-                  ) : null}
-                </button>
-                {/* 桌面：仅在侧栏收起时出现的「展开筛选」入口（参考稿未留线索，由本项目自定）；
-                    与小屏按钮互斥显示（lg:hidden / max-lg:hidden），不影响 <lg 行为 */}
-                {filtersCollapsed ? (
+              {/* R2：控件区另起一行，左 筛选→搜索→分类 / 右 排序→上传 skills */}
+              <div
+                className={`relative mt-4 flex flex-wrap items-center gap-x-2 gap-y-3 ${
+                  categoryOpen ? 'z-50' : ''
+                }`}
+              >
+                <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+                  {/* 小屏：筛选按钮（打开 drawer 覆盖层）；桌面侧栏常驻，隐藏 */}
                   <button
                     type="button"
-                    aria-label="展开筛选"
-                    className="btn btn-outline btn-sm gap-1.5 max-lg:hidden"
-                    onClick={() => setFiltersCollapsed(false)}
+                    className="btn btn-outline btn-sm gap-1.5 lg:hidden"
+                    onClick={() => setDrawerOpen(true)}
                   >
-                    <AppIcon
-                      name="layout-sidebar-expand"
-                      className="size-3.5"
-                    />
                     筛选
+                    {activeCount > 0 ? (
+                      <span className="badge badge-neutral badge-xs">
+                        {activeCount}
+                      </span>
+                    ) : null}
                   </button>
-                ) : null}
-                <div className="min-w-0 flex-1 sm:flex-none">
-                  <SortTabs value={sort} onChange={setSort} />
+                  {/* 桌面：仅在侧栏收起时出现的「展开筛选」入口（参考稿未留线索，由本项目自定）；
+                      与小屏按钮互斥显示（lg:hidden / max-lg:hidden），不影响 <lg 行为 */}
+                  {filtersCollapsed ? (
+                    <button
+                      type="button"
+                      aria-label="展开筛选"
+                      className="btn btn-outline btn-sm gap-1.5 max-lg:hidden"
+                      onClick={() => setFiltersCollapsed(false)}
+                    >
+                      <AppIcon
+                        name="layout-sidebar-expand"
+                        className="size-3.5"
+                      />
+                      筛选
+                    </button>
+                  ) : null}
+                  <SearchInput value={query} onChange={setQuery} />
+                  <CategoryMenu
+                    open={categoryOpen}
+                    onOpenChange={setCategoryOpen}
+                    active={active}
+                    onToggle={onToggle}
+                  />
+                </div>
+
+                <div className="flex min-w-0 items-center gap-2">
+                  <div className="min-w-0 flex-1 sm:flex-none">
+                    <SortTabs value={sort} onChange={setSort} />
+                  </div>
+                  {/* 上传入口：无权限（宿主注入且不含码）即整块不渲染 */}
+                  <Permission code="skills:skill:create">
+                    <UploadButton />
+                  </Permission>
                 </div>
               </div>
             </header>
@@ -114,7 +154,7 @@ export function MarketplacePage() {
               </div>
             ) : (
               <div className="border-base-300 text-base-content/50 rounded-2xl border border-dashed py-16 text-center text-sm">
-                没有符合筛选条件的 Skills，试试清除部分筛选。
+                没有符合筛选条件的 Skills，试试清除部分筛选或换个搜索关键词。
               </div>
             )}
           </main>

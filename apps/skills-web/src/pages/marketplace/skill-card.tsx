@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { AppIcon } from '@zanelab/ui';
-import type { OutputType, SkillItem } from './data';
+import { AGENT_LABEL, type OutputType, type SkillItem } from './data';
 
 /**
  * 技能卡片（参考稿网格单元）：无卡片容器——`aspect-video` 缩略图自身承载
@@ -26,14 +26,6 @@ const OUTPUT_ICON: Record<OutputType, string> = {
   幻灯片: 'presentation',
   视频: 'video',
   图像: 'photo',
-};
-
-/** 兼容 Agent 缩写 → 全称（title 提示） */
-const AGENT_LABEL: Record<string, string> = {
-  CC: 'Claude Code',
-  CX: 'Codex',
-  AG: 'Antigravity',
-  CU: 'Cursor',
 };
 
 /** 标题行最多展示的头像圆片数，其余折叠为 "+N" */
