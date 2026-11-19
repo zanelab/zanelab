@@ -317,3 +317,39 @@ apikey-interceptor 任务的评审驱动续批：a576eae 按 X_* 评审——请
 ### Status
 
 [OK] **Completed**
+
+
+## Session 13: 市场页工具栏：筛选/搜索/分类 + 上传入口
+<!-- trellis-session: v=2 fp=3882b642419b23eb -->
+
+**Date**: 2026-11-19
+**Task**: 市场页工具栏：筛选/搜索/分类 + 上传入口
+**Branch**: `feat/skills-marketplace-toolbar`
+
+### Summary
+
+把市场页标题行下的控件区重排为左右两栏（左侧 筛选→搜索→分类，右侧 排序→上传），分类下拉对齐 skillry.dev 的两栏 tabbed 弹层（遮罩 + 缩放淡入），上传按钮按 skills:skill:create 显隐。AC1–AC15 全部达成，实测数据落在 verify/acceptance.md。验收中发现并修复「关闭弹层后焦点掉到 body」的缺陷。
+
+### Main Changes
+
+- apps/skills-web/src/{utils/permission.ts,hooks/use-permissions.ts,components/permission.tsx,pages/marketplace/toolbar/*,pages/marketplace/modal/*}
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `6d51be2` | feat(@zanelab/skills-web): 市场页工具栏重排 —— 筛选/搜索/分类 + 上传入口 |
+| `6f145b4` | style: 沉淀弹层焦点归还契约与 qiankun 样式隔离实测结论 |
+| `96f6cd4` | chore(task): 记录 11-16-marketplace-toolbar 规划与验收 |
+
+### Testing
+
+- [OK] pnpm --filter @zanelab/skills-web lint/test/build（83 tests passed）
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- portal-web 那批在途改动（skills 子应用注册、菜单 mock、@source 扫描、dev:skills 脚本）尚未提交，需单独成提交；父任务 11-14-skills-marketplace-refactor 与子任务 11-14-footer-marketing 仍在 planning，待后者完成后归档父任务
