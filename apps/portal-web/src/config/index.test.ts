@@ -60,19 +60,19 @@ describe('loadConfig', () => {
     expect(errorSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('api.apiKey 合法 → 透传（拦截器注入 apikey 头的数据源）', () => {
+  it('api.publishableKey 合法 → 透传（拦截器注入 apikey 头的数据源）', () => {
     window.__APP_CONFIG__ = {
-      api: { apiKey: 'sb_publishable_test' },
+      api: { publishableKey: 'sb_publishable_test' },
     };
     const cfg = loadConfig();
-    expect(cfg.api.apiKey).toBe('sb_publishable_test');
+    expect(cfg.api.publishableKey).toBe('sb_publishable_test');
     expect(errorSpy).not.toHaveBeenCalled();
   });
 
-  it('api.apiKey 缺省 → undefined（不注入、不报错、不回退）', () => {
+  it('api.publishableKey 缺省 → undefined（不注入、不报错、不回退）', () => {
     window.__APP_CONFIG__ = { api: { baseURL: '/gateway' } };
     const cfg = loadConfig();
-    expect(cfg.api.apiKey).toBeUndefined();
+    expect(cfg.api.publishableKey).toBeUndefined();
     expect(cfg.api.baseURL).toBe('/gateway');
     expect(errorSpy).not.toHaveBeenCalled();
   });

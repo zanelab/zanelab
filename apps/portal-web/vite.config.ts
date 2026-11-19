@@ -30,7 +30,7 @@ export default defineConfig(({ command, mode }) => {
         // 由子应用 MSW worker 拦截）或云 Supabase 网关（VITE_PROXY_TARGET）。
         '/iam/functions/v1': {
           target: proxyTarget || 'http://localhost:8081',
-          // apikey 由请求拦截器注入（http.ts，读 config.js 的 api.apiKey）——
+          // apikey 由请求拦截器注入（http.ts，读 config.js 的 api.publishableKey）——
           // proxy 不再注入：生产无 vite proxy，注入点必须在 http 层才覆盖生产
           changeOrigin: true,
           secure: false,
