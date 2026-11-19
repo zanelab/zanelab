@@ -155,6 +155,46 @@ return <div id={containerId} style={{ width: '100%', height: '100%' }} />;
 - 本地页面用 `lazy(() => import('../pages/${componentPath}'))` 包裹 `<Suspense>`，fallback 用 daisyUI `loading`：`<span className="loading loading-spinner loading-lg" />`（§7.1）。
 - 兜底路由由动态路由生成追加：`config.route.forbiddenPath`、404 兜底 `*`，首页 `'/'` 重定向 `config.route.homePath`（§7.1）。
 
+## 弹层：受控开合的四相位与焦点归还（11-16-marketplace-toolbar 实测）
+
+daisyUI `dropdown` / `modal` 用**受控**开合（本项目不用 `<details>`：条目点击后要程序化关闭）。
+弹层本体若带进出场过渡，需四相位状态机，而不是 `open ? <Panel/> : null`：
+
+```
+closed ──open──> entering ──(layout effect 翻转)──> open ──close──> closing ──350ms──> closed
+```
+
+- `entering` / `closing` 相位**保持挂载**（过渡需要），`closed` 才卸载；`closing` 相位挂 `inert`
+  + `pointer-events-none`，防止出场途中被再次点击改写状态。
+- 进场翻转用 `useLayoutEffect` 读一次 `getBoundingClientRect()` 强制浏览器结算 start 态样式，
+  再翻终态类——挂载即终态或同帧改类都**不会**触发 CSS transition。
+- daisyUI 的 `@starting-style`（`scale:.95`）会抢跑一条过渡、把进场起点劫持成 `.95`；
+  用 `transition-none` + `animate-none` 分别堵住 `@starting-style` 与 daisyUI 自带的
+  0.2s `dropdown` keyframe（CSS animation 优先级高于 transition，会劫持 opacity）。
+
+### 焦点归还是硬契约（AC15）
+
+**弹层卸载时若不干预，焦点会掉到 `body`**——键盘用户失去位置锚点，Tab 从页首重新开始。
+所有关闭路径（点条目 / 点遮罩 / Esc / 点外部）都必须把焦点还给**触发器**：
+
+```tsx
+const triggerRef = useRef<HTMLButtonElement>(null);
+
+// 在弹层真正卸载的那一刻归还焦点（此刻面板已从 DOM 移除，
+// 焦点不会被仍挂载的 inert 容器截走）
+useEffect(() => {
+  if (phase !== 'closed') return;
+  triggerRef.current?.focus();
+}, [phase]);
+```
+
+> **Common Mistake**：在 `onOpenChange(false)` 里直接 `focus()`。此时弹层**仍在 DOM**
+> （`closing` 相位），焦点会被仍挂载的面板截走或随后被卸载吞掉——看起来"有时生效"。
+> 必须等到 `phase` 转 `closed`（面板已移除）再归还。
+>
+> **测试要求**：三条关闭路径各断言一次 `expect(trigger).toHaveFocus()`。
+> 只测"弹层消失"测不出焦点丢失——DOM 断言与焦点断言是两回事。
+
 ## 主题
 
 - 主题由 daisyUI 主题系统提供：按项目 CSS（见 [目录结构](./directory-structure.md)）启用的主题，在 `<html data-theme="...">` 上切换；默认随 `config.layout.theme`（如 `dark`/`light`）。
