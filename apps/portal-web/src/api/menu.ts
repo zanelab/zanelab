@@ -160,7 +160,16 @@ function transformMenu(
     !raw.component.startsWith('/') &&
     !/^[A-Z_]+$/.test(raw.component)
   ) {
-    item.component = raw.component;
+    // component 命中已注册子应用注册键（config.microApps，如 iam 后台手工建的
+    // type='menu' component='skills'/'home'）→ 实为子应用入口，按 app 语义处理：
+    // 升 type 为 'app'（menu-views 空壳应用根判定/elementFor 子应用占位消费），
+    // 不写 item.component（避免被当本地页解析 → 「未注册的本地页面组件」警告）。
+    // 2026-11-13：skills 接入实测，iam 菜单管理页不限制 menu 节点填注册键。
+    if (appConfig.microApps[raw.component]) {
+      item.type = 'app';
+    } else {
+      item.component = raw.component;
+    }
   }
 
   // 递归 children：app 节点的 children 用自身 path 作为新前缀

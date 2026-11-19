@@ -87,5 +87,14 @@ window.__APP_CONFIG__ = {
       public: true,
       prefetch: true,
     },
+    'skills': {
+      name: 'skills',
+      entry: '//localhost:8084',
+      container: '#subapp-skills-container',
+      activeRule: '/skills',
+      props: {},
+      public: false,
+      prefetch: true,
+    },
   },
 };
