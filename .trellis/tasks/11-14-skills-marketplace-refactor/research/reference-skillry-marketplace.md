@@ -238,3 +238,85 @@ div.mt-10.flex.min-h-20.items-center.justify-center
 
 第 3 项（徽章配色）与第 9 项（复选框形状）的差异部分是**配色决策**的结果（本任务保留
 daisyUI 语义色），部分是**结构决策**（方形 vs 圆形）。结构部分属于本次要改的范围。
+
+---
+
+## 附：顶部导航「分类」下拉（展开态）
+
+2026-11-16 补采。planning 期抓的那份 DOM 是**折叠态**，弹层条件渲染故不存在
+（`/html/body/div/div[2]` 命中 0）。本节的证据来自一次带点击的采集（同样是 REA
+`capture_browser_scenario`，headless Chromium 157，1440×900，zh-CN，click 定位
+`role=button name=分类`），产物在 `/tmp/skills-cat/`（`dom.html`、`category-open.png`）。
+
+### 结构（折叠态不存在，展开后出现）
+
+```
+body
+├─ skillry-app
+├─ section
+└─ div                              ← Base UI 门户容器（展开后才创建）
+   ├─ div[role=presentation]        ← 全页遮罩
+   │    .fixed.inset-x-0.top-[var(--storefront-header-bottom,4rem)].bottom-0.z-40
+   │    .bg-background/70.backdrop-blur-[3px].saturate-[0.8]
+   │    .transition-opacity.duration-150.data-ending-style:opacity-0…
+   └─ div[role=presentation]        ← 定位器（位置/尺寸走 CSS 变量）
+        .isolate.z-50.h-(--positioner-height).w-(--positioner-width)
+        .max-w-(--available-width).transition-[top,left,right,bottom].duration-[0.35s]
+        .ease-[cubic-bezier(0.22,1,0.36,1)]
+        └─ nav                      ← 弹层本体
+             .rounded-[20px].border.border-black/8.bg-popover
+             .shadow-[0_28px_80px_rgba(18,19,19,0.18)]
+             .transition-[opacity,transform,width,height,scale,translate].duration-[0.35s]
+             .data-starting-style:scale-90.data-starting-style:opacity-0
+             .data-ending-style:scale-90.data-ending-style:opacity-0
+           └─ div.grid.w-[min(688px,calc(100vw-2rem))].grid-cols-[160px_minmax(0,1fr)].gap-2.5.p-2.5
+              ├─ div[role=tablist][aria-label=分类]
+              │    .flex.flex-col.gap-1.rounded-2xl.bg-muted.p-1.5          ← 左栏 160px
+              │    ├─ button[role=tab] 选中态 .bg-card.shadow-[0_1px_0_…#f4ff71 无]
+              │    │     .flex.w-full.items-center.justify-between.gap-2.rounded-xl.px-3.py-2.5
+              │    │     .text-left.text-[13px].font-semibold.tracking-[-0.01em]
+              │    │     id=desktop-category-tab-tasks    :: 按使用场景
+              │    ├─ … roles    :: 按角色
+              │    ├─ … outputs  :: 按输出类型
+              │    └─ … agents   :: 按 Agent
+              └─ section[role=tabpanel]
+                   .flex.min-h-[296px].flex-col.rounded-2xl.border.border-black/[0.045].bg-muted/60.p-3
+                   ├─ div.grid.grid-cols-2.content-start.gap-1.5
+                   │    └─ a[href=/zh/skills/<dim>/<slug>]
+                   │         .group.flex.h-11.items-center.gap-2.rounded-xl
+                   │         .border.border-black/[0.05].bg-card/72.px-2.5.py-1.5
+                   │         .text-[13px].font-medium
+                   │         .hover:border-black/[0.12].hover:bg-card.hover:shadow-[0_4px_14px_…]
+                   │       ├─ img .size-8.shrink-0.rounded-[9px].object-cover.ring-1.ring-black/5
+                   │       │        .transition-transform.group-hover:scale-[1.06]   ← 32px 缩略图
+                   │       └─ span .min-w-0
+                   └─ a（CTA）
+                        .group.mt-auto.inline-flex.min-h-10.w-fit.self-end.rounded-full
+                        .bg-[#f4ff71].px-5.text-xs.font-semibold.text-[#121313]  :: 浏览全部 Skills
+```
+
+### 四个分组的实际条目（参考站）
+
+| 分组 | 条目 |
+|---|---|
+| 按使用场景 | 网站与数字体验 / 产品发布与应用增长 / 品牌建立与视觉规范 / 客户交付与管理层汇报 / 社交内容与营销活动 / 科研出版与技术沟通 / 知识解释与教学 / 内容与编辑发布 |
+| 按角色 | 内容创作者 / 创始人 / 电商卖家 / 设计师 / 顾问 / …（与页内筛选同源） |
+| 按输出类型 | （与页内筛选同源） |
+| 按 Agent | （支持/兼容的 Coding Agent） |
+
+### 「点击效果」的实质
+
+1. 页面整体被遮罩压暗并轻度模糊（`bg-background/70` + `backdrop-blur-[3px]` + `saturate-[0.8]`），
+   遮罩从 header 底边开始、不盖 header。
+2. 弹层从 header 下方以 `scale(0.9) → 1` + 淡入展开，时长 0.35s、
+   缓动 `cubic-bezier(0.22,1,0.36,1)`；关闭反向。
+3. 左栏切换 group 时右栏内容横向滑入滑出（`slide-in-from-left/right-52`）。
+
+### 与本地实现的差异（供新任务参考）
+
+- 参考站的分组条目是**路由链接**（`/zh/skills/use-case/…`）；skills-web 没有这些路由，
+  只能落成"应用对应筛选值"。
+- 参考站每个条目带 **32px 缩略图**；skills-web 无此类静态资源。
+- 参考站有 **按 Agent** 分组；skills-web 的 `agents` 目前只渲染在卡片上，不是筛选组。
+- 参考站的分组集合（使用场景/角色/输出类型/Agent）与页内筛选侧栏的分组**不完全重合**
+  （侧栏另有 推荐/免费/精选）。
