@@ -16,7 +16,7 @@ window.__APP_CONFIG__ = {
     menusEndpoint: '/iam/functions/v1/iam/auth/menus',
     logoutEndpoint: '/iam/functions/v1/iam/auth/logout',
     refreshEndpoint: '/iam/functions/v1/iam/auth/refresh',
-    apiKey: 'sb_publishable_mLaIc7HxpEB3Ky6GMkkZRw_wm3-7uC8',
+    publishableKey: 'sb_publishable_mLaIc7HxpEB3Ky6GMkkZRw_wm3-7uC8',
   },
   route: {
     homePath: '/home',
