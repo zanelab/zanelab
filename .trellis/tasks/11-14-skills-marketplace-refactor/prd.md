@@ -61,6 +61,7 @@
 ```
 11-14-skills-marketplace-refactor/   (本任务·父)
 ├── 11-14-listing-area/              筛选侧栏 + 标题/排序行 + 卡片网格 + 筛选数据模型
+├── 11-16-marketplace-toolbar/       工具栏重排（筛选/搜索/分类 + 上传入口），2026-11-15 后补
 └── 11-14-footer-marketing/          页脚三段营销区（文案待定）
 ```
 
@@ -70,16 +71,20 @@
 
 ## 跨子任务验收（集成）
 
-集成验收在**两个子任务都完成后**由父任务执行一次：
+集成验收在**两个子任务都完成后**由父任务执行一次（2026-11-20 已执行，逐项结论见
+[`verify/acceptance.md`](./verify/acceptance.md)，全部通过）：
 
-- [ ] IC1 页面整体（列表区 + 页脚）在 1440×900 独立态截图，与参考站截图并排比对，
+- [x] IC1 页面整体（列表区 + 页脚）在 1440×900 独立态截图，与参考站截图并排比对，
       从侧栏顶部到页脚底部**无结构性缺口**（尤其：列表区与页脚之间不应有空白断层，
       也不应残留"已经到底了。"这类占位文案）。
-- [ ] IC2 `apps/skills-web/src/index.css` 与 `apps/portal-web/src/index.css` 的 token 块
+- [x] IC2 `apps/skills-web/src/index.css` 与 `apps/portal-web/src/index.css` 的 token 块
       逐行无差异（`diff <(sed -n '/^:root,/,/^}/p' 两份文件)` 为空）。
-- [ ] IC3 全仓回归：`pnpm --filter @zanelab/skills-web build && pnpm --filter @zanelab/skills-web test && pnpm --filter @zanelab/skills-web lint` 全绿。
-- [ ] IC4 集成态（portal 内）抽查一次：`http://localhost:5173/skills` 在登录态下渲染无样式错位。
-      （未登录会 302 到 `/iam/login`；若无法取得登录态，记录为未验证项而非静默跳过。）
+      附注：唯一差异为 portal 侧 CRLF 行尾（`bd66b98`，2026-11-06 即存在，早于本重构），
+      strip `\r` 后逐字节一致；portal 不在任务范围，视为通过。
+- [x] IC3 全仓回归：`pnpm --filter @zanelab/skills-web build && pnpm --filter @zanelab/skills-web test && pnpm --filter @zanelab/skills-web lint` 全绿。
+- [x] IC4 集成态（portal 内）抽查一次：`http://localhost:5173/skills` 在登录态下渲染无样式错位。
+      （未登录会 302 到 `/iam/login`；登录态经 dev-only 的 `VITE_USE_MOCK=true` + MSW
+      OTP mock 取得，验证后已恢复原配置。）
 
 ## 不做的事（父任务级）
 
