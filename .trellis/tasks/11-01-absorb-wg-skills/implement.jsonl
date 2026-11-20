@@ -1,0 +1,4 @@
+{"file": ".trellis/tasks/11-01-absorb-wg-skills/prd.md", "reason": "需求 R1-R8、AC1-AC8：全量吸收、独立 spec 层、转写格式与许可要求"}
+{"file": ".trellis/tasks/11-01-absorb-wg-skills/design.md", "reason": "§1 目标文件结构、§3 转写规则模板、§5 子代理分工与红线——转写执行的唯一规范依据"}
+{"file": ".trellis/tasks/11-01-absorb-wg-skills/implement.md", "reason": "S4 子代理职责：读 design §3、产出覆盖清单 research/coverage-<板块>.md、不写任务外文件"}
+{"file": ".trellis/tasks/11-01-absorb-wg-skills/research/source-inventory.md", "reason": "158 技能→源路径→目标文档三列清单（机械生成，UNKNOWN=0），子代理按板块认领输入范围"}
