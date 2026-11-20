@@ -445,3 +445,28 @@ footer-marketing 检查与收尾：AC1–AC10 全过（tsc/build/lint、测试 8
 ### Status
 
 [OK] **Completed** — 全部活动任务清零
+
+---
+
+## 2026-11-20 · 11-20-skills-web-permission-align
+
+### What happened
+
+skills-web 权限系统对齐 iam-web：删除订阅式权限内核（utils/permission.ts + hooks/use-permissions.ts + main.tsx 接线，约 130 行），Permission 组件改为每次渲染读 getProps().permissions，与 iam-web 逐行同构。决策依据：宿主 bootstrapSession 先 fetchMenus 再 setupMicroApps，mount 时 props.permissions 已是真值，订阅防的竞态不存在。trellis-implement + trellis-check 两轮子代理，tsc/84 测试/build 全绿，AC1-4 达成后提交归档。
+
+### Lessons
+
+- 子应用 getProps 必须抽独立 props.ts，不能从 main.tsx 导出——main.tsx 顶层有独立态 render() 副作用，组件测试 import 链会连带执行入口崩溃（iam-web props.ts 头注释已记载此因，skills 重蹈前已被 prompt 拦截）。已沉淀到 component-guidelines.md。
+- task.py archive 对直提 main 的任务要求 --skip-branch-validation（否则报 branch unchanged 拒绝归档）。
+- commitlint scope-enum 无 spec/refactor 专属值，用 project 通过。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `273618a` | refactor(project): skills-web 权限组件对齐 iam-web（纯 getProps 快照） |
+| (auto) | chore(task): archive 11-20-skills-web-permission-align |
+
+### Status
+
+[OK] **Completed**
