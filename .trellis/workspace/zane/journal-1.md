@@ -398,3 +398,25 @@ footer-marketing 检查与收尾：AC1–AC10 全过（tsc/build/lint、测试 8
 ### Status
 
 [OK] **Completed**
+
+
+## Session 16: 11-06-iam-api-rbac 补做收尾验收并归档
+<!-- trellis-session: v=2 fp=431564e003530630 -->
+
+**Date**: 2026-11-20
+**Task**: 11-06-iam-api-rbac 补做收尾验收并归档
+**Branch**: `feat/skills-marketplace-toolbar`
+
+### Summary
+
+发现 RBAC 实现（S1–S9）已通过 PR #5 合入 main 但任务未收尾。补做验收：iam-web tsc（app+Edge Fn）0 错、测试 51/51、build ✓；portal-web build ✓ 测试 179/179；functions/v1 裸引 grep 仅命中 HTTP 客户端自身测试。代码落地抽查 0002_permission.sql / requirePermission / Permission.tsx 均在位。记录 verify/acceptance.md 后归档任务。至此全部 3 个活动任务清零。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `70ef8db` | chore(task): 11-06-iam-api-rbac 补做收尾验收（验证命令全绿） |
+
+### Status
+
+[OK] **Completed**
