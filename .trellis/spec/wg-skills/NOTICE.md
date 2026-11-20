@@ -20,7 +20,7 @@
 本层内容**并非原样复制**，而是做了如下修改：
 
 1. **合并转写**：158 个独立技能按其技术主题合并为 22 份规范文档（如 Java 的 16 个技能
-   合并为 `backend/java-springboot.md`）。
+   合并为 `backend/java-springboot.md`）。22 份已全部产出（2026-11-20 续做完成 13 份）。
 2. **剥离技能机制**：删除了源 `SKILL.md` 的 YAML frontmatter（`name` / `description` /
    触发词）——那是面向「技能自动触发」的机制，与 Trellis 的 spec 按需读取模型无关。
 3. **剥离人类向内容**：删除 README.md 的安装说明、营销叙述、图片引用、目录导航。

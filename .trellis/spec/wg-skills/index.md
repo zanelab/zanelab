@@ -28,10 +28,10 @@ env 分层、HTTP 封装、i18n 等）以 `../frontend/` 为准，两者冲突�
 
 ---
 
-## 吸收进度（2026-11-20 核对）
+## 吸收进度（2026-11-20 完成）
 
-**已产出 9/22 份内容文档，覆盖 116/158 技能**；13 份待产出（≈42 技能）。
-任务 [11-01-absorb-wg-skills](../../tasks/11-01-absorb-wg-skills/prd.md) 保持 in_progress。
+**22/22 份内容文档全部产出，158/158 技能全覆盖**（另 4 个私有仓库技能未收录，见下文）。
+核对底稿：任务 `research/` 下 5 份 coverage 清单（backend-jp / deploy-workflow / uniapp / vue / completion）。
 
 | 文档 | 技能数 | 状态 |
 |------|-------|------|
@@ -44,22 +44,19 @@ env 分层、HTTP 封装、i18n 等）以 `../frontend/` 为准，两者冲突�
 | deploy/deploy-suite.md | 16 | ✅ 已产出 |
 | workflow/writing-skills.md | 1 | ✅ 已产出 |
 | others/content-writing.md | 6 | ✅ 已产出 |
-| backend/conventions.md | 2 | ⏳ 待产出 |
-| backend/tech-selection.md | 2 | ⏳ 待产出 |
-| backend/crypto.md | 1 | ⏳ 待产出 |
-| backend/backend-analysis.md | 1 | ⏳ 待产出 |
-| backend/database-design.md | 7 | ⏳ 待产出 |
-| backend/go.md | 6 | ⏳ 待产出 |
-| backend/nodejs-rust.md | 2 | ⏳ 待产出 |
-| frontend/shared-request-layer.md | 1 | ⏳ 待产出 |
-| frontend/react.md | 3 | ⏳ 待产出 |
-| frontend/electron.md | 5 | ⏳ 待产出 |
-| frontend/code-quality.md | 3 | ⏳ 待产出 |
-| frontend/assets-and-icons.md | 6 | ⏳ 待产出 |
-| workflow/vibecoding-methodology.md | 4 | ⏳ 待产出 |
-
-> ⚠️ 续做须知：源仓库克隆（`/tmp/wg-skills-inspect` @ `3b93743`）与执行 worktree 均已删除，
-> 续做需重新克隆源仓库并以「来源与许可」一节的 commit 为 diff 基线。
+| backend/conventions.md | 2 | ✅ 已产出 |
+| backend/tech-selection.md | 2 | ✅ 已产出 |
+| backend/crypto.md | 1 | ✅ 已产出 |
+| backend/backend-analysis.md | 1 | ✅ 已产出 |
+| backend/database-design.md | 7 | ✅ 已产出 |
+| backend/go.md | 6 | ✅ 已产出 |
+| backend/nodejs-rust.md | 2 | ✅ 已产出 |
+| frontend/shared-request-layer.md | 1 | ✅ 已产出 |
+| frontend/react.md | 3 | ✅ 已产出 |
+| frontend/electron.md | 5 | ✅ 已产出 |
+| frontend/code-quality.md | 3 | ✅ 已产出 |
+| frontend/assets-and-icons.md | 6 | ✅ 已产出 |
+| workflow/vibecoding-methodology.md | 4 | ✅ 已产出 |
 
 ---
 
@@ -67,23 +64,23 @@ env 分层、HTTP 封装、i18n 等）以 `../frontend/` 为准，两者冲突�
 
 | 你要做的事 | 读这些 |
 |-----------|--------|
-| 判断后端语言/框架/数据库怎么选 | ⏳ [backend/tech-selection.md](./backend/tech-selection.md)（待产出） |
-| 定后端统一返回格式、错误码、JWT、分页 | ⏳ [backend/conventions.md](./backend/conventions.md)（待产出；产出后为**唯一定义处**） |
-| 写接口契约 `api-contract.md` | ⏳ [backend/conventions.md](./backend/conventions.md)（同上，含模板） |
+| 判断后端语言/框架/数据库怎么选 | [backend/tech-selection.md](./backend/tech-selection.md) |
+| 定后端统一返回格式、错误码、JWT、分页 | ✅ [backend/conventions.md](./backend/conventions.md) ← **唯一定义处** |
+| 写接口契约 `api-contract.md` | ✅ [backend/conventions.md](./backend/conventions.md)（含模板） |
 | 搭 Spring Boot / FastAPI 服务 | ✅ [backend/java-springboot.md](./backend/java-springboot.md) / [backend/python-fastapi.md](./backend/python-fastapi.md) |
-| 搭 Go / Node / Rust 服务 | ⏳ `backend/go.md` / `backend/nodejs-rust.md`（待产出） |
-| 设计数据库表、索引；接 MySQL/PG/Mongo/Redis/Kafka/SQLite | ⏳ [backend/database-design.md](./backend/database-design.md)（待产出） |
-| 做密码存储/支付验签/敏感字段加密选型 | ⏳ [backend/crypto.md](./backend/crypto.md)（待产出） |
-| 接手陌生后端项目、盘点接口 | ⏳ [backend/backend-analysis.md](./backend/backend-analysis.md)（待产出） |
-| 搭 React / Next.js / React Native 项目 | ⏳ [frontend/react.md](./frontend/react.md)（待产出） |
+| 搭 Go / Node / Rust 服务 | [backend/go.md](./backend/go.md) / [backend/nodejs-rust.md](./backend/nodejs-rust.md) |
+| 设计数据库表、索引；接 MySQL/PG/Mongo/Redis/Kafka/SQLite | [backend/database-design.md](./backend/database-design.md) |
+| 做密码存储/支付验签/敏感字段加密选型 | [backend/crypto.md](./backend/crypto.md) |
+| 接手陌生后端项目、盘点接口 | [backend/backend-analysis.md](./backend/backend-analysis.md) |
+| 搭 React / Next.js / React Native 项目 | [frontend/react.md](./frontend/react.md) |
 | 搭 Vue 后台 / 组件选型 / 复合场景页 | ✅ [frontend/vue-core.md](./frontend/vue-core.md)、[vue-complex-scenes.md](./frontend/vue-complex-scenes.md)、[vue-theme-style.md](./frontend/vue-theme-style.md) |
 | 搭小程序 / 多端应用（UniApp） | ✅ [frontend/uniapp.md](./frontend/uniapp.md) |
-| 写前端请求层（信封/错误码/Token/SSE/Mock） | ⏳ [frontend/shared-request-layer.md](./frontend/shared-request-layer.md)（待产出） |
-| 搭 Electron 桌面端 / 排查 xterm、原生 ABI 问题 | ⏳ [frontend/electron.md](./frontend/electron.md)（待产出） |
-| 前端代码审查、一致性审计 | ⏳ [frontend/code-quality.md](./frontend/code-quality.md)（待产出） |
-| 处理图标、图片、HTML 模板 | ⏳ [frontend/assets-and-icons.md](./frontend/assets-and-icons.md)（待产出） |
+| 写前端请求层（信封/错误码/Token/SSE/Mock） | [frontend/shared-request-layer.md](./frontend/shared-request-layer.md) |
+| 搭 Electron 桌面端 / 排查 xterm、原生 ABI 问题 | [frontend/electron.md](./frontend/electron.md) |
+| 前端代码审查、一致性审计 | [frontend/code-quality.md](./frontend/code-quality.md) |
+| 处理图标、图片、HTML 模板 | [frontend/assets-and-icons.md](./frontend/assets-and-icons.md) |
 | 部署到服务器（含装数据库/运行时） | ✅ [deploy/deploy-suite.md](./deploy/deploy-suite.md) |
-| 需求访谈、项目路线图、VibeCoding 工作流 | ⏳ [workflow/vibecoding-methodology.md](./workflow/vibecoding-methodology.md)（待产出） |
+| 需求访谈、项目路线图、VibeCoding 工作流 | [workflow/vibecoding-methodology.md](./workflow/vibecoding-methodology.md) |
 | 审计一个 Skill 的安全性、沉淀自己的 Skill | ✅ [workflow/writing-skills.md](./workflow/writing-skills.md) |
 | 写公众号/小红书文案、去 AI 味、生成流程图、剪视频 | ✅ [others/content-writing.md](./others/content-writing.md) |
 
@@ -95,14 +92,12 @@ env 分层、HTTP 封装、i18n 等）以 `../frontend/` 为准，两者冲突�
 wg-skills/
 ├── index.md                     ← 本文件
 ├── NOTICE.md                    ← 来源与 Apache-2.0 许可声明
-├── backend/    ✅ java-springboot · python-fastapi
-│               ⏳ conventions · tech-selection · crypto · backend-analysis
-│                  database-design · go · nodejs-rust
-├── frontend/   ✅ vue-core · vue-complex-scenes · vue-theme-style · uniapp
-│               ⏳ shared-request-layer · react · electron · code-quality
-│                  assets-and-icons
+├── backend/    ✅ conventions · tech-selection · crypto · backend-analysis
+│               database-design · java-springboot · python-fastapi · go · nodejs-rust
+├── frontend/   ✅ shared-request-layer · react · vue-core · vue-complex-scenes
+│               vue-theme-style · uniapp · electron · code-quality · assets-and-icons
 ├── deploy/     ✅ deploy-suite
-├── workflow/   ✅ writing-skills   ⏳ vibecoding-methodology
+├── workflow/   ✅ vibecoding-methodology · writing-skills
 └── others/     ✅ content-writing
 ```
 
@@ -111,29 +106,28 @@ wg-skills/
 ## 158 技能完整映射
 
 > 下方每一行 = 源仓库的一个技能（`SKILL.md`），共 **158** 行，按目标文档分组。
-> 每条格式：`源技能名 → 归入文档`。组标题带 ✅ 表示该文档已产出，⏳ 表示待产出
-> （对照「吸收进度」）。核对方法与更新流程见任务
+> 每条格式：`源技能名 → 归入文档`。全部文档已产出 ✅。核对方法与更新流程见任务
 > `.trellis/tasks/11-01-absorb-wg-skills/`。
 
-### backend/conventions.md （2）⏳ 待产出
+### backend/conventions.md （2）✅
 
 - `backend-convention-skill` → backend/conventions.md
 - `shared/`（6 份跨语言公共规范：响应信封 / 错误码 / JWT / 分页 / api-contract 模板 / 模块输出规范）→ backend/conventions.md
 
-### backend/tech-selection.md （2）⏳ 待产出
+### backend/tech-selection.md （2）✅
 
 - `backend-select-skill` → backend/tech-selection.md
 - `database-learning-skill` → backend/tech-selection.md
 
-### backend/crypto.md （1）⏳ 待产出
+### backend/crypto.md （1）✅
 
 - `crypto-scenario-skill` → backend/crypto.md
 
-### backend/backend-analysis.md （1）⏳ 待产出
+### backend/backend-analysis.md （1）✅
 
 - `backend-analysis-skill` → backend/backend-analysis.md
 
-### backend/database-design.md （7）⏳ 待产出
+### backend/database-design.md （7）✅
 
 - `database-design-skill` → backend/database-design.md
 - `mysql-guide-skill` → backend/database-design.md
@@ -185,7 +179,7 @@ wg-skills/
 - `article-generator` → backend/python-fastapi.md
 - `hot-trend-collector` → backend/python-fastapi.md
 
-### backend/go.md （6）⏳ 待产出
+### backend/go.md （6）✅
 
 - `go-gin-init-skill` → backend/go.md
 - `go-frame-init-skill` → backend/go.md
@@ -194,16 +188,16 @@ wg-skills/
 - `go-auth-module-skill` → backend/go.md
 - `go-storage-module-skill` → backend/go.md
 
-### backend/nodejs-rust.md （2）⏳ 待产出
+### backend/nodejs-rust.md （2）✅
 
 - `nodejs-init-skill` → backend/nodejs-rust.md
 - `rust-backend-skill` → backend/nodejs-rust.md
 
-### frontend/shared-request-layer.md （1）⏳ 待产出
+### frontend/shared-request-layer.md （1）✅
 
 - `frontend-request-skill` → frontend/shared-request-layer.md
 
-### frontend/react.md （3）⏳ 待产出
+### frontend/react.md （3）✅
 
 - `react-generate-skill` → frontend/react.md
 - `next-generate-skill` → frontend/react.md
@@ -278,7 +272,7 @@ wg-skills/
 - `uniapp-ui-replica-skill` → frontend/uniapp.md
 - `uniapp-ui-template-builder-skill` → frontend/uniapp.md
 
-### frontend/electron.md （5）⏳ 待产出
+### frontend/electron.md （5）✅
 
 - `electron-react-skill` → frontend/electron.md
 - `electron-vue-init-skill` → frontend/electron.md
@@ -286,13 +280,13 @@ wg-skills/
 - `xterm-js-rendering-pitfalls` → frontend/electron.md
 - `electron-native-abi-fix` → frontend/electron.md
 
-### frontend/code-quality.md （3）⏳ 待产出
+### frontend/code-quality.md （3）✅
 
 - `frontend-code-doctor` → frontend/code-quality.md
 - `frontend-style-harmonizer-skill` → frontend/code-quality.md
 - `frontend-ui-foundry` → frontend/code-quality.md
 
-### frontend/assets-and-icons.md （6）⏳ 待产出
+### frontend/assets-and-icons.md （6）✅
 
 - `frontend-icon-skill` → frontend/assets-and-icons.md
 - `icon-image-catch-skill`（父技能）→ frontend/assets-and-icons.md
@@ -320,7 +314,7 @@ wg-skills/
 - `nodejs-install-skill` → deploy/deploy-suite.md
 - `python-install-skill` → deploy/deploy-suite.md
 
-### workflow/vibecoding-methodology.md （4）⏳ 待产出
+### workflow/vibecoding-methodology.md （4）✅
 
 - `vibecoding-guide-skill` → workflow/vibecoding-methodology.md
 - `vibecoding-workflow-skill` → workflow/vibecoding-methodology.md
@@ -359,6 +353,6 @@ wg-skills/
 | 源仓库 | https://github.com/jiushiwon/wg-skills |
 | 吸收时 commit | `3b93743e0f87a36b7b3456a609b2b937897b8e7e` |
 | 许可 | **Apache License 2.0**（源仓库 README 自称 MIT，以其 `LICENSE` 文件为准） |
-| 修改说明 | 计划合并转写为 22 份文档（已产出 9 份）；剥离 frontmatter/触发词/README/图片；压缩叙述、保留规则精确值；不收录 scripts 与二进制；新增本索引 |
+| 修改说明 | 合并转写为 22 份文档（全部产出）；剥离 frontmatter/触发词/README/图片；压缩叙述、保留规则精确值；不收录 scripts 与二进制；新增本索引 |
 
 完整声明见 [`NOTICE.md`](./NOTICE.md)。重新吸收或更新时，以本表记录的 commit 为 diff 基线。

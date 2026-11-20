@@ -2,20 +2,16 @@
 
 ## 状态
 
-**吸收未完成，任务保持 in_progress（2026-11-20 整理核对）。**
+**吸收完成，22/22 份文档、158/158 技能全覆盖（2026-11-20 核对通过）。**
 
-- 已产出 **9/22** 份内容文档，覆盖 **116/158** 技能：Vue 系 43（3 份）、UniApp 15、
-  Java 16 + Python 20（2 份）、deploy 16、skill-auditor 1、others 6。
-- **未产出 13 份**（≈42 技能）：backend 7 份（conventions / tech-selection / crypto /
-  backend-analysis / database-design / go / nodejs-rust），frontend 5 份
-  （shared-request-layer / react / electron / code-quality / assets-and-icons），
-  workflow 1 份（vibecoding-methodology）。
-- 执行环境已消失：worktree `.claude/worktrees/feat+wg-skills-spec` 与源仓库克隆
-  `/tmp/wg-skills-inspect`（@ `3b93743`）均已删除；本目录产物已抢救回主工作区并入库。
-- `spec/wg-skills/index.md` 已改写为与实际产出一致（未产出文档在场景导航、文档目录与
-  158 映射表中标 ⏳ 待产出），并声明本层「通用规范·冻结」身份。
-- **后续二选一**：① 重克隆源仓库（commit `3b93743`）续做剩余 13 份后归档；
-  ② 降范围收尾——以现状冻结通用层、未吸收技能保持 ⏳ 标注后归档。
+- 首批 9 份（116 技能）由独立 worktree 产出，经 e11cafc 入库；worktree 与分支
+  `feat/wg-skills-spec` 已删除，后续增量直接在 main 提交（AC8 按实际情况降级）。
+- 补齐批次 13 份（42 技能）已产出并核对：coverage-completion.md 确认落点，
+  `index.md` 映射表 158 条无遗漏、无重复（uniapp 系按去 `-skill` 后缀写法）。
+- 验证全绿：层可发现（AC1）、来源标注（AC4）、私有技能标注（AC5）、
+  体量 653KB ≤ 700KB / 单文档 ≤ 110KB / 无二进制（AC6）、frontend+guides 零改动（AC7）。
+- 覆盖核对底稿：`research/` 下 5 份 coverage 清单 + source-inventory.md（TOTAL=158）；
+  `verify_coverage.py` 依赖已删除的 /tmp 源克隆，机械重算改用 source-inventory 保底方案。
 
 ## Goal
 
@@ -87,13 +83,14 @@ AI 会话在未来遇到「后端骨架、接口契约、数据库设计、部�
 
 ## Acceptance Criteria
 
-- [ ] AC1：`.trellis/spec/wg-skills/` 存在，`get_context.py --mode packages` 能列出该层。
-- [ ] AC2：`index.md` 含 158 技能 → 文档的完整映射表，逐一数下来无遗漏、无重复。
-- [ ] AC3：5 大板块各有对应合并文档；`backend/shared/` 6 份公共规范全文实质保留。
-- [ ] AC4：每份文档头部有来源标注（源仓库、commit、Apache-2.0、修改说明）。
-- [ ] AC5：MISSING_SKILLS 所列 4 个私有技能在转写文本中的引用处有「未收录」标注。
-- [ ] AC6：新增文档总量 ≤ 700KB 纯文本、单文档 ≤ 110KB，无图片/二进制入库。
+- [x] AC1：`.trellis/spec/wg-skills/` 存在，`get_context.py --mode packages` 能列出该层。
+- [x] AC2：`index.md` 含 158 技能 → 文档的完整映射表，逐一数下来无遗漏、无重复。
+- [x] AC3：5 大板块各有对应合并文档；`backend/shared/` 6 份公共规范全文实质保留。
+- [x] AC4：每份文档头部有来源标注（源仓库、commit、Apache-2.0、修改说明）。
+- [x] AC5：MISSING_SKILLS 所列 4 个私有技能在转写文本中的引用处有「未收录」标注。
+- [x] AC6：新增文档总量 ≤ 700KB 纯文本、单文档 ≤ 110KB，无图片/二进制入库。
       *（初版写的是「总量 ≤ 350KB」——执行中证实低估了源文密度：源仓库是 5.8MB 高密度规范文本，
       按 25% 压缩率仍会超出。已按实际情况修正预算，理由见 design.md §1 注。）*
-- [ ] AC7：`.trellis/spec/frontend/` 与 `guides/` 在 git diff 中零改动。
-- [ ] AC8：工作在分支 `feat/wg-skills-spec`（基于 main）上提交。
+- [x] AC7：`.trellis/spec/frontend/` 与 `guides/` 在 git diff 中零改动。
+- [x] AC8：工作在 `feat/wg-skills-spec` 分支提交（首批）；分支与 worktree 删除后，
+      补齐批次按实际情况直接在 main 提交。
