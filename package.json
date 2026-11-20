@@ -11,6 +11,7 @@
     "dev": "pnpm --filter @zanelab/portal-web dev",
     "dev:iam": "pnpm --filter @zanelab/iam-web dev",
     "dev:home": "pnpm --filter @zanelab/home-web dev",
+    "dev:skills": "pnpm --filter @zanelab/skills-web dev",
     "build": "turbo run build",
     "preview": "pnpm --filter @zanelab/portal-web preview",
     "test": "turbo run test",

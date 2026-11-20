@@ -1,0 +1,30 @@
+{
+  "id": "skills-marketplace-refactor",
+  "name": "skills-marketplace-refactor",
+  "title": "skills-web 市场页对照参考站重构",
+  "description": "按 skillry.dev/zh/skills 的 DOM 结构重做 skills-web 市场页的筛选侧栏、内容列与技能卡片：对齐组件形态、间距与栅格，保留现有 daisyUI 配色，缩略图改为满铺 16:9 渐变占位。",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "zane",
+  "assignee": "zane",
+  "createdAt": "2026-11-14",
+  "completedAt": "2026-11-20",
+  "branch": "feat/skills-marketplace-toolbar",
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [
+    "11-14-listing-area",
+    "11-14-footer-marketing",
+    "11-16-marketplace-toolbar"
+  ],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {}
+}

@@ -40,6 +40,48 @@ export const BUILTIN_ICONS: Record<string, IconData> = {
     ],
     fill: 'currentColor',
   },
+  // skills-web 市场页新增（Tabler stroke 字形，2026-11-12）：下载/收藏/预览/媒体类型
+  bookmark: {
+    paths: ['M18 7v14l-6 -4l-6 4v-14a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4'],
+  },
+  download: {
+    paths: [
+      'M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2',
+      'M7 11l5 5l5 -5',
+      'M12 4l0 12',
+    ],
+  },
+  monitor: {
+    paths: [
+      'M3 5a1 1 0 0 1 1 -1h16a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1v-10',
+      'M7 20h10',
+      'M9 16v4',
+      'M15 16v4',
+    ],
+  },
+  presentation: {
+    paths: [
+      'M3 4l18 0',
+      'M4 4v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-10',
+      'M12 16l0 4',
+      'M9 20l6 0',
+      'M8 12l3 -3l2 2l3 -3',
+    ],
+  },
+  photo: {
+    paths: [
+      'M15 8h.01',
+      'M3 6a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v12a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3v-12',
+      'M3 16l5 -5c.928 -.893 2.072 -.893 3 0l5 5',
+      'M14 14l1 -1c.928 -.893 2.072 -.893 3 0l3 3',
+    ],
+  },
+  video: {
+    paths: [
+      'M15 10l4.553 -2.276a1 1 0 0 1 1.447 .894v6.764a1 1 0 0 1 -1.447 .894l-4.553 -2.276v-4',
+      'M3 8a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-8a2 2 0 0 1 -2 -2l0 -8',
+    ],
+  },
   check: { paths: ['M20 6L9 17L4 12'] },
   'chevron-down': { paths: ['M6 9L12 15L18 9'] },
   'chevron-left': { paths: ['m15 18-6-6 6-6'] },
@@ -96,6 +138,12 @@ export const BUILTIN_ICONS: Record<string, IconData> = {
       'M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z',
       'M15 12a3 3 0 1 0-6 0a3 3 0 1 0 6 0',
       'M3 3l18 18',
+    ],
+  },
+  // 市场页卡片「喜欢」按钮（Tabler stroke 字形，2026-11-14）
+  heart: {
+    paths: [
+      'M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572',
     ],
   },
   'home-outline': {

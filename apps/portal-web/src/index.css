@@ -11,6 +11,7 @@
    （shadow-xl/min-h-screen/focus:ring 等）不会生成——daisyUI 5 / Tailwind 4
    按使用裁剪，:root 级主题 token 不受影响，宿主样式零冲突 */
 @source '../../iam-web/src';
+@source '../../skills-web/src';
 
 @plugin 'daisyui' {
   themes: light, dark;

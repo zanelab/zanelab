@@ -180,6 +180,52 @@ qiankun 直接加载 vite dev server entry（useDevMode）时，控制台会出�
 - **注册时机**：`main.tsx` bootstrap 里 `setupHostState()` 后即调 `setupMicroApps()`（幂等，`registered` 短路）——公开子应用提前注册，未登录时 token getter 返回 null，登录后自动取最新值；`restoreSession` 尾部的调用直接短路。
 - **登录闭环**：props 契约新增 `onLoginSuccess({ token, refreshToken, user })`（`register.ts`，复用幂等 `bootstrapSession`：入库 + 拉菜单 + 注册其余子应用，随后 pushState+popstate 跳 `?from=` 或 homePath）。子应用登录页（iam-web `src/pages/LoginPage.tsx`）用 `props.http`（共享 axios 实例，勿自建）调登录接口，成功后调 `onLoginSuccess` 并停止自身跳转。
 
+### `experimentalStyleIsolation` 对 `@layer` 内工具类无效（11-16 实测证伪）
+
+宿主 `register.ts` 开了 `experimentalStyleIsolation`，qiankun 2.10.16 会给子应用 `<style>` 标签的
+选择器加 `div[data-qiankun="<appName>"]` 前缀。据此前缀会得出一个**错误推论**：
+「子应用里 `createPortal` 到 `document.body` 的元素不在 wrapper 内 → 匹配不到工具类 → 丢样式」。
+
+**实测结论：这个推论不成立。** qiankun 的 `ScopedCSS.rewrite()` 只处理三种 rule type：
+
+```js
+switch (rule.type) {
+  case RuleType.STYLE:     css += ruleStyle(rule, prefix); break;   // 加前缀
+  case RuleType.MEDIA:     /* 递归，层内规则仍走 STYLE 分支加前缀 */
+  case RuleType.SUPPORTS:  /* 同上 */
+  default:
+    if (typeof rule.cssText === 'string') css += rule.cssText;        // ← 原样输出，不加前缀
+}
+```
+
+而 Tailwind CSS 4 + daisyUI 5 的产物里，**工具类与组件类全部在 `@layer` 内**
+（`CSSLayerBlockRule`）——`@layer` 块的 type 既不是 STYLE/MEDIA/SUPPORTS，
+走 default 分支**整块原样输出**，其内部的 `.fixed` / `.z-40` / `.bg-base-200/70`
+**不会被加前缀**。同理，token 变量声明在 `:is(:root:has(...), [data-theme="light"])`
+这类全局选择器上，也不加前缀。
+
+| 产物形态 | qiankun 处理 | portal 到 body 的元素 |
+|---|---|---|
+| `@layer utilities { .fixed{...} }` | default 分支原样输出 | ✅ 能命中 |
+| `@layer theme { :root{--color-base-200:...} }` | 原样输出 | ✅ 能拿到变量 |
+| `:root{...}`（裸规则） | STYLE 分支加前缀 | ⚠️ 变量作用域收进 wrapper |
+
+**验算方法**（比搭整套集成态环境快得多）：拿宿主生产产物 CSS，在浏览器里建 `<style>`，
+用 qiankun 的 `rewrite()` 原样跑一遍，检查目标选择器是否被加前缀。
+jsdom 解析不了现代 CSS（`Could not parse CSS stylesheet`），**必须用真实浏览器**。
+
+> **但主题上下文仍会丢**：portal 到 body 的元素不在应用的 `.dark` 子树内。
+> 宿主把 `data-theme` + `.dark` 都加在 `<html>` 上（`theme-provider.tsx`），
+> body 是 html 的子元素 → **能**继承。但若应用自己把 `.dark` 挂在应用根 div 上
+> （而非 `<html>`），portal 到 body 的遮罩就会拿不到深色 token——**实测出现过浅色遮罩压深色页面**。
+> 结论：portal 的遮罩只依赖 `<html>` 上的主题属性，不要把 `.dark` 挂到应用根。
+
+### `createPortal` 到 body 与本仓先例
+
+`iam-web` 的 `OtpVerifyModal.tsx` **刻意不 portal**（注释：「不 createPortal 到 body：渲染在根 div 内」）。
+那是为避免样式隔离下的选择器失配——在 Tailwind v4 的 `@layer` 结构下该担忧不成立，
+但**层结构变化时（换 Tailwind/daisyUI 大版本）这个先例仍值得复查**。
+
 ## 反面模式
 
 - 在组件/路由里写死子应用 `entry`，或把注册信息散落多处。

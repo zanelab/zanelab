@@ -15,6 +15,9 @@
 - `Permission`——`hide` 无权限渲染 fallback、`disabled` 无权限给子元素设 `disabled`（`btn` 元素按 daisyUI 禁用语义）、空 permission 放行。
 - `RouteGuard`——无 token 跳登录、无权限跳 403、放行 children。
 
+> **Warning（测试文件里的 daisyUI 类名会进产物 CSS，11-14 实测）**：Tailwind 4 扫 `@source` 覆盖的全部源码，**包含 `*.test.tsx`**。测试里以**标识符**形式出现的 daisyUI 组件名会被当成类名使用并生成真实组件 CSS——本地变量名 `toggle`、`collapse`，或用例名里写 `drawer-toggle`，都会注入对应组件样式。实测代价：一次改动因此多出 **8.7 kB 死 CSS**（`.toggle`、`.collapse` 等 41 条规则），改名后回到 98.15 kB（改动前 98.10 kB）。
+> 规避：测试里的局部变量/描述文本避免与 daisyUI 组件类名同名（`toggle`/`collapse`/`tab`/`drawer`/`join`/`stack`/`filter`/`indicator` 等）。改完顺带看一眼 `dist/assets/*.css` 的体积变化。
+
 ## 集成测试（MSW，§14）
 
 用 Mock Service Worker 模拟后端，覆盖业务链路：

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import {
   Navigate,
   useLocation,
@@ -10,7 +10,8 @@ import { useTranslation } from 'react-i18next';
 import { BasicLayout } from '@/components/layouts/basic/layout';
 import { REFERENCE_VALUE } from '@/components/layouts/basic/header/header';
 import { UserDropdown } from '@/components/layouts/widgets/user-dropdown/user-dropdown';
-import { ChangePasswordModal } from '@/components/layouts/widgets/user-dropdown/change-password-modal';
+// 修改密码弹窗已下线：项目不再提供「修改密码」入口（登录与账号管理在 iam 子应用）。
+// 组件文件 change-password-modal.tsx 暂留，需要时按 iam 的账号流程重新接入。
 import { Notification } from '@/components/layouts/widgets/notification/notification';
 import { RouteGuard } from '@/components/RouteGuard';
 import { useLayoutStore } from '@/stores/layout-store';
@@ -65,8 +66,8 @@ function LayoutShell() {
   const user = useAuthStore((state) => state.user);
   const token = useAuthStore((state) => state.token);
 
-  // 修改密码弹窗开关（入口在用户下拉菜单，见 accountMenus）
-  const [changePasswordOpen, setChangePasswordOpen] = useState(false);
+  // 修改密码弹窗已下线（见文件顶部说明）：原为用户下拉菜单的入口开关，
+  // 当前项目不提供「修改密码」功能，账号相关流程在 iam 子应用。
 
   // 从缓存兜底读取用户名（刷新瞬间 restoreSession 还没写 store 时 user 为 null）
   const displayName =
@@ -174,10 +175,7 @@ function LayoutShell() {
                     navigate('/lock');
                   }}
                 />
-                <ChangePasswordModal
-                  open={changePasswordOpen}
-                  onOpenChange={setChangePasswordOpen}
-                />
+                {/* 修改密码弹窗已下线，见文件顶部说明 */}
               </>
             ) : (
               // 未登录：头像位显示登录按钮，点击跳登录页（带 from 回跳）

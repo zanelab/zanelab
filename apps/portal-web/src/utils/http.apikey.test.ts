@@ -6,7 +6,7 @@ import httpService from './http';
 import { appConfig } from '../config';
 
 /*
- * apikey 注入（任务 11-05）：请求拦截器读 config.js 的 api.apiKey，
+ * apikey 注入（任务 11-05）：请求拦截器读 config.js 的 api.publishableKey，
  * 非空才注入 apikey 头（生产链路的唯一注入点——vite proxy 不再注入）。
  * appConfig 是模块级单例 → 用 vi.spyOn 改读值模拟「config.js 配了/没配」。
  */
@@ -18,9 +18,9 @@ afterEach(() => {
 });
 
 describe('请求拦截器 × apikey 注入', () => {
-  it('api.apiKey 非空 → 请求头携带 apikey', async () => {
+  it('api.publishableKey 非空 → 请求头携带 apikey', async () => {
     const spy = vi
-      .spyOn(appConfig.api, 'apiKey', 'get')
+      .spyOn(appConfig.api, 'publishableKey', 'get')
       .mockReturnValue('test-key-123');
     let seen: string | null = null;
     server.use(
@@ -34,9 +34,9 @@ describe('请求拦截器 × apikey 注入', () => {
     spy.mockRestore();
   });
 
-  it('api.apiKey 空 → 不注入（头缺失）', async () => {
+  it('api.publishableKey 空 → 不注入（头缺失）', async () => {
     const spy = vi
-      .spyOn(appConfig.api, 'apiKey', 'get')
+      .spyOn(appConfig.api, 'publishableKey', 'get')
       .mockReturnValue(undefined);
     let seen: string | null = 'sentinel';
     server.use(

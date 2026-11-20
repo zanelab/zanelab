@@ -317,3 +317,106 @@ apikey-interceptor 任务的评审驱动续批：a576eae 按 X_* 评审——请
 ### Status
 
 [OK] **Completed**
+
+
+## Session 13: 市场页工具栏：筛选/搜索/分类 + 上传入口
+<!-- trellis-session: v=2 fp=3882b642419b23eb -->
+
+**Date**: 2026-11-19
+**Task**: 市场页工具栏：筛选/搜索/分类 + 上传入口
+**Branch**: `feat/skills-marketplace-toolbar`
+
+### Summary
+
+把市场页标题行下的控件区重排为左右两栏（左侧 筛选→搜索→分类，右侧 排序→上传），分类下拉对齐 skillry.dev 的两栏 tabbed 弹层（遮罩 + 缩放淡入），上传按钮按 skills:skill:create 显隐。AC1–AC15 全部达成，实测数据落在 verify/acceptance.md。验收中发现并修复「关闭弹层后焦点掉到 body」的缺陷。
+
+### Main Changes
+
+- apps/skills-web/src/{utils/permission.ts,hooks/use-permissions.ts,components/permission.tsx,pages/marketplace/toolbar/*,pages/marketplace/modal/*}
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `6d51be2` | feat(@zanelab/skills-web): 市场页工具栏重排 —— 筛选/搜索/分类 + 上传入口 |
+| `6f145b4` | style: 沉淀弹层焦点归还契约与 qiankun 样式隔离实测结论 |
+| `96f6cd4` | chore(task): 记录 11-16-marketplace-toolbar 规划与验收 |
+
+### Testing
+
+- [OK] pnpm --filter @zanelab/skills-web lint/test/build（83 tests passed）
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- portal-web 那批在途改动（skills 子应用注册、菜单 mock、@source 扫描、dev:skills 脚本）尚未提交，需单独成提交；父任务 11-14-skills-marketplace-refactor 与子任务 11-14-footer-marketing 仍在 planning，待后者完成后归档父任务
+
+
+## Session 14: 11-14-footer-marketing 检查与收尾
+<!-- trellis-session: v=2 fp=9cb975021e053236 -->
+
+**Date**: 2026-11-20
+**Task**: 11-14-footer-marketing 检查与收尾
+**Branch**: `feat/skills-marketplace-toolbar`
+
+### Summary
+
+footer-marketing 检查与收尾：AC1–AC10 全过（tsc/build/lint、测试 87/87、深浅两态截图、页脚纯展示无 a/button/tabindex、FAQ 可开合、无横向溢出）；浏览器实测确认 scrollWidth === clientWidth。提交 39ae48e（footer 三段纯展示区）+ 35b330d（任务文档）。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `39ae48e` | feat(@zanelab/skills-web): 市场页页脚营销区 —— 三段纯展示区 |
+| `35b330d` | chore(task): 记录 11-14-footer-marketing 规划与验收 |
+
+### Status
+
+[OK] **Completed**
+
+
+## Session 15: 11-14-skills-marketplace-refactor 集成验收与归档
+<!-- trellis-session: v=2 fp=11f3004d046fb083 -->
+
+**Date**: 2026-11-20
+**Task**: 11-14-skills-marketplace-refactor 集成验收与归档
+**Branch**: `feat/skills-marketplace-toolbar`
+
+### Summary
+
+父任务集成验收 IC1–IC4 全过：IC1 整页结构无断层（网格与页脚间距恰为 mt-16，无占位残留）；IC2 token 块 strip CR 后逐字节一致（portal 侧 CRLF 为 bd66b98 历史遗留）；IC3 build/test 87 全绿/lint 过；IC4 集成态 5173 登录态（dev-only VITE_USE_MOCK + MSW OTP mock 取得，验证后恢复原配置）下 /skills 完整渲染无样式错位。新增 verify/acceptance.md，prd.md 勾选 IC1–IC4 并修正任务图（补 11-16-marketplace-toolbar）。父任务已归档。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `a0676e7` | chore(task): 11-14-skills-marketplace-refactor 集成验收（IC1–IC4 全过） |
+
+### Status
+
+[OK] **Completed**
+
+
+## Session 16: 11-06-iam-api-rbac 补做收尾验收并归档
+<!-- trellis-session: v=2 fp=431564e003530630 -->
+
+**Date**: 2026-11-20
+**Task**: 11-06-iam-api-rbac 补做收尾验收并归档
+**Branch**: `feat/skills-marketplace-toolbar`
+
+### Summary
+
+发现 RBAC 实现（S1–S9）已通过 PR #5 合入 main 但任务未收尾。补做验收：iam-web tsc（app+Edge Fn）0 错、测试 51/51、build ✓；portal-web build ✓ 测试 179/179；functions/v1 裸引 grep 仅命中 HTTP 客户端自身测试。代码落地抽查 0002_permission.sql / requirePermission / Permission.tsx 均在位。记录 verify/acceptance.md 后归档任务。至此全部 3 个活动任务清零。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `70ef8db` | chore(task): 11-06-iam-api-rbac 补做收尾验收（验证命令全绿） |
+
+### Status
+
+[OK] **Completed**

@@ -1,0 +1,5 @@
+{"file": ".trellis/tasks/11-14-footer-marketing/prd.md", "reason": "AC1–AC10 逐条验收；重点：AC5（页脚无 a/button/tabindex，纯展示）、AC6（无固定色/dark:/primary、token 无差异）、AC7（数字从 data.ts 派生、无 Skillry 品牌残留）、AC8（FAQ 可开合）、AC9（既有测试一条不改）、AC10（无断层、无横向溢出）。"}
+{"file": ".trellis/tasks/11-14-footer-marketing/design.md", "reason": "核对实现是否按转译表用语义色而非照抄 text-black/60、bg-white/75 等固定色；分类入口/大卡条目是否为 div 而非 a、无箭头无 hover 位移；FAQ 是否用 daisyUI collapse 而非手写 details 类；文案是否与改写对照表一致。"}
+{"file": ".trellis/tasks/11-14-skills-marketplace-refactor/research/reference-skillry-marketplace.md", "reason": "结构基准：页脚三段的骨架（容器 max-w-[1120px] gap-16、特性卡 lg:4 列 aspect-[4/3]、入口 lg:4 列、大卡 lg:2 列、FAQ 5 条）；栅格列数与段间距按此核对。"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "评审清单：语义色/dark:/固定色、primary 名额（免费徽章仍占）、AppIcon 渲染、无内联 SVG、可见描边对比。"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "检查测试新增用例文本是否避开了 daisyUI 类名词；dist CSS 体积无异常上涨（对比改动前）。"}

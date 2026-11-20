@@ -16,6 +16,7 @@
 - 全部函数组件 + Hooks；不用 class 组件。
 - 给用户的提示用 daisyUI `alert`，错误类提示置于 `.toast` 定位（见 [HTTP 与数据请求](./http-api-guidelines.md) 的 notify 约定）。
 - 组件需要配置值时通过 `useConfig()`（见 [Hook 规范](./hook-guidelines.md)），不要直接读 `window.__APP_CONFIG__`。
+- **分隔线/描边色必须与其所在底色有可见对比**：同底同色的描边等于不存在。把某个容器的底色换成另一个 `base-*` 后，**要回头检查它内部所有 `border-*`**——11-14 实测踩过：侧栏底色由 `base-100` 改为 `base-200` 后，分组分隔线的 `border-base-200` 与底色同色而整体消失（`base-200` 底上用 `base-300`）。
 
 ## 本项目 antd → daisyUI 速查
 
@@ -84,6 +85,61 @@ interface PermissionProps {
 
 `SidebarMenu` 由 store 的 `state.menu.menus` 递归渲染 `menu`：有 `children` 的项用 `<details>` 做可折叠子菜单，叶子项用 `<li><a>`（onClick 里 `preventDefault()` + `useNavigate()(path)`），当前路径加 `menu-active`。按 daisyui `menu` 指南取类名与结构。
 
+### `drawer-side` 的四条硬约束（11-14-listing-area 实测）
+
+daisyUI 的 `drawer-side` 在两种模式下的布局契约（查编译后 CSS 得到，非推测）：
+
+| 模式 | 规则 | 含义 |
+|---|---|---|
+| 小屏（默认） | `.drawer-side{position:fixed;width:100%;display:grid;grid-template-columns:1fr}`；子元素 `translate:-100%` | 面板是覆盖层，**宽度由子元素自身决定** |
+| `lg:drawer-open` | `.drawer-open>.drawer-toggle~.drawer-side{width:auto;display:block;position:sticky}` | 变成 sticky 块，**列宽同样由子元素自身决定** |
+
+**1）宽度只写一层，不要在 `drawer-side` 里再套一层 `aside`。** `drawer-side` 不承担撑宽职责。套两层会同时产生两个 `aside` landmark，并把宽度/内边距/背景/描边/sticky 声明两遍——外层 `lg:w-60`(240px) 扣掉自身 `px-4`(32px) 后可用宽 208px，内层再声明 `lg:w-60`(240px)，子元素比容器宽 32px，**表现为页面横向滚动条**。注意 `min-w-0` 解决不了这个问题：它管的是 flex/grid 子项的收缩，管不了「显式宽度 > 容器可用宽度」。
+
+```tsx
+// 坏：drawer-side 里再套一层 aside，宽度声明两遍
+<div className="drawer-side">
+  <label className="drawer-overlay" />
+  <aside className="w-72 px-4 lg:w-60">      {/* ← 多余 */}
+    <FilterSidebar />                        {/* 内部根节点又是 <aside> */}
+  </aside>
+</div>
+
+// 好：drawer-side 直接子元素就是唯一的 aside
+<div className="drawer-side">
+  <label htmlFor="filter-drawer" aria-label="关闭筛选" className="drawer-overlay" />
+  <FilterSidebar />
+</div>
+```
+
+**2）`drawer-open` ≠ `lg:drawer-open`，不要按状态给容器追加裸 `drawer-open`。** 前者是**强制开启**，会命中 `.drawer-open>.drawer-toggle~.drawer-side`，把 `.drawer-side` 从覆盖层翻成**内联列**；后者是**响应式常驻**。小屏开合只能交给受控的 `drawer-toggle` 复选框（`checked` + `onChange`），daisyUI 的 `.drawer-toggle:checked~.drawer-side` 本就负责显出覆盖层。
+
+```tsx
+// 坏：小屏开抽屉时内容被挤成窄列、遮罩变全透明、320/375 宽下横向溢出
+<div className={`drawer lg:drawer-open ${open ? 'drawer-open' : ''}`}>
+
+// 好：容器只保留静态的响应式常驻类
+<div className="drawer lg:drawer-open">
+```
+
+**3）桌面收起 = 摘掉容器的 `lg:drawer-open`。** 此时 `.drawer-side` 回到覆盖层模式（`position:fixed`，不占布局宽度），复选框未被勾选故 daisyUI 保持其 `visibility:hidden; opacity:0`，侧栏不可见且不占宽；展开即恢复该类名。比「条件渲染 `SidebarMenu`」好——只切一个类名，小屏路径零影响。
+
+```tsx
+<div className={`drawer ${collapsed ? '' : 'lg:drawer-open'}`}>
+```
+
+**4）内容区带 z-index 的浮层必须被自己的层叠上下文收束（`isolate`）。** daisyUI 的 `.drawer` 是 `position:relative` + `z-index:auto`，**不建立层叠上下文**；`.drawer-side` 只有 `z-index:10`。因此卡片等组件内部的 `z-15/z-20/z-30` 若其所在元素未建立层叠上下文（`relative` 但无 `z-index`、且无 `transform`/`isolation`），就会逃逸到根层叠上下文，**盖到小屏抽屉之上**——表现为筛选面板上浮出卡片徽章与统计数字。
+
+```tsx
+// 好：卡片自持层叠上下文，内部浮层的 z 值不再参与页面级竞争
+<article className="group relative isolate flex flex-col …">
+  <span className="… z-20">免费</span>
+</article>
+```
+
+> 这三条的验证都不能靠读计算样式（`position`/`display`/`opacity` 都会是对的）。第 1 条读 `scrollWidth` vs `clientWidth`；第 4 条用 `document.elementFromPoint()` 在面板范围内打点，确认命中的都是面板自身元素而非卡片浮层。
+
+
 ## 子应用挂载容器
 
 菜单项 `appName` 非 `portal`（也不为空）时渲染**纯容器 `div`**，由 qiankun 挂子应用（§4.5）；本地代码不要 import 子应用：
@@ -99,6 +155,46 @@ return <div id={containerId} style={{ width: '100%', height: '100%' }} />;
 - 本地页面用 `lazy(() => import('../pages/${componentPath}'))` 包裹 `<Suspense>`，fallback 用 daisyUI `loading`：`<span className="loading loading-spinner loading-lg" />`（§7.1）。
 - 兜底路由由动态路由生成追加：`config.route.forbiddenPath`、404 兜底 `*`，首页 `'/'` 重定向 `config.route.homePath`（§7.1）。
 
+## 弹层：受控开合的四相位与焦点归还（11-16-marketplace-toolbar 实测）
+
+daisyUI `dropdown` / `modal` 用**受控**开合（本项目不用 `<details>`：条目点击后要程序化关闭）。
+弹层本体若带进出场过渡，需四相位状态机，而不是 `open ? <Panel/> : null`：
+
+```
+closed ──open──> entering ──(layout effect 翻转)──> open ──close──> closing ──350ms──> closed
+```
+
+- `entering` / `closing` 相位**保持挂载**（过渡需要），`closed` 才卸载；`closing` 相位挂 `inert`
+  + `pointer-events-none`，防止出场途中被再次点击改写状态。
+- 进场翻转用 `useLayoutEffect` 读一次 `getBoundingClientRect()` 强制浏览器结算 start 态样式，
+  再翻终态类——挂载即终态或同帧改类都**不会**触发 CSS transition。
+- daisyUI 的 `@starting-style`（`scale:.95`）会抢跑一条过渡、把进场起点劫持成 `.95`；
+  用 `transition-none` + `animate-none` 分别堵住 `@starting-style` 与 daisyUI 自带的
+  0.2s `dropdown` keyframe（CSS animation 优先级高于 transition，会劫持 opacity）。
+
+### 焦点归还是硬契约（AC15）
+
+**弹层卸载时若不干预，焦点会掉到 `body`**——键盘用户失去位置锚点，Tab 从页首重新开始。
+所有关闭路径（点条目 / 点遮罩 / Esc / 点外部）都必须把焦点还给**触发器**：
+
+```tsx
+const triggerRef = useRef<HTMLButtonElement>(null);
+
+// 在弹层真正卸载的那一刻归还焦点（此刻面板已从 DOM 移除，
+// 焦点不会被仍挂载的 inert 容器截走）
+useEffect(() => {
+  if (phase !== 'closed') return;
+  triggerRef.current?.focus();
+}, [phase]);
+```
+
+> **Common Mistake**：在 `onOpenChange(false)` 里直接 `focus()`。此时弹层**仍在 DOM**
+> （`closing` 相位），焦点会被仍挂载的面板截走或随后被卸载吞掉——看起来"有时生效"。
+> 必须等到 `phase` 转 `closed`（面板已移除）再归还。
+>
+> **测试要求**：三条关闭路径各断言一次 `expect(trigger).toHaveFocus()`。
+> 只测"弹层消失"测不出焦点丢失——DOM 断言与焦点断言是两回事。
+
 ## 主题
 
 - 主题由 daisyUI 主题系统提供：按项目 CSS（见 [目录结构](./directory-structure.md)）启用的主题，在 `<html data-theme="...">` 上切换；默认随 `config.layout.theme`（如 `dark`/`light`）。
@@ -106,6 +202,13 @@ return <div id={containerId} style={{ width: '100%', height: '100%' }} />;
 
 > **Warning（嵌套 `.dark` 遮蔽运行时选色，09-08 修复）**：`usePreferencesRuntime` 把运行时可配置的变量（`--primary` + ramp、`--success/--warning/--destructive`、`--radius`、`--font-size-base`）内联写在 `<html>` 上；这些变量的默认值只定义在**根锚点**（light 块的 `:root` 与 `index.css` 的 `:root.dark` 块），**不能**放进 `.dark` 块——认证页（`authentication.tsx`）和半暗侧栏（`sidebar.tsx`）会在子树挂嵌套 `.dark` 类，CSS 自定义属性取最近祖先声明，嵌套块会用静态默认值遮蔽 `<html>` 上的内联值，表现为「亮色跟色、暗色无效」。给嵌套 `.dark` 区域新增 token 时，运行时管理的动态变量一律走 `:root(.dark)`。
 > 另注：daisyUI 组件圆角不消费 `--radius`（那是 Tailwind `rounded-*` 的源），而是 `--radius-field/-selector/-box`——`usePreferencesRuntime` 已做同步映射（field = radius/2，其余 = radius），改圆角逻辑时两边都要动。
+
+> **Warning（小尺寸控件被 `--radius-selector` 放大成近圆，11-14 实测）**：`--radius-selector` 被映射为 `--radius`（0.5rem = 8px），而它管的是 **checkbox / toggle / badge** 的圆角。8px 作用在 `checkbox-xs` 这类小尺寸上，渲染结果**近似圆形**——容易被误判成"daisyUI 的 checkbox 天生是圆的"。
+> 要方角不要手写方块 + 视觉隐藏 input（daisyUI 已有 `checkbox`，规范要求能不用自定义 CSS 就不用），加 Tailwind 工具类覆盖即可：`checkbox checkbox-xs rounded-[5px]`。**无需 `!`**：`.checkbox` 的 `border-radius:var(--radius-selector)` 在 `@layer utilities/daisyui.*`，而 `rounded-[5px]` 在 `@layer utilities` 的隐式末位子层，层序已压过。
+
+> **Warning（深色验证必须同时给 `data-theme` 和 `.dark` 类，11-14 实测）**：宿主 `theme-provider.tsx` 同时做 `setAttribute('data-theme', resolved)` **和** `classList.add(resolved)`。**只给 `data-theme="dark"` 会得到错误的解析值**——产物 CSS 里 `:root,.light,…`（浅色，含 `--color-base-300: #e8eaed`）与 `[data-theme=dark]`（daisyUI 深色）**同特异性**，但 `:root` 那条位置靠后因而胜出；而 `.dark,…` 块在更后面，同时加类时才由它给出深色值 `#44474b`。
+> 后果：用 `data-theme=dark` 单开验证，会看到**深色主题下侧栏分隔线是浅色的**（对比度 13.9:1 的亮线），据此得出"深色对比度有缺陷"的结论——实测证明那是**假象**（真实深色态下为 `rgb(68,71,75)`，与底色对比度 1.076 的细线）。
+> 验证深色时同时设二者，并把 `colorScheme` 一起设上。
 
 ## 反面模式
 

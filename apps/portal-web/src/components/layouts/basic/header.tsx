@@ -41,7 +41,7 @@ export function LayoutHeaderCore({
 
   return (
     <header
-      className={`${theme} border-border bg-header top-0 flex w-full flex-[0_0_auto] items-center border-b pl-2 transition-[margin-top] duration-200`}
+      className={`${theme} border-border bg-header/20 top-0 flex w-full flex-[0_0_auto] items-center border-b pl-2 backdrop-blur-[10px] transition-[margin-top] duration-200`}
       style={style}
     >
       {slotLogo ? <div style={logoStyle}>{slotLogo}</div> : null}
