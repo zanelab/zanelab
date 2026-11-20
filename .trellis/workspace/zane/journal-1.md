@@ -376,3 +376,25 @@ footer-marketing 检查与收尾：AC1–AC10 全过（tsc/build/lint、测试 8
 ### Status
 
 [OK] **Completed**
+
+
+## Session 15: 11-14-skills-marketplace-refactor 集成验收与归档
+<!-- trellis-session: v=2 fp=11f3004d046fb083 -->
+
+**Date**: 2026-11-20
+**Task**: 11-14-skills-marketplace-refactor 集成验收与归档
+**Branch**: `feat/skills-marketplace-toolbar`
+
+### Summary
+
+父任务集成验收 IC1–IC4 全过：IC1 整页结构无断层（网格与页脚间距恰为 mt-16，无占位残留）；IC2 token 块 strip CR 后逐字节一致（portal 侧 CRLF 为 bd66b98 历史遗留）；IC3 build/test 87 全绿/lint 过；IC4 集成态 5173 登录态（dev-only VITE_USE_MOCK + MSW OTP mock 取得，验证后恢复原配置）下 /skills 完整渲染无样式错位。新增 verify/acceptance.md，prd.md 勾选 IC1–IC4 并修正任务图（补 11-16-marketplace-toolbar）。父任务已归档。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `a0676e7` | chore(task): 11-14-skills-marketplace-refactor 集成验收（IC1–IC4 全过） |
+
+### Status
+
+[OK] **Completed**
