@@ -420,3 +420,28 @@ footer-marketing 检查与收尾：AC1–AC10 全过（tsc/build/lint、测试 8
 ### Status
 
 [OK] **Completed**
+
+---
+
+## 2026-11-20 · 11-01-absorb-wg-skills 收尾
+
+### What happened
+
+续做 wg-skills 吸收任务：上一会话已补齐 13 份缺口文档（42 技能）但未核对未提交。本会话跑完 S5–S9：验证 8 项 AC 全绿（层可发现 / 158 映射无遗漏无重复 / shared 6 份实质保留 / 来源标注 / 私有技能标注 / 体量 653KB≤700KB / frontend+guides 零改动），PRD 状态改为完成，单 commit 入库后归档任务。
+
+### Lessons
+
+- commitlint scope-enum 不含 `spec`，spec 层提交用 `project` scope。
+- `verify_coverage.py` 依赖 /tmp 源克隆做机械重算，克隆删除后改用 source-inventory.md（TOTAL=158）保底交叉核对；coverage 清单中 uniapp 系用去 `-skill` 后缀名，按 basename 匹配才不误报。
+- worktree/分支删除后 task archive 会告警 recorded branch 不存在——首批已直入 main 时无碍。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `9983337` | docs(project): 补齐 wg-skills 吸收层剩余 13 份文档（42 技能，158/158 全覆盖） |
+| (auto) | chore(task): archive 11-01-absorb-wg-skills |
+
+### Status
+
+[OK] **Completed** — 全部活动任务清零
