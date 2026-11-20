@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 13
-- **Last Active**: 2026-11-19
+- **Total Sessions**: 14
+- **Last Active**: 2026-11-20
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~355 | Active |
+| `journal-1.md` | ~378 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 14 | 2026-11-20 | 11-14-footer-marketing 检查与收尾 | `39ae48e`, `35b330d` | `feat/skills-marketplace-toolbar` |
 | 13 | 2026-11-19 | 市场页工具栏：筛选/搜索/分类 + 上传入口 | `6d51be2`, `6f145b4`, `96f6cd4` | `feat/skills-marketplace-toolbar` |
 | 12 | 2026-11-09 | GitHub Pages 发布流程：tag 触发构建 + 目录布局 + Supabase 直连（PR #6） | `5107e5b`, `d52312b`, `4710d20` | `feat/github-pages-release` |
 | 11 | 2026-11-08 | AppIcon 下沉收尾：BUILTIN_ICONS 精简 + 图标键对齐 + PR #5 | `d8a6e34`, `ed4f516`, `8af8318`, `908d5ec` | `feat/iam-api-rbac` |

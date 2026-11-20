@@ -353,3 +353,26 @@ apikey-interceptor 任务的评审驱动续批：a576eae 按 X_* 评审——请
 ### Next Steps
 
 - portal-web 那批在途改动（skills 子应用注册、菜单 mock、@source 扫描、dev:skills 脚本）尚未提交，需单独成提交；父任务 11-14-skills-marketplace-refactor 与子任务 11-14-footer-marketing 仍在 planning，待后者完成后归档父任务
+
+
+## Session 14: 11-14-footer-marketing 检查与收尾
+<!-- trellis-session: v=2 fp=9cb975021e053236 -->
+
+**Date**: 2026-11-20
+**Task**: 11-14-footer-marketing 检查与收尾
+**Branch**: `feat/skills-marketplace-toolbar`
+
+### Summary
+
+footer-marketing 检查与收尾：AC1–AC10 全过（tsc/build/lint、测试 87/87、深浅两态截图、页脚纯展示无 a/button/tabindex、FAQ 可开合、无横向溢出）；浏览器实测确认 scrollWidth === clientWidth。提交 39ae48e（footer 三段纯展示区）+ 35b330d（任务文档）。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `39ae48e` | feat(@zanelab/skills-web): 市场页页脚营销区 —— 三段纯展示区 |
+| `35b330d` | chore(task): 记录 11-14-footer-marketing 规划与验收 |
+
+### Status
+
+[OK] **Completed**
