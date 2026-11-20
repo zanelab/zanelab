@@ -649,6 +649,76 @@ describe('MarketplacePage —— 分类下拉', () => {
   });
 });
 
+// 11-14 页脚营销区任务：纯展示（B3）。
+// 注意用例文本避开 daisyUI 类名词（如折叠/选项卡/页脚等组件名，daisyUI 5 均有对应
+// 组件类），防止被 Tailwind 扫成类名注入死 CSS
+// （quality-guidelines「测试文件里的 daisyUI 类名会进产物 CSS」警告）。
+describe('MarketplacePage —— 页脚营销区', () => {
+  /** 页脚三段的标题（h2，与页面 sr-only h2、侧栏分组 h3 不同层级） */
+  const sectionHeadings = () =>
+    screen
+      .getAllByRole('heading', { level: 2 })
+      .filter((h) =>
+        [
+          '什么是 Agent Skills 市场？',
+          '浏览 Agent Skills 库',
+          'Agent Skills 市场常见问题',
+        ].includes(h.textContent ?? ''),
+      );
+
+  /** 页脚容器（section，含 border-t），仅页脚内含这三段标题 */
+  function promoSection() {
+    const heading = sectionHeadings()[0] as HTMLElement;
+    return heading.closest('section') as HTMLElement;
+  }
+
+  it('三段营销区齐全：段标题 + 特性卡 4 张 + 分类入口 4 个 + FAQ 5 条', () => {
+    renderPage();
+    expect(sectionHeadings().map((h) => h.textContent)).toEqual([
+      '什么是 Agent Skills 市场？',
+      '浏览 Agent Skills 库',
+      'Agent Skills 市场常见问题',
+    ]);
+    // 数字从 data.ts 派生（14 条种子 / 12 免费 / 4 个 Agent）
+    const promo = promoSection();
+    expect(within(promo).getByText('共 14 个 Skills')).toBeInTheDocument();
+    expect(within(promo).getByText('12 个免费')).toBeInTheDocument();
+    expect(within(promo).getByText('4 个 Agent')).toBeInTheDocument();
+  });
+
+  it('纯展示（B3）：页脚内无链接、无按钮、无可聚焦元素', () => {
+    const { container } = renderPage();
+    const promo = promoSection();
+    expect(promo.querySelector('a')).toBeNull();
+    expect(promo.querySelector('button')).toBeNull();
+    expect(promo.querySelectorAll('[tabindex]').length).toBe(0);
+    // 页面其余部分不受影响：上传按钮等仍正常存在
+    expect(container).toBeTruthy();
+  });
+
+  it('FAQ 可开合：默认全部收起，点击问题后展开', () => {
+    renderPage();
+    const promo = promoSection();
+    const items = [...promo.querySelectorAll('details')];
+    expect(items).toHaveLength(5);
+    items.forEach((item) => expect(item.open).toBe(false));
+
+    // 点击 summary 展开（原生 details 语义）
+    items[0].querySelector('summary')?.click();
+    expect(items[0].open).toBe(true);
+    expect(items[1].open).toBe(false);
+  });
+
+  it('文案无参考站品牌残留（Skillry / 会员 / CLI / ZIP）', () => {
+    renderPage();
+    const promo = promoSection();
+    const text = promo.textContent ?? '';
+    ['Skillry', '会员', 'CLI', 'ZIP', '采集站'].forEach((word) => {
+      expect(text).not.toContain(word);
+    });
+  });
+});
+
 // 11-16 R8/R9：上传入口按权限码 skills:skill:create 显隐。
 // 测试用 setPermissions 注入（等价于 main.tsx 消费 props.permissions /
 // onHostStateChange 的结果——业务层只认这个数据源，与 qiankun 无关）。

@@ -8,6 +8,7 @@ import {
   toggleFilter,
 } from './filters';
 import { FilterSidebar } from './filter-sidebar';
+import { MarketplaceFooter } from './footer/footer';
 import { SortTabs } from './sort-tabs';
 import { SkillCard } from './skill-card';
 import { CategoryMenu } from './toolbar/category-menu';
@@ -157,6 +158,9 @@ export function MarketplacePage() {
                 没有符合筛选条件的 Skills，试试清除部分筛选或换个搜索关键词。
               </div>
             )}
+
+            {/* 页脚营销区（参考站 section.mt-16）：纯展示，不受筛选/搜索影响 */}
+            <MarketplaceFooter />
           </main>
         </div>
 
