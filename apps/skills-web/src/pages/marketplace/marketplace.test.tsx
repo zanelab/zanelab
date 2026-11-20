@@ -9,7 +9,7 @@ import {
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it } from 'vitest';
-import { setPermissions } from '../../utils/permission';
+import { setProps } from '../../props';
 import { MarketplacePage } from './marketplace';
 import { TRANSITION_MS } from './toolbar/category-menu';
 
@@ -720,56 +720,62 @@ describe('MarketplacePage —— 页脚营销区', () => {
 });
 
 // 11-16 R8/R9：上传入口按权限码 skills:skill:create 显隐。
-// 测试用 setPermissions 注入（等价于 main.tsx 消费 props.permissions /
-// onHostStateChange 的结果——业务层只认这个数据源，与 qiankun 无关）。
+// 测试用 setProps 注入权限码（Permission 组件每次 render 读 getProps().permissions，
+// 纯快照判定——与 iam-web 同构，无订阅机制）。
 describe('MarketplacePage —— 上传入口权限', () => {
-  afterEach(() => setPermissions(undefined));
+  afterEach(() => setProps({}));
 
   const uploadButton = () =>
     screen.queryByRole('button', { name: '上传 skills' });
 
-  it('① 无宿主（permissions 非数组）→ 显示', () => {
-    setPermissions(undefined);
+  it('① 无宿主（permissions 未注入）→ 显示', () => {
     renderPage();
     expect(uploadButton()).toBeInTheDocument();
   });
 
   it('② 宿主注入且含 skills:skill:create → 显示', () => {
-    setPermissions(['skills:skill:list', 'skills:skill:create']);
+    setProps({ permissions: ['skills:skill:list', 'skills:skill:create'] });
     renderPage();
     expect(uploadButton()).toBeInTheDocument();
   });
 
   it('③ 宿主注入但不含该码 → 隐藏', () => {
-    setPermissions(['skills:skill:list']);
+    setProps({ permissions: ['skills:skill:list'] });
     renderPage();
     expect(uploadButton()).not.toBeInTheDocument();
   });
 
   it('③b 空数组（有宿主但无权限）→ 隐藏：空数组不等于「无宿主」', () => {
-    setPermissions([]);
+    setProps({ permissions: [] });
     renderPage();
     expect(uploadButton()).not.toBeInTheDocument();
   });
 
   it('④ 含通配 * → 显示', () => {
-    setPermissions(['*']);
+    setProps({ permissions: ['*'] });
     renderPage();
     expect(uploadButton()).toBeInTheDocument();
   });
 
-  it('权限晚于挂载到达（挂载早于菜单加载的竞态）→ 从显示切到隐藏', () => {
-    setPermissions(undefined);
-    renderPage();
+  // 纯快照语义：无订阅，权限码变化要经重新渲染才反映（宿主 remount / update 重渲）。
+  // 锁定「每次 render 重读 getProps()」而非首次渲染冻结快照。
+  it('重新渲染时重读 props：先有权限渲染，改为无权限后重渲即隐藏', () => {
+    setProps({ permissions: ['skills:skill:create'] });
+    const { rerender } = renderPage();
     expect(uploadButton()).toBeInTheDocument();
-    // 宿主菜单加载完成 → 推送权限（等价于 onHostStateChange 回调写入）
-    act(() => setPermissions(['skills:skill:list']));
+
+    act(() => setProps({ permissions: ['skills:skill:list'] }));
+    rerender(
+      <MemoryRouter>
+        <MarketplacePage />
+      </MemoryRouter>,
+    );
     expect(uploadButton()).not.toBeInTheDocument();
   });
 
   it('点击打开占位对话框；文案说明待接入；Esc 与关闭按钮都能关', async () => {
     const user = userEvent.setup();
-    setPermissions(['skills:skill:create']);
+    setProps({ permissions: ['skills:skill:create'] });
     const { container } = renderPage();
     const dialog = container.querySelector('dialog') as HTMLDialogElement;
     expect(dialog).not.toHaveAttribute('open');

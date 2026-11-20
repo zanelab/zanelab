@@ -67,6 +67,8 @@ interface PermissionProps {
 - **菜单节点挂 permission**：目录/菜单节点 = 进入权限、按钮节点 = 操作权限、`permission` 空 = 公开（所有登录用户可见）；admin 通配 `*`。值域是数据（菜单节点的字段值），不是代码常量表——新增操作 = 建一个 button 节点填 permission，不改鉴权代码。
 - **前端只是体验优化，后端才强制**：`Permission` 隐藏按钮不替代后端 `requirePermission`；独立态（宿主未注入 permissions）一律渲染，写操作靠接口 403 兜底。
 - iam 子应用自建 `src/components/Permission.tsx`（`<Permission code mode="hide|disabled">`，读 `props.permissions`），与基座 `Permission`（读 `state.menu.permissions`）同语义、不同数据源——跨应用不互引，按各自 props/store 取码。
+- skills 子应用同构 iam（任务 11-20）：`src/components/permission.tsx` + `src/props.ts` 的 `getProps().permissions`，**纯快照、无订阅**。不要给子应用权限加 `useSyncExternalStore`/`onHostStateChange` 订阅内核：宿主 `bootstrapSession` 先 `fetchMenus` 入库再 `setupMicroApps` 注册，mount 时 `props.permissions` getter 已是真值，订阅防的「挂载早于菜单加载」竞态在注册时序下不存在；宿主权限变更后不 remount 子应用属接受行为（后端 403 兜底）。`getProps` 必须抽独立 `props.ts`（不得从 main.tsx 导出）——main.tsx 顶层有独立态 `render()` 副作用，组件测试 import 链会连带执行入口（iam/skills 两处 props.ts 头注释同因）。
+- disabled 模式的两种实现并存是有意的：基座/iam 用 `cloneElement` 安放 `disabled`（要求子元素是单个可接 disabled 的元素，**Fragment 子元素会把 props 弄丢**）；skills 用 span 包裹（任意 children 安全）。新子应用二选一，勿再造第三种。
 
 ## 侧边栏与布局
 
