@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/frontend/http-api-guidelines.md", "reason": "新增端点常量与 fetch 函数须遵循 http 封装约定（含 Supabase 网关 apikey 规则）"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "工具栏样式改动遵循组件规范；权限码同源语义（§权限码同源）"}
+{"file": ".trellis/spec/frontend/state-management.md", "reason": "menu-store permissions 派生与合并链路的 store 约定"}
+{"file": ".trellis/spec/frontend/microfrontend-guidelines.md", "reason": "子应用权限消费（props.permissions getter）与宿主状态同步"}

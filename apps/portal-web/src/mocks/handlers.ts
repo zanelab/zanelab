@@ -295,6 +295,24 @@ export const handlers = [
     });
   }),
 
+  // 当前用户角色权限码并集（任务 11-21）：按身份返回——无 token → 401（业务码
+  // 1010，与 iam Edge Fn /auth/permissions 语义对齐）；有 token → mock 角色
+  // （admin）持 '*' 通配。前端 mergePermissions 后 '*' 进入 permissions。
+  http.get('/iam/functions/v1/iam/auth/permissions', ({ request }) => {
+    const token = request.headers.get('authorization')?.replace(/^Bearer /, '');
+    if (!token) {
+      return HttpResponse.json(
+        { code: 1010, data: null, msg: '请先登录' },
+        { status: 401 },
+      );
+    }
+    return HttpResponse.json({
+      code: 0,
+      data: { permissions: ['*'] },
+      msg: 'ok',
+    });
+  }),
+
   // 需登录态的示例端点：无 token → 401。仅供手动 dev 演练（curl/控制台 fetch）；
   // http.401.test 的用例全部 server.use 覆写自建行为，不依赖此基线 handler。
   http.get('/api/protected', ({ request }) => {

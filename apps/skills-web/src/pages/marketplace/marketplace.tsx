@@ -97,7 +97,9 @@ export function MarketplacePage() {
                   {/* 小屏：筛选按钮（打开 drawer 覆盖层）；桌面侧栏常驻，隐藏 */}
                   <button
                     type="button"
-                    className="btn btn-outline btn-sm gap-1.5 lg:hidden"
+                    // 胶囊形与 SortTabs 同款（sort-tabs.tsx：h-8 rounded-full
+                    // border-base-300 bg-base-100 px-3.5 text-[13px] font-semibold）
+                    className="border-base-300 bg-base-100 hover:bg-base-content/5 inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-3.5 text-[13px] font-semibold transition-colors lg:hidden"
                     onClick={() => setDrawerOpen(true)}
                   >
                     筛选
@@ -113,7 +115,7 @@ export function MarketplacePage() {
                     <button
                       type="button"
                       aria-label="展开筛选"
-                      className="btn btn-outline btn-sm gap-1.5 max-lg:hidden"
+                      className="border-base-300 bg-base-100 hover:bg-base-content/5 inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-3.5 text-[13px] font-semibold transition-colors max-lg:hidden"
                       onClick={() => setFiltersCollapsed(false)}
                     >
                       <AppIcon

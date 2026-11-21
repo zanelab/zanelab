@@ -25,6 +25,8 @@ export const ApiConfigSchema = z.object({
   // loginEndpoint 已移除：登录走 iam 子应用（OTP），portal 不再持有旧密码登录端点
   logoutEndpoint: z.string().optional(),
   refreshEndpoint: z.string().optional(),
+  /** 当前用户角色权限码并集端点（GET，登录态；前端 permissions = 菜单派生 ∪ 角色并集） */
+  permissionsEndpoint: z.string().optional(),
   /** Supabase publishable key（请求拦截器注入 apikey 头；留空 = 不注入） */
   publishableKey: z.string().optional(),
 });

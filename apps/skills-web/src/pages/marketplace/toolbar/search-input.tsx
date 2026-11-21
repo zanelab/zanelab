@@ -3,10 +3,11 @@ import { AppIcon } from '@zanelab/ui';
 /**
  * 关键词搜索框（R4，工具栏左栏第二位）。
  *
- * `input` 类写在**外层 `<label>`** 上：框内不止 `<input>` 一个元素（还有前置
- * 搜索图标），依据 daisyUI components/input.md「If the input contains more than
- * one element, use the `input` class on the parent element」——`.input` 本体就是
- * `inline-flex + gap + padding-inline` 的容器形态。
+ * 外观为工具栏胶囊形（与 SortTabs / 筛选 / 分类触发器同款：h-8 rounded-full
+ * border-base-300 bg-base-100 px-3.5）——自拼容器类而非 daisyUI `input`：
+ * `.input` 的圆角/边框参数与胶囊形不一致，覆盖拼装比叠加类名更稳。胶囊类写在
+ * 外层 `<label>` 上（框内不止 `<input>` 一个元素，还有前置搜索图标），内部
+ * `<input>` 裸化（bg-transparent + flex-1 撑满 + outline-none）。
  *
  * 受控 + 可访问名显式给（label 内无可读文本，只有图标）：aria-label 优先于
  * 包装 label 的空文本内容。宽度固定（不 flex 撑开），窄屏换行而不是挤压。
@@ -20,7 +21,7 @@ interface SearchInputProps {
 
 export function SearchInput({ value, onChange }: SearchInputProps) {
   return (
-    <label className="input input-sm w-44 min-w-0 shrink-0 sm:w-56">
+    <label className="border-base-300 bg-base-100 inline-flex h-8 w-44 min-w-0 shrink-0 cursor-text items-center gap-2 rounded-full border px-3.5 sm:w-56">
       <AppIcon name="search" className="text-base-content/45 size-4 shrink-0" />
       <input
         type="search"
@@ -28,6 +29,7 @@ export function SearchInput({ value, onChange }: SearchInputProps) {
         onChange={(event) => onChange(event.target.value)}
         placeholder="搜索 Skills"
         aria-label="搜索 Skills"
+        className="text-base-content placeholder:text-base-content/45 min-w-0 flex-1 bg-transparent text-[13px] outline-none"
       />
     </label>
   );

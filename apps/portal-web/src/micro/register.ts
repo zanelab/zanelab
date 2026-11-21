@@ -6,7 +6,7 @@ import { usePreferencesStore } from '../stores/preferences-store';
 import { clearStoredTokens, handleLogout } from '../utils/auth';
 import { isSessionExpiredError } from '../utils/http';
 import { cache, notify } from '@zanelab/utils';
-import { fetchMenus } from '../api/menu';
+import { fetchMenus, fetchMyPermissions } from '../api/menu';
 import { isAuthPath } from '../router/auth-path';
 import type { UserInfo } from '../types';
 
@@ -48,6 +48,9 @@ export async function bootstrapSession(
   // 失败不阻塞主流程——子应用可自行重新拉取
   const menus = await fetchMenus();
   useMenuStore.getState().setMenus(menus);
+  // 角色权限码并集并入前端 permissions（任务 11-21：前端权限 = 菜单派生 ∪ 角色并集，
+  // admin 的 '*' 由这里进来）；失败不阻塞——菜单派生码兜底
+  await mergeRolePermissions();
   setupMicroApps();
 }
 
@@ -66,6 +69,8 @@ export async function restoreSession(token: string): Promise<void> {
   try {
     const menus = await fetchMenus();
     useMenuStore.getState().setMenus(menus);
+    // 角色权限码并集并入（同 bootstrapSession；失败仅 warn，菜单派生码兜底）
+    await mergeRolePermissions();
   } catch (e) {
     // 菜单拉取失败（token 过期等）→ 401 链路 handleLogout 已处理
     console.warn('[restoreSession] fetchMenus failed:', e);
@@ -75,6 +80,25 @@ export async function restoreSession(token: string): Promise<void> {
     }
   }
   setupMicroApps();
+}
+
+/**
+ * 角色权限码并集并入 menuStore（任务 11-21）：fetchMyPermissions → mergePermissions。
+ *
+ * 失败不抛出（console.warn）：登录态的核心数据是菜单，权限并集只是显隐体验增强——
+ * 菜单派生码兜底，端点不可用/网络抖动都不应阻塞会话恢复。端点未配置
+ * （permissionsEndpoint 缺省）时 fetchMyPermissions 返回空数组，mergePermissions
+ * 无新码不写 state。
+ */
+async function mergeRolePermissions(): Promise<void> {
+  try {
+    const codes = await fetchMyPermissions();
+    if (Array.isArray(codes) && codes.length) {
+      useMenuStore.getState().mergePermissions(codes);
+    }
+  } catch (e) {
+    console.warn('[register] 角色权限合并失败，仅用菜单派生权限码:', e);
+  }
 }
 
 /**

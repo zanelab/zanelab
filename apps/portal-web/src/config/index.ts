@@ -27,6 +27,8 @@ export const DEFAULT_CONFIG: AppConfig = {
     menusEndpoint: '/iam/functions/v1/iam/auth/menus',
     logoutEndpoint: '/iam/functions/v1/iam/auth/logout',
     refreshEndpoint: '/iam/functions/v1/iam/auth/refresh',
+    // 当前用户角色权限码并集（任务 11-21）；与 public/config.js 保持一致
+    permissionsEndpoint: '/iam/functions/v1/iam/auth/permissions',
     // publishableKey 留空（默认）= 不注入 apikey 头；接云 Supabase 时在 config.js 配置
     publishableKey: undefined,
   },

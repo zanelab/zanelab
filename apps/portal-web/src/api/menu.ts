@@ -187,6 +187,23 @@ function transformMenu(
 }
 
 /**
+ * 拉取当前用户角色权限码并集（GET permissionsEndpoint，iam Edge Fn /auth/permissions）。
+ *
+ * 前端 permissions = 菜单派生码（flattenPermissions）∪ 角色权限码并集——后端
+ * requirePermission 的比对数据源是 role_permissions（admin 持 '*'），只看菜单树
+ * 会让 admin 的按钮级显隐依赖「菜单树里恰好有对应 button 节点」。本端点把角色
+ * 侧的真实权限集交给前端合并（任务 11-21）；调用方（micro/register.ts）须容忍
+ * 失败——菜单派生码兜底，不阻塞会话恢复。
+ */
+export async function fetchMyPermissions(): Promise<string[]> {
+  if (!appConfig.api.permissionsEndpoint) return [];
+  const data = await http.get<{ permissions: string[] }>(
+    appConfig.api.permissionsEndpoint,
+  );
+  return Array.isArray(data?.permissions) ? data.permissions : [];
+}
+
+/**
  * 拉取菜单树并转换为项目 MenuItem 格式。
  *
  * 旧后端 /user/menu/tree 返回 { code: "10000", data: RawMenuItem[] }，

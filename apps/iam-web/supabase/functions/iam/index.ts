@@ -4,6 +4,7 @@
 //   POST   /auth/otp/send   { email }       → { code: 0, data: { success: true } }
 //   POST   /auth/otp/verify { email, code }   → { code: 0, data: { token, refreshToken, user } }
 //   GET    /auth/menus      （匿名可调）      → 游客可见子集；有效 JWT → 按权限过滤的菜单树
+//   GET    /auth/permissions（登录态）        → { permissions } 当前用户角色权限码并集（admin 含 '*'）
 //   POST   /menus           { ...菜单字段 }   → 新建（system:menu:create）
 //   PUT    /menus/:id       { ...菜单字段 }   → 更新（system:menu:update）
 //   DELETE /menus/:id                         → 删除（级联子树，system:menu:delete）
@@ -175,6 +176,9 @@ export default {
         }
         if (path.endsWith('/auth/menus')) {
           return await menusList(req, ctx, lang);
+        }
+        if (path.endsWith('/auth/permissions')) {
+          return await authPermissions(req, ctx, lang);
         }
         if (path.endsWith('/menus')) {
           return await menusCreate(req, ctx, lang);
@@ -678,6 +682,41 @@ async function requirePermission(
     );
   }
   return user;
+}
+
+/**
+ * GET /auth/permissions —— 当前登录用户角色权限码并集（前端按钮级显隐的数据源补全）。
+ *
+ * 动机（任务 11-21）：前端权限唯一来源是菜单树派生（flattenPermissions），与后端
+ * requirePermission 用的 role_permissions 不对齐——admin 前端完全依赖菜单树里有
+ * 对应 button 节点。此端点把角色权限码并集（admin 即 ['*']）交给前端做并集合并。
+ *
+ * 登录态端点：resolveUser 无 JWT/无效 JWT → 401（形态照抄 requirePermission 的
+ * 未登录分支，业务码 1010）。注意与 /auth/roles/:id/permissions 的区别：那是
+ * 「角色管理页」的按角色查询（require system:role:list），这里是「当前用户」的
+ * 权限并集，仅需登录、无权限码门槛。
+ */
+async function authPermissions(
+  req: Request,
+  ctx: { supabase: SupabaseClient; supabaseAdmin: SupabaseClient },
+  lang: string,
+): Promise<Response> {
+  const user = await resolveUser(ctx, req.headers.get('authorization'));
+  if (!user) {
+    return new Response(
+      JSON.stringify({
+        code: 1010,
+        data: null,
+        msg: msg(lang, 'unauthorized'),
+      }),
+      {
+        status: 401,
+        headers: { ...corsHeaders, 'content-type': 'application/json' },
+      },
+    );
+  }
+  const perms = await userPermissions(ctx, user.id);
+  return json(lang, { permissions: perms });
 }
 
 /**

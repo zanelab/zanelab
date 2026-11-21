@@ -189,7 +189,7 @@ export function CategoryMenu({
           aria-haspopup="menu"
           aria-expanded={open}
           aria-controls={open ? 'skills-category-panel' : undefined}
-          className="btn btn-outline btn-sm focus-visible:outline-base-content gap-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-solid"
+          className="border-base-300 bg-base-100 hover:bg-base-content/5 focus-visible:outline-base-content inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-3.5 text-[13px] font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-solid"
           onClick={() => onOpenChange(!open)}
         >
           分类
