@@ -14,7 +14,9 @@ export function UploadButton() {
     <>
       <button
         type="button"
-        className="btn btn-primary btn-sm gap-1.5"
+        // 胶囊形与工具栏其余控件同款（sort-tabs.tsx：h-8 rounded-full
+        // px-3.5 text-[13px] font-semibold）；primary 底色是页面唯一强调按钮
+        className="bg-primary text-primary-content hover:bg-primary/90 inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-3.5 text-[13px] font-semibold whitespace-nowrap transition-colors"
         onClick={() => openDialog(dialogRef.current)}
       >
         <AppIcon name="plus" className="size-3.5" />
