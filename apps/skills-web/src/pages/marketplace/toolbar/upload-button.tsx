@@ -14,7 +14,7 @@ export function UploadButton() {
     <>
       <button
         type="button"
-        className="btn btn-sm gap-1.5"
+        className="btn btn-primary btn-sm gap-1.5"
         onClick={() => openDialog(dialogRef.current)}
       >
         <AppIcon name="plus" className="size-3.5" />
