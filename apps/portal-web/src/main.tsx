@@ -119,6 +119,14 @@ async function bootstrap() {
           console.warn('[bootstrap] refresh token 已失效，清除本地登录态');
           handleLogout();
           await loadPublicMenus();
+        } else if (kind === 'gateway') {
+          // 网关配置错误（缺 apikey 等，reportGatewayMisconfigured 已
+          // console.error + notify）→ 部署配置问题，绝不登出：保留旧 token
+          // 继续恢复（业务请求若因缺 apikey 被网关 401，401 拦截器兜底）
+          console.warn(
+            '[bootstrap] refresh 被网关拒绝（配置错误），以本地 token 恢复会话',
+          );
+          await restoreSession(savedToken);
         } else {
           // 网络/服务瞬断 → 保留旧 token 继续恢复（401 拦截器后续兜底）
           console.warn(

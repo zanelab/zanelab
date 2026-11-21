@@ -12,6 +12,7 @@
       "sessionExpired": "登录状态已失效，请重新登录",
       "sessionTimeout": "会话已超时，请重新登录",
       "refreshFailed": "刷新失败",
+      "refreshGatewayMisconfigured": "部署配置错误：refresh 端点被网关拒绝（缺 apikey）。请在 public/config.js 的 api.publishableKey 填写 Supabase publishable key",
       "requestFailed": "请求失败",
       "networkError": "网络连接异常，请检查网络",
       "forbidden": "无权限访问",

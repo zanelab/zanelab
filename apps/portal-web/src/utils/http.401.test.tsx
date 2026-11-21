@@ -1,10 +1,11 @@
 import { act, cleanup, render } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import httpService from '../utils/http';
 import { ToastRegion } from '@zanelab/ui';
 import { useAuthStore, initialAuthState } from '../stores/auth-store';
 import { useMenuStore, initialMenuState } from '../stores/menu-store';
+import { appConfig } from '../config';
 import { server } from '../mocks/server';
 
 afterEach(() => {
@@ -17,6 +18,14 @@ afterEach(() => {
 });
 
 describe('401 单飞刷新', () => {
+  // jsdom 无 window.__APP_CONFIG__ → publishableKey 回退 undefined，refreshToken
+  // 的网关前置检查会拦下发请求（任务 11-21）——统一模拟「config.js 已配置 key」。
+  beforeEach(() => {
+    vi.spyOn(appConfig.api, 'publishableKey', 'get').mockReturnValue(
+      'test-key-123',
+    );
+  });
+
   it('并发两个 401 请求：refresh 只调一次，两个请求都以新 token 重放成功', async () => {
     localStorage.setItem('portal_refresh_token', 'mock-refresh-token');
     useAuthStore.getState().setToken('expired-token');

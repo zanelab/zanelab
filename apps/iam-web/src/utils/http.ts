@@ -4,11 +4,16 @@
  * 集成态：透传宿主 props.http（RequestClient 只读代理，拦截器含解包/token/notify/401 单飞）。
  * 独立态：用 @zanelab/utils RequestClient + 最小拦截器链自建（x-client-info lang= +
  * apikey(.env 配置时) + Authorization Bearer + envelope 解包 + 401 单飞刷新重放——
- * 刷新数据源 = Edge Fn 的 POST /auth/refresh（GoTrue 会话轮换），刷新失败才跳登录页）。
+ * 刷新数据源 = Edge Fn 的 POST /auth/refresh（GoTrue 会话轮换；匿名端点但网关层
+ * 仍要求 apikey），GoTrue 业务失效才跳登录页）。
  *
  * 业务层只 import 本模块的 post/get/put/del / onLoginSuccess，无 props 分支。
  */
-import { defaultResponseInterceptor, RequestClient } from '@zanelab/utils';
+import {
+  defaultResponseInterceptor,
+  notify,
+  RequestClient,
+} from '@zanelab/utils';
 import { getProps, type HostHttpClient } from '../props';
 
 const STANDALONE_TOKEN_KEY = 'iam_token';
@@ -62,10 +67,45 @@ function redirectToLogin(): void {
   window.location.replace('/login');
 }
 
+/** 独立态 apikey（.env VITE_API_KEY；与本地客户端请求拦截器同源，单点读取） */
+function readApiKey(): string | undefined {
+  return import.meta.env.VITE_API_KEY as string | undefined;
+}
+
+/** 网关配置错误的用户可见提示（console 修复指引 + notify；独立态本地渲染） */
+function reportGatewayMisconfigured(guide: string): void {
+  console.error('[iam/http] refresh 端点被网关拒绝——', guide);
+  // 独立态刷新链路无宿主通知（此时 props.http 未透传——本地兜底分支），直接
+  // 本地 notify；ToastRegion 已在根组件挂载（main.tsx render）
+  notify.error(`部署配置错误：refresh 端点被网关拒绝（缺 apikey）。${guide}`);
+}
+
+/**
+ * Supabase 平台网关鉴权失败判定：响应体可解析 JSON 且 `source ===
+ * '@supabase/server'`（code 当前为 MISSING_CREDENTIALS，判定以 source 为准——
+ * 凡网关层拒绝一律视为部署配置错误，而非会话失效；业务 401 的响应体是 Edge Fn
+ * envelope {code,msg}，无 source 字段。2026-11-21 修复）。
+ */
+async function isGatewayAuthFailure(res: Response): Promise<boolean> {
+  try {
+    const body = (await res.json()) as { source?: unknown };
+    return body?.source === '@supabase/server';
+  } catch {
+    return false;
+  }
+}
+
 /**
  * 单飞刷新：并发 401 共享同一次刷新请求；成功后调用重放，失败统一跳登录。
  * 刷新数据源 = Edge Fn POST /auth/refresh（GoTrue 轮换语义：refresh_token 一次性，
  * 响应的双 token 必须覆盖本地，否则下一次刷新必失败）。
+ *
+ * 端点语义：匿名端点（Edge Fn 不校验 JWT）但**网关层仍要求 apikey**——缺失会被
+ * 平台网关 401 MISSING_CREDENTIALS 拦截（请求到不了 Edge Function）。故：
+ * - VITE_API_KEY 未配置 → 发请求前即失败（console.error + notify），不跳登录
+ *   （跳登录是会话失效语义，配置错误保留登录态）；
+ * - 网关 401（source=@supabase/server）→ 配置错误，不跳登录；
+ * - GoTrue 业务 401（Edge Fn envelope）→ 原失效链路 redirectToLogin。
  */
 async function refreshAndReplay(
   replay: () => Promise<unknown>,
@@ -76,12 +116,35 @@ async function refreshAndReplay(
       redirectToLogin();
       throw new Error('no refresh token');
     }
+    // 网关鉴权前置检查：独立态直连云 Supabase 必须带 apikey（与请求拦截器
+    // 同源）；未配置 → 请求必被网关 401 拦截，不发、不跳登录（保留登录态）。
+    const apiKey = readApiKey();
+    if (!apiKey) {
+      reportGatewayMisconfigured(
+        '未配置 VITE_API_KEY——在 apps/iam-web/.env 填写 Supabase publishable key（参考 .env.example）后重试',
+      );
+      throw new Error('refresh endpoint misconfigured: missing apikey');
+    }
     try {
       const res = await fetch(REFRESH_PATH, {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: {
+          'content-type': 'application/json',
+          // 网关要求（云 Supabase）；与请求拦截器注入的 apikey 同源
+          apikey: apiKey,
+        },
         body: JSON.stringify({ refreshToken }),
       });
+      // 401/403 → 先区分网关鉴权失败（配置错误，不跳登录）与业务失效
+      if (
+        (res.status === 401 || res.status === 403) &&
+        (await isGatewayAuthFailure(res))
+      ) {
+        reportGatewayMisconfigured(
+          '响应体 source=@supabase/server：网关拒绝（缺/错 apikey）。请检查 .env 的 VITE_API_KEY 是否为当前 Supabase 项目的 publishable key',
+        );
+        throw new Error('refresh rejected by gateway: missing apikey');
+      }
       const body = (await res.json()) as {
         code: number;
         data: { token: string; refreshToken: string } | null;
@@ -93,6 +156,13 @@ async function refreshAndReplay(
       // GoTrue 轮换：双 token 都换新，必须一起覆盖
       writeSession(body.data.token, body.data.refreshToken);
     } catch (e) {
+      // 网关配置错误 → 不跳登录（保留登录态；错误原样上抛给 401 单飞调用方）
+      if (
+        (e as Error)?.message?.startsWith('refresh rejected by gateway') ||
+        (e as Error)?.message?.startsWith('refresh endpoint misconfigured')
+      ) {
+        throw e instanceof Error ? e : new Error('refresh failed');
+      }
       redirectToLogin();
       throw e instanceof Error ? e : new Error('refresh failed');
     }
@@ -123,7 +193,8 @@ function getLocalHttp(): HostHttpClient {
       config.headers.set('x-client-info', `lang=${locale.replace('-', '_')}`);
       // 独立态直连云 Supabase 时需 publishable key（.env 配了才注入；本地
       // supabase start 无鉴权可不填）。集成态由宿主 dev proxy 注入，不走此分支。
-      const apiKey = import.meta.env.VITE_API_KEY as string | undefined;
+      // 与 refreshAndReplay 的 apikey 同源（readApiKey 单点读取）。
+      const apiKey = readApiKey();
       if (apiKey) {
         config.headers.set('apikey', apiKey);
       }

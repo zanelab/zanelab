@@ -1,0 +1,3 @@
+{"file": ".trellis/spec/frontend/http-api-guidelines.md", "reason": "HTTP 封装与拦截器约定；refresh fetch 属 http 层改动"}
+{"file": ".trellis/spec/frontend/microfrontend-guidelines.md", "reason": "宿主/子应用 http 通道与 Supabase 网关约定（CORS 白名单、apikey 语义）"}
+{"file": ".trellis/spec/frontend/env-config-guidelines.md", "reason": "config.js 运行时配置约定（publishableKey 来源与缺失时的行为）"}

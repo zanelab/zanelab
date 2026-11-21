@@ -78,6 +78,12 @@ window.__http = httpProxy;
 - 独立态：`new RequestClient({ responseReturn: 'data' })` + 最小拦截器（语言头 + token + 解包 + 401 跳登录）自建，业务层零感知。
 - props 消费收敛在 `src/utils/http.ts` 兼容层，业务组件不出现 `props.http` 判空分支。
 
+## Supabase 网关鉴权（2026-11-21 修复沉淀）
+
+- **「匿名端点」≠ 无凭据**：Edge Fn 不校验 JWT 的匿名端点（如 `/auth/refresh`）仍会被 **Supabase 平台网关**要求 `apikey` 头（publishable key）——缺失时网关在 Edge Runtime 之前就以 401 `MISSING_CREDENTIALS` 拦截（响应体 `source: "@supabase/server"`），请求到不了函数。**凡手写裸 `fetch` 调 Supabase 端点，必须与请求拦截器同源注入 apikey**（portal 统一收敛到 `buildLegacyHeaders()`；iam 独立态 `readApiKey()` 单点读取），不要绕过拦截器另起 fetch。
+- **网关 401 与业务 401 status 相同，必须看响应体区分**：网关鉴权失败（部署配置错误，`source === '@supabase/server'`）≠ 会话失效（Edge Fn envelope `{code:1004,msg}`）。前者**绝不触发 handleLogout/跳登录**（保留登录态 + console.error 修复指引 + notify 明确提示），后者才走失效链路。教训：网关 401 曾被 `classifyRefreshError` 归为 invalid，导致**任何有效会话每次刷新页面都被强制登出**（启动期 refresh 必被网关拦截）。
+- apikey 的 key 来源是**运行时配置**（portal `config.js` 的 `api.publishableKey`）/ **构建期 env**（iam 独立态 `VITE_API_KEY`），与拦截器注入同源、单点读取；未配置时**发请求前即失败**并给出修复指引，不发注定被拦的请求。
+
 ## 接口函数的书写（src/api/）
 
 - 请求地址一律取 `appConfig.api.<endpoint>`（如 `menusEndpoint`），**不硬编码路径**（§10：接口路径都可在配置覆盖）。
@@ -100,3 +106,4 @@ window.__http = httpProxy;
 - 在 packages/utils 之外 import `qs`（paramsSerializer 能力仅共享层内部使用）。
 - 在拦截器里直接操作 React/组件库弹窗（用 notify 帮助模块），或把刷新失败静默掉。
 - 子应用业务层裸用 `props.http` / 散落 props 判空分支（props 消费收敛在 `src/utils/http.ts` 兼容层）。
+- 手写裸 `fetch` 调 Supabase 端点不带 `apikey`（网关 401 MISSING_CREDENTIALS，请求到不了函数）；或把网关 401（`source:@supabase/server`，配置错误）当会话失效处理（触发登出）。

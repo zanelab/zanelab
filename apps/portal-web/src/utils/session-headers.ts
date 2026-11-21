@@ -1,4 +1,5 @@
 import i18n from '../locales/i18n';
+import { appConfig } from '../config';
 import { useAuthStore } from '../stores/auth-store';
 
 /**
@@ -14,6 +15,10 @@ import { useAuthStore } from '../stores/auth-store';
  *   网关白名单外被弃）
  * - Authorization: Bearer <token>（会话凭据；token 非空才带——logout 后
  *   fire-and-forget 请求不附带）
+ * - apikey: config.publishableKey（配置了才带）。注意 /auth/refresh 虽是
+ *   匿名端点（Edge Fn 不校验 JWT），但 **网关层仍要求 apikey**——缺失会被
+ *   平台网关以 401 MISSING_CREDENTIALS 拦截（请求到不了 Edge Function），
+ *   故统一在此注入，业务请求与 refresh fetch 同源（2026-11-21 修复）
  */
 export function buildLegacyHeaders(): Record<string, string> {
   const headers: Record<string, string> = {
@@ -29,6 +34,12 @@ export function buildLegacyHeaders(): Record<string, string> {
   const token = useAuthStore.getState().token;
   if (token) {
     headers.Authorization = `Bearer ${token}`;
+  }
+
+  // 网关鉴权（云 Supabase 要求；默认 undefined = 不注入，本地 supabase start
+  // 无鉴权可不配。与请求拦截器原注入点同源，收敛到本函数后 refresh fetch 自动带上）
+  if (appConfig.api.publishableKey) {
+    headers.apikey = appConfig.api.publishableKey;
   }
 
   return headers;

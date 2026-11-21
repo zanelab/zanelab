@@ -1,0 +1,2 @@
+{"file": ".trellis/spec/frontend/http-api-guidelines.md", "reason": "评审 http 层改动是否符合封装约定"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "质量基线（tsc/test/build）"}

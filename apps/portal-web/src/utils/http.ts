@@ -112,8 +112,48 @@ function onSessionExpired(code: unknown, backendMsg?: string) {
   handleLogout();
 }
 
-/** 刷新失败的归类：会话失效（清登录态）vs 网络/服务瞬断（保态，401 拦截器兜底） */
-export type RefreshErrorKind = 'invalid' | 'network';
+/** 刷新失败的归类：会话失效（清登录态）vs 网络/服务瞬断（保态，401 拦截器兜底）vs 网关配置错误（保态） */
+export type RefreshErrorKind = 'invalid' | 'network' | 'gateway';
+
+/** 网关错误标记：refreshToken 抛出的错误携带 kind:'gateway'（配置错误，非会话失效） */
+const GATEWAY_KIND = 'gateway';
+
+/** 判断错误是否为网关配置错误（classifyRefreshError 与 doRefreshToken 包装共用） */
+function isGatewayRefreshError(err: unknown): boolean {
+  return (err as { kind?: string } | null)?.kind === GATEWAY_KIND;
+}
+
+/**
+ * 运行期 401 单飞的「本次刷新失败是网关配置错误」标记：doRefreshToken catch
+ * 置位 → doReAuthenticate 读到即跳过 handleLogout（配置错误保登录态，R2/R3），
+ * 消费后复位。每次刷新开始也复位，防陈旧标记跳过真实失效的登出。
+ */
+let refreshFailedByGateway = false;
+
+/**
+ * Supabase 平台网关鉴权失败判定（2026-11-21 修复）：响应体可解析 JSON 且
+ * `source === '@supabase/server'`。code 当前为 'MISSING_CREDENTIALS'（漏发
+ * apikey），但判定以 source 为准——凡网关层拒绝一律视为部署配置错误，而非
+ * 会话失效（业务 401 的响应体是 Edge Fn 的 `{code:1004,msg}`，无 source 字段，
+ * status 上无法区分，必须看响应体）。
+ */
+async function isGatewayAuthFailure(res: Response): Promise<boolean> {
+  try {
+    const body = (await res.json()) as { source?: unknown };
+    return body?.source === '@supabase/server';
+  } catch {
+    return false; // body 非 JSON（HTML 错误页等）→ 非网关 envelope
+  }
+}
+
+/** 网关配置错误的用户可见提示（console 修复指引 + notify 明确文案） */
+function reportGatewayMisconfigured(guide: string): void {
+  console.error(
+    '[http] refresh 端点被 Supabase 网关拒绝（401 MISSING_CREDENTIALS）——',
+    guide,
+  );
+  notify.error(i18n.t('common.http.refreshGatewayMisconfigured'));
+}
 
 /**
  * 刷新失败的语义分类（bootstrap 启动期主动刷新消费，401 单飞路径不区分）：
@@ -121,8 +161,10 @@ export type RefreshErrorKind = 'invalid' | 'network';
  *   响应体解析失败（网关返回了明确响应）→ refresh token 不可用，应清登录态
  * - network：fetch 抛错（断网/DNS/超时/连接拒绝）、HTTP 5xx → 瞬时故障，
  *   保留本地态继续启动，后续请求由 401 拦截器兜底
+ * - gateway：网关鉴权失败（部署缺 apikey）→ 配置错误，保留登录态，绝不登出
  */
 export function classifyRefreshError(err: unknown): RefreshErrorKind {
+  if (isGatewayRefreshError(err)) return 'gateway';
   if (err instanceof TypeError) return 'network'; // fetch 网络层失败
   if (axios.isAxiosError?.(err)) return 'network';
   const status = (err as { status?: number }).status;
@@ -135,6 +177,11 @@ export function classifyRefreshError(err: unknown): RefreshErrorKind {
 /**
  * 用 refresh token 换新 access token（GoTrue 轮换语义）。
  * 401 单飞拦截器与 bootstrap 启动期主动刷新共用。
+ *
+ * 端点语义：/auth/refresh 是匿名端点（Edge Fn 不校验 JWT），但**网关层仍要求
+ * apikey**（buildLegacyHeaders 已统一注入）——缺失会被平台网关 401
+ * MISSING_CREDENTIALS 拦截（请求到不了 Edge Function），故 key 未配置时发请求
+ * 前即失败（gateway 错误，保态不登出）。
  */
 async function refreshToken(): Promise<string> {
   const refreshTokenValue = localStorage.getItem(
@@ -142,6 +189,17 @@ async function refreshToken(): Promise<string> {
   );
   if (!appConfig.api.refreshEndpoint || !refreshTokenValue) {
     throw new Error('no refresh token');
+  }
+  // 网关鉴权前置检查：publishableKey 未配置 → 请求必被网关 401 拦截，不发。
+  // 抛 gateway 标记错误（classifyRefreshError → 'gateway'，保登录态）。
+  if (!appConfig.api.publishableKey) {
+    reportGatewayMisconfigured(
+      '未配置 api.publishableKey——在 public/config.js 的 api.publishableKey 填写 Supabase publishable key 后重试',
+    );
+    throw Object.assign(
+      new Error('refresh endpoint misconfigured: missing publishable key'),
+      { kind: GATEWAY_KIND },
+    );
   }
   const res = await fetch(
     `${appConfig.api.baseURL}${appConfig.api.refreshEndpoint}`,
@@ -154,8 +212,18 @@ async function refreshToken(): Promise<string> {
       body: JSON.stringify({ refreshToken: refreshTokenValue }),
     },
   );
-  // 401/403 → refresh token 已失效（附带 status 供 classifyRefreshError 归类）
+  // 401/403 → 先区分网关鉴权失败（部署配置错误，保态）与 refresh token 失效
+  //（附带 status 供 classifyRefreshError 归类）
   if (res.status === 401 || res.status === 403) {
+    if (await isGatewayAuthFailure(res)) {
+      reportGatewayMisconfigured(
+        '响应体 source=@supabase/server：网关拒绝（缺 apikey）。请检查 public/config.js 的 api.publishableKey 是否为当前 Supabase 项目的 publishable key',
+      );
+      throw Object.assign(
+        new Error('refresh rejected by gateway: missing apikey'),
+        { kind: GATEWAY_KIND },
+      );
+    }
     const err = new Error(`refresh rejected: ${res.status}`);
     (err as { status?: number }).status = res.status;
     throw err;
@@ -272,16 +340,13 @@ function createRequestClient(
   // 请求拦截器：公共头集中装配（buildLegacyHeaders——Accept-Language 无条件带
   // （登录页也要语言识别）；Authorization Bearer 仅 token 非空才带，保持 auth.ts
   // logout fire-and-forget 特例）
-  // + apikey（config.publishableKey 非空才 set——云 Supabase 网关要求；iam 集成态经
-  // props.http 走本拦截器，故此处注入即覆盖子应用，vite proxy 不再重复注入）
+  // + apikey（buildLegacyHeaders 已统一注入——refresh fetch 复用同函数，业务
+  // 请求与刷新同源；publishableKey 未配置时不注入，refresh 端点自行前置失败）
   client.addRequestInterceptor({
     fulfilled: (config) => {
       const extraHeaders = buildLegacyHeaders();
       for (const [key, value] of Object.entries(extraHeaders)) {
         config.headers.set(key, value);
-      }
-      if (appConfig.api.publishableKey) {
-        config.headers.set('apikey', appConfig.api.publishableKey);
       }
       return config;
     },
@@ -299,14 +364,31 @@ function createRequestClient(
     authenticateResponseInterceptor({
       client,
       doReAuthenticate: async () => {
+        // 网关配置错误（缺 apikey）→ 不登出（R2/R3）：配置错误 ≠ 会话失效。
+        // 共享包 authenticateResponseInterceptor 的 catch 无论刷新抛何错都会
+        // doReAuthenticate（packages/utils 本任务不动）——用模块级标记把
+        // 「本次刷新失败是 gateway 类」传递到本回调，跳过 handleLogout。
+        // 标记由 doRefreshToken 的 catch 设置、每次刷新开始时清除。
+        if (refreshFailedByGateway) {
+          refreshFailedByGateway = false;
+          return;
+        }
         handleLogout();
       },
       doRefreshToken: async () => {
+        refreshFailedByGateway = false;
         try {
           const token = await refreshToken();
           onTokenRefreshed(token);
           return token;
         } catch (e) {
+          // 网关配置错误（缺 apikey）→ 不转为会话失效：置标记（doReAuthenticate
+          // 跳过 handleLogout）后原样重抛。bizCode 不设 '401'：isSessionExpiredError
+          // 不命中，micro/register.ts 的 restoreSession 不会误判会话失效。
+          if (isGatewayRefreshError(e)) {
+            refreshFailedByGateway = true;
+            throw e;
+          }
           // 刷新失败 → BizCodeError('401')：保持 isSessionExpiredError 对
           // 刷新失败错误的判定语义（micro/register.ts restoreSession 消费）
           throw Object.assign(

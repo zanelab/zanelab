@@ -12,6 +12,7 @@
       "sessionExpired": "Your session has expired. Please sign in again",
       "sessionTimeout": "Session timed out. Please sign in again",
       "refreshFailed": "Token refresh failed",
+      "refreshGatewayMisconfigured": "Deployment error: the refresh endpoint was rejected by the gateway (missing apikey). Set api.publishableKey to this Supabase project's publishable key in public/config.js",
       "requestFailed": "Request failed",
       "networkError": "Network error, please check your connection",
       "forbidden": "No permission to access",
