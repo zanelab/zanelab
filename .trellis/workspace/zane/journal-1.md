@@ -497,3 +497,29 @@ skills-web 权限系统对齐 iam-web：删除订阅式权限内核（utils/perm
 ### Status
 
 [OK] **Completed**
+
+---
+
+## 2026-11-21 · 11-21-skills-toolbar-permission-fix
+
+### What happened
+
+用户报 /skills 两问题：工具栏（筛选/搜索/分类）与 sort-tabs 胶囊样式不一致；admin 也看不到上传入口。实测定位：样式是 daisyUI 默认形态 vs 自拼胶囊；上传入口根因是前端 permissions 唯一来源=菜单树派生，role_permissions 的 '*' 从不进前端（mergePermissions 无消费方）+ 菜单树无 skills:skill:create 节点。修复：Edge Fn 新增 /auth/permissions（角色权限并集）→ portal bootstrap/restore 合并；migration 0006 补种按钮节点；三控件统一胶囊。浏览器实测全过（入口出现、对话框可开、样式同形）。
+
+### Lessons
+
+- RBAC 前后端数据源必须对齐：后端 requirePermission 看 role_permissions，前端只看菜单树——admin 的 '*' 若无显式合并链路永远进不了前端。已沉淀 component-guidelines。
+- 诊断链路有效：用角色权限端点做探针（menus/all 探 admin、roles/1/permissions 查 '*'）逐层排除。
+- supabase CLI npx 版在 darwin-x64 缺二进制；直接下 GitHub release tar.gz 可用（/tmp/supabase-cli）。本次云端已含端点与节点，未需部署。
+- 工具栏多控件视觉统一：对齐基准选一个组件的参数（sort-tabs），其余手写同款类，不引抽象。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| (see log) | fix(project): skills 工具栏胶囊样式统一 + admin 权限链路修复 |
+| (auto) | chore(task): archive 11-21-skills-toolbar-permission-fix |
+
+### Status
+
+[OK] **Completed**
