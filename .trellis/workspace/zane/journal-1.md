@@ -470,3 +470,30 @@ skills-web 权限系统对齐 iam-web：删除订阅式权限内核（utils/perm
 ### Status
 
 [OK] **Completed**
+
+---
+
+## 2026-11-21 · 11-21-refresh-apikey-fix
+
+### What happened
+
+用户报「token 过期后刷新首页仍显示已登录」。排查链路：refresh 端点本身 → 启动期 bootstrap → 浏览器实测复现 → 定位真因：portal/iam 独立态的 refresh 裸 fetch 漏发 apikey，被 Supabase 网关 401 MISSING_CREDENTIALS 拦截（请求未到 Edge Fn），有效会话每次刷新被强制登出。curl 对比实证（同请求带/不带 apikey → 200/401）。修复：portal apikey 收敛 buildLegacyHeaders + classifyRefreshError 加 gateway 类别（响应体 source=@supabase/server 判定）+ 运行期 doReAuthenticate 用模块级标记跳过登出（packages/utils 零改动）；iam 同款。浏览器实测请求已带 apikey 到达 Edge Fn。
+
+### Lessons
+
+- **匿名端点 ≠ 无凭据**：Edge Fn 不校验 JWT，但 Supabase 网关仍要求 apikey；裸 fetch 绕过拦截器就丢凭据。已沉淀 http-api-guidelines.md。
+- 网关 401 与业务 401 status 相同，必须看响应体（source 字段）区分；配置错误绝不能当会话失效。
+- 排障路径有效：curl 直接对比 → 浏览器 devtools 网络面板抓请求头 → 不轻信「设计如此」的结论（本轮我最初误判 401 为预期行为）。
+- prettier CRLF/locale 文件：子代理产出 4 文件格式不符，commit 被 lefthook 拦，prettier --write 后重提（tsc/test 复跑确认无损）。
+- 用户反馈：子代理 prompt 偏宽偏慢、check 面太宽——后续小修复收窄 prompt（改动点+关键事实+底线），check 限直接相关命令与文件。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| (see log) | fix(project): refresh 请求补 apikey 并区分网关鉴权失败与会话失效 |
+| (auto) | chore(task): archive 11-21-refresh-apikey-fix |
+
+### Status
+
+[OK] **Completed**
