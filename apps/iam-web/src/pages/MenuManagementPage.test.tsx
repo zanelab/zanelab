@@ -94,6 +94,45 @@ describe('MenuManagementPage', () => {
     localStorage.removeItem('iam_token');
   });
 
+  it('新增菜单：填 i18nKey 后提交，列表显示该键', async () => {
+    localStorage.setItem('iam_token', 'mock-admin');
+    const user = userEvent.setup();
+    render(<MenuManagementPage />);
+    await waitFor(() =>
+      expect(screen.getAllByText('首页')[0]).toBeInTheDocument(),
+    );
+
+    await user.click(
+      screen.getAllByRole('button', { name: 'iam.menu.create' })[0],
+    );
+    const dialogTitle = await screen.findByText('iam.menu.createTitle');
+    const dialog = dialogTitle.closest('.modal-box')!;
+    const byPlaceholder = (key: string) =>
+      dialog.querySelector(`input[placeholder="${key}"]`) as HTMLInputElement;
+    await user.type(byPlaceholder('iam.menu.namePlaceholder'), '带键菜单');
+    await user.type(byPlaceholder('iam.menu.uriPlaceholder'), '/i18n-menu');
+    await user.type(
+      byPlaceholder('iam.menu.i18nKeyPlaceholder'),
+      'menus.custom.thing',
+    );
+    await user.click(
+      [...dialog.querySelectorAll('button')].find(
+        (b) => b.textContent === 'iam.menu.save',
+      )!,
+    );
+
+    await waitFor(() =>
+      expect(
+        screen.queryByText('iam.menu.createTitle'),
+      ).not.toBeInTheDocument(),
+    );
+    // 表格列展示 i18nKey（admin 核对用）
+    await waitFor(() =>
+      expect(screen.getByText('menus.custom.thing')).toBeInTheDocument(),
+    );
+    localStorage.removeItem('iam_token');
+  });
+
   it('删除确认弹窗展示级联数量；确认后列表刷新', async () => {
     localStorage.setItem('iam_token', 'mock-admin');
     const user = userEvent.setup();

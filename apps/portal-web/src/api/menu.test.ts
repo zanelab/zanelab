@@ -26,6 +26,7 @@ type R = {
   pid?: number | null;
   code?: string;
   name: string;
+  i18n_key?: string | null;
   component?: string | null;
   uri?: string | null;
   type: 'app' | 'menu' | 'button' | 'group';
@@ -238,5 +239,85 @@ describe('fetchMenus 前缀拼接', () => {
       '/maip/models_deploy',
       '/maip/offline_task',
     ]);
+  });
+});
+
+describe('fetchMenus i18nKey 映射（菜单多语言链路）', () => {
+  it('接口的 i18n_key → MenuItem.i18nKey（null → undefined = 未配）', async () => {
+    vi.mocked(http.get).mockResolvedValue([
+      node({
+        id: 1,
+        name: '首页',
+        i18n_key: 'menus.home',
+        uri: '/home',
+        type: 'menu',
+      }),
+      node({
+        id: 2,
+        name: 'Skills 市场',
+        i18n_key: null,
+        uri: '/skills',
+        type: 'app',
+      }),
+      node({
+        id: 3,
+        name: '系统管理',
+        uri: '/iam',
+        type: 'app',
+        children: [
+          node({
+            id: 31,
+            name: '用户管理',
+            i18n_key: 'menus.system.users',
+            uri: '/users',
+            type: 'menu',
+          }),
+          node({
+            id: 311,
+            name: '查看',
+            i18n_key: 'menus.system.view',
+            type: 'button',
+          }),
+        ],
+      }),
+    ]);
+    const menus = await fetchMenus();
+
+    expect(menus.find((m) => m.name === '首页')?.i18nKey).toBe('menus.home');
+    // 未配 i18nKey → undefined（menuTitle 三态：无 key → 用 name 原文）
+    expect(
+      menus.find((m) => m.name === 'Skills 市场')?.i18nKey,
+    ).toBeUndefined();
+
+    const sys = menus.find((m) => m.name === '系统管理');
+    expect(sys?.i18nKey).toBeUndefined();
+    expect(sys?.children?.[0]?.i18nKey).toBe('menus.system.users');
+    // button 节点也映射（其 name 同样进菜单文案展示点）
+    expect(sys?.children?.[1]?.i18nKey).toBe('menus.system.view');
+  });
+
+  it('映射结果可被 menuTitle 消费：命中取翻译、缺条目回退 name', async () => {
+    const { menuTitle } = await import('../locales/i18n');
+    vi.mocked(http.get).mockResolvedValue([
+      node({
+        id: 1,
+        name: '首页',
+        i18n_key: 'menus.home',
+        uri: '/home',
+        type: 'menu',
+      }),
+      node({
+        id: 2,
+        name: '不存在的键',
+        i18n_key: 'menus.not.exists',
+        uri: '/x',
+        type: 'menu',
+      }),
+    ]);
+    const menus = await fetchMenus();
+
+    expect(menuTitle(menus[0])).toBe('首页');
+    // 语言包缺该 key → 回退接口原文 name
+    expect(menuTitle(menus[1])).toBe('不存在的键');
   });
 });

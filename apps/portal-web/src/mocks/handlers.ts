@@ -29,6 +29,7 @@ export const mockMenus: MenuItem[] = [
   {
     id: 1,
     name: '首页',
+    i18nKey: 'menus.home',
     path: '/home',
     icon: 'home',
     activeIcon: 'home-active',
@@ -46,6 +47,7 @@ export const mockMenus: MenuItem[] = [
   {
     id: 3,
     name: '系统管理',
+    i18nKey: 'menus.system.title',
     path: '/iam',
     icon: 'system',
     activeIcon: 'system-active',
@@ -55,6 +57,7 @@ export const mockMenus: MenuItem[] = [
       {
         id: 31,
         name: '用户管理',
+        i18nKey: 'menus.system.users',
         path: '/iam/users',
         appName: 'iam',
         type: 'menu',
@@ -70,6 +73,7 @@ export const mockMenus: MenuItem[] = [
       {
         id: 32,
         name: '菜单管理',
+        i18nKey: 'menus.system.menus',
         path: '/iam/menus',
         appName: 'iam',
         type: 'menu',
@@ -105,6 +109,7 @@ const mockRawMenus = [
     pid: null,
     permission: null,
     name: '首页',
+    i18n_key: 'menus.home',
     component: null,
     uri: '/home',
     type: 'menu',
@@ -135,6 +140,7 @@ const mockRawMenus = [
     pid: null,
     permission: null,
     name: '系统管理',
+    i18n_key: 'menus.system.title',
     component: 'iam',
     uri: '/iam',
     type: 'app',
@@ -149,6 +155,7 @@ const mockRawMenus = [
         pid: 3,
         permission: 'system:user:list',
         name: '用户管理',
+        i18n_key: 'menus.system.users',
         component: null,
         uri: '/users',
         type: 'menu',
@@ -180,6 +187,7 @@ const mockRawMenus = [
         pid: 3,
         permission: 'system:menu:list',
         name: '菜单管理',
+        i18n_key: 'menus.system.menus',
         component: null,
         uri: '/menus',
         type: 'menu',

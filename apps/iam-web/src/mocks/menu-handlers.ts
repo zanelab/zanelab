@@ -38,6 +38,7 @@ const seedMenus: MenuItemRecord[] = [
     pid: null,
     permission: null,
     name: '首页',
+    i18nKey: 'menus.home',
     component: null,
     uri: '/home',
     type: 'menu',
@@ -53,6 +54,7 @@ const seedMenus: MenuItemRecord[] = [
     pid: null,
     permission: null,
     name: '系统管理',
+    i18nKey: 'menus.system.title',
     component: 'iam',
     uri: '/iam',
     type: 'app',
@@ -67,6 +69,7 @@ const seedMenus: MenuItemRecord[] = [
         pid: 3,
         permission: 'system:user:list',
         name: '用户管理',
+        i18nKey: 'menus.system.users',
         component: null,
         uri: '/users',
         type: 'menu',
@@ -82,6 +85,7 @@ const seedMenus: MenuItemRecord[] = [
         pid: 3,
         permission: 'system:menu:list',
         name: '菜单管理',
+        i18nKey: 'menus.system.menus',
         component: null,
         uri: '/menus',
         type: 'menu',
@@ -139,6 +143,18 @@ function validateType(body: Record<string, unknown>): string | null {
 /** 树 → 平铺（引用共享，直接改内存里的对象）。 */
 function flatten(tree: MenuItemRecord[]): MenuItemRecord[] {
   return tree.flatMap((n) => [n, ...flatten(n.children ?? [])]);
+}
+
+/** i18nKey 归一：null 原样、字符串 trim 后空串归 null（与 Edge Fn 同语义）。
+ *  入参优先级与 Edge Fn parseMenuInput 一致：snake 优先，缺失才取 camel。 */
+function normalizeI18nKey(v: unknown): string | null {
+  if (v === null || v === undefined) return null;
+  return String(v).trim() || null;
+}
+
+/** 从写请求体取 i18nKey（双形态：snake 优先，与 Edge Fn 同款）。 */
+function readI18nKey(body: Record<string, unknown>): unknown {
+  return body.i18n_key !== undefined ? body.i18n_key : body.i18nKey;
 }
 
 /** 按谓词过滤树（含祖先链保留）：镜像 Edge Fn menusList 的 keep/prune。 */
@@ -259,6 +275,9 @@ export const iamMenuHandlers = [
         pid: (body.pid as number | null) ?? null,
         permission: (body.permission as string | null) ?? null,
         name: String(body.name),
+        // i18nKey 双形态入参（camelCase 前端 / snake_case DB 列）+ 空串归一 null，
+        // 与 Edge Fn parseMenuInput 同语义
+        i18nKey: normalizeI18nKey(readI18nKey(body)),
         component: matrix.component
           ? ((body.component as string | null) ?? null)
           : null,
@@ -308,6 +327,10 @@ export const iamMenuHandlers = [
       const matrix = TYPE_MATRIX[type] ?? TYPE_MATRIX.app;
       Object.assign(row, {
         name: body.name !== undefined ? String(body.name) : row.name,
+        i18nKey:
+          body.i18n_key !== undefined || body.i18nKey !== undefined
+            ? normalizeI18nKey(readI18nKey(body))
+            : row.i18nKey,
         component:
           body.component !== undefined
             ? matrix.component

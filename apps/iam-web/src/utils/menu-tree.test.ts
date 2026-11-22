@@ -14,6 +14,7 @@ function row(
     pid,
     permission: null,
     name: `n${id}`,
+    i18nKey: null,
     component: '',
     uri: null,
     type: 'menu',

@@ -123,6 +123,62 @@ describe('menusApi CRUD（admin 身份，localStorage 注入 token）', () => {
   });
 });
 
+describe('menusApi i18nKey（菜单多语言链路）', () => {
+  beforeEach(() => {
+    localStorage.setItem('iam_token', 'mock-admin');
+  });
+  afterEach(() => {
+    localStorage.removeItem('iam_token');
+    localStorage.removeItem('iam_refresh_token');
+  });
+
+  it('种子菜单的 i18nKey 随 list 读回（camelCase 归一）', async () => {
+    const tree = await menusApi.list();
+    const home = tree.find((n) => n.name === '首页');
+    expect(home?.i18nKey).toBe('menus.home');
+    const iam = tree.find((n) => n.name === '系统管理');
+    expect(iam?.i18nKey).toBe('menus.system.title');
+  });
+
+  it('create 带 i18nKey → 落库并读回', async () => {
+    const created = await menusApi.create({
+      ...input,
+      name: '带键的菜单',
+      i18nKey: 'menus.custom.thing',
+    });
+    expect(created.i18nKey).toBe('menus.custom.thing');
+    const tree = await menusApi.list();
+    const flat = tree.flatMap((n) => [n, ...(n.children ?? [])]);
+    expect(flat.find((n) => n.id === created.id)?.i18nKey).toBe(
+      'menus.custom.thing',
+    );
+  });
+
+  it('create 不带 i18nKey → null（未配 = 渲染回退 name 原文）', async () => {
+    const created = await menusApi.create({ ...input, name: '无键菜单' });
+    expect(created.i18nKey).toBeNull();
+  });
+
+  it('空串 i18nKey → 归一 null（表单空 input 的语义）', async () => {
+    const created = await menusApi.create({
+      ...input,
+      name: '空键菜单',
+      i18nKey: '   ',
+    });
+    expect(created.i18nKey).toBeNull();
+  });
+
+  it('update 清空 i18nKey（空串 → null）', async () => {
+    const created = await menusApi.create({
+      ...input,
+      name: '待清键',
+      i18nKey: 'menus.custom.thing',
+    });
+    const updated = await menusApi.update(created.id, { i18nKey: '' });
+    expect(updated.i18nKey).toBeNull();
+  });
+});
+
 describe('游客写操作（无 token）', () => {
   it('create → 403，后端 msg 透出（design DD4：Error(msg)）', async () => {
     await expect(menusApi.create(input)).rejects.toThrow(
