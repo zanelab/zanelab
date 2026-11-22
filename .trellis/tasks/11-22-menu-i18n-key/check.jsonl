@@ -1,0 +1,3 @@
+{"file": ".trellis/spec/frontend/i18n-guidelines.md", "reason": "检查语言包两包 key 树一致、menuTitle 语义未被改动、无硬编码中文属性值"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "全量质量检查标准（tsc/vitest/lint/build）"}
+{"file": ".trellis/spec/frontend/http-api-guidelines.md", "reason": "检查接口契约层改动符合约定（错误语义/响应归一化未被破坏）"}

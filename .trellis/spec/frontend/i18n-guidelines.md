@@ -38,6 +38,106 @@
 - 消费点：`menu-views.ts`（侧边栏/顶栏/搜索/用户下拉框）、tabbar（`use-tabbar` 渲染期解析，store 只存 `name`/`i18nKey` 原始值）、面包屑。**菜单 store 不动**——仍存全量原始契约，翻译在渲染期解析，menuType 分流不变式不受影响（见 [状态管理](./state-management.md)）。
 - 非 hook 上下文的 menuTitle 调用链（menu-views 纯函数）靠 **App.tsx 装配层的 `useTranslation()`** 驱动重渲染；`use-tabbar` 的 useMemo 依赖需含 `i18n.language`。
 
+## Scenario: 菜单 i18nKey 跨层链路（iam 配置 → /auth/menus → 宿主渲染）
+
+> **触发**：改菜单多语言、加菜单字段、或「admin 在后台配了 key 但界面没翻译」时读本文。
+> 链路是 2026-11-22（任务 11-22-menu-i18n-key）打通的——此前宿主渲染机制齐备，
+> 但后端从不下发该键，`menuTitle` 的第三态永远走不到。
+
+### 1. Scope / Trigger
+
+跨 4 层的契约变更：DB 列 → Edge Fn → 宿主 API 层 → 宿主渲染。
+**任一层漏改 = 键到不了消费点**（且不报错，只是静默回退 `name`）。
+
+### 2. Signatures
+
+| 层 | 位置 | 契约 |
+|---|---|---|
+| DB | `apps/iam-web/supabase/migrations/0007_menu_i18n_key.sql` | `menus.i18n_key text`（可空、无默认值） |
+| Edge Fn | `apps/iam-web/supabase/functions/iam/index.ts` | `MENU_COLUMNS` 含 `i18n_key`；`MenuRow.i18n_key`；`MenuInput.i18n_key` |
+| iam api | `apps/iam-web/src/api/menus.ts` | `MenuItemRecord.i18nKey: string \| null`；`MenuInput.i18nKey?: string \| null`；`mapRow()` 归一 |
+| 宿主 api | `apps/portal-web/src/api/menu.ts` | `RawMenuItem.i18n_key?: string \| null`；`transformMenu()` → `MenuItem.i18nKey` |
+| 宿主渲染 | `apps/portal-web/src/locales/i18n.ts` | `menuTitle(menu)` —— **已存在，本次未改** |
+
+### 3. Contracts
+
+**读链路**（逐跳格式）：
+
+```
+DB i18n_key (snake)
+  → edge fn MENU_COLUMNS select → MenuRow.i18n_key
+  → 响应 JSON { ..., i18n_key }        ← 原样透传，edge fn 不做语言分支
+  → portal RawMenuItem.i18n_key
+  → transformMenu → MenuItem.i18nKey   ← null → undefined（= 未配）
+  → menuTitle() → i18nnext t(key, {defaultValue: name})
+```
+
+**写链路**：
+
+```
+iam 表单 i18nKey（camel）
+  → MenuInput.i18nKey
+  → edge fn parseMenuInput（双形态：snake 优先，缺失取 camel）
+  → trim → 空串归 null → 存 DB i18n_key
+```
+
+**关键约定**：
+
+- **edge fn 不做语言分支**：接口响应**不随语言变化**（`detectLang` 只影响 `msg`）。
+  翻译在宿主渲染期发生 → 切语言走既有 `switchLocale` → 整页刷新 → 重拉菜单 → 按新语言解析。
+- **`name` 保持 `not null` 且继续是回退原文**——存量数据零改动即可工作。
+- **iam api 层双形态归一**：线上 edge fn 返回 snake_case，独立态 mock 持有 camelCase。
+  `mapRow` 用 `snake ?? camel ?? null` 接住两种来源（与既有 `activeIcon` 同款）。
+- **button 节点也映射 i18nKey**——其 `name` 同样进菜单文案展示点。
+
+### 4. Validation & Error Matrix
+
+| 条件 | 行为 | 是否有提示 |
+|---|---|---|
+| `i18n_key` 为 null / 未配 | 渲染 `name` 原文 | 无（正常态） |
+| 语言包缺该 key | `defaultValue: name` 回退原文 | 无（正常态） |
+| 表单提交空串 / 纯空格 | edge fn 与 mock 均 trim → null | 无 |
+| admin 填了语言包里不存在的 key | 静默回退 `name` 原文 | **无** —— 已知的 UX 缺口（见「反面模式」） |
+| 后端未部署新版本（响应无该字段） | `raw.i18n_key ?? undefined` → 未配 → 回退 `name` | 无（安全降级） |
+
+### 5. Good / Base / Bad Cases
+
+- **Good**：admin 在菜单管理页填 `menus.system.users` → 保存 → 宿主切到 en-US 显示 "Users"。
+- **Base**：既有菜单未配 i18nKey → 切语言后仍显示 `name` 原文，不报错、不空白。
+- **Bad**：admin 填 `menu.system.users`（少个 s）→ 界面无提示地显示中文原文 → 排查时
+  **先查键名与语言包是否对得上**，而不是怀疑渲染层。
+
+### 6. Tests Required
+
+- `apps/iam-web/src/api/menus.test.ts` —— i18nKey 随 list 读回（camelCase 归一）、
+  create 带键落库、不带键 → null、空串 → null、update 清空 → null。
+- `apps/iam-web/src/pages/MenuManagementPage.test.tsx` —— 表单填 i18nKey 提交后
+  表格列展示该键。
+- `apps/portal-web/src/api/menu.test.ts` —— `i18n_key` → `MenuItem.i18nKey` 映射
+  （含 button 分支）、null → undefined、映射结果可被 `menuTitle` 消费。
+- 语言包两包 key 树必须一致（见「新文案入包流程」的比对脚本）。
+
+### 7. Wrong vs Correct
+
+#### Wrong
+
+```ts
+// ❌ 在 edge fn 里按语言返回已翻译的 name —— 响应随语言变化，
+//    破坏「接口是语言无关的公共数据」前提，且失去客户端语言包统一治理
+const name = lang === 'zh-CN' ? row.name : translate(row.i18n_key);
+```
+
+#### Correct
+
+```ts
+// ✅ 接口原样透传键与原文，翻译在宿主渲染期发生
+// edge fn: MENU_COLUMNS 含 i18n_key，响应带 i18n_key + name
+// portal transformMenu:
+i18nKey: raw.i18n_key ?? undefined,
+// portal 渲染:
+menuTitle(menu); // 有 key 命中→翻译；缺条目→回退 name；无 key→name
+```
+
 ## 切语言链路（单点）
 
 - 唯一切换入口：`preferences store 的 app.locale`（语言下拉只写 preferences，不直接调 changeLanguage）。
@@ -71,3 +171,10 @@
 - 语言包里存 JSX/HTML——语言包只放纯文案（emoji 可以）。
 - 绕过 preferences 直接调 `i18n.changeLanguage`——会脱离 persist 与 qiankun 同步链路。
 - tabbar/持久化结构里存**解析后的翻译**——必须存原始 `name`/`i18nKey`，渲染期解析。
+- **在 edge fn 里按 `detectLang` 返回已翻译的 `name`**——菜单接口必须是语言无关的公共数据，
+  翻译统一在宿主渲染期（见「Scenario: 菜单 i18nKey 跨层链路」）。
+- **只改 `MENU_COLUMNS` 就以为链路通了**——`MenuRow`/`MenuInput`/`parseMenuInput`/
+  iam api 的 `mapRow`/宿主 `transformMenu` 五处都要改，漏一处则键静默消失
+  （表现为「配了 key 但不翻译」）。
+- **给 i18nKey 做「下拉选已有 key」**——会堵死内置包外的键（第三方菜单走
+  `i18n.packUrls` 时必需）；用自由文本框 + placeholder 说明格式。

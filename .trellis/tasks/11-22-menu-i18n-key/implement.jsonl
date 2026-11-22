@@ -1,0 +1,5 @@
+{"file": ".trellis/spec/frontend/i18n-guidelines.md", "reason": "菜单 i18nKey 契约、menuTitle 三态语义、切语言链路、新文案入包流程（两包 key 树一致 + 比对脚本）——本任务核心规范"}
+{"file": ".trellis/spec/frontend/http-api-guidelines.md", "reason": "edge fn 接口契约与前端 api 层约定（menus.ts 改动需对齐）"}
+{"file": ".trellis/spec/frontend/type-safety.md", "reason": "snake_case 接口字段到 camelCase 前端类型的映射约定（RawMenuItem/MenuItemRecord 归一层）"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "提交前质量要求（类型检查/测试/lint）"}
+{"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "本任务横跨 DB→edge fn→iam→portal 四层，数据流边界契约先行"}
