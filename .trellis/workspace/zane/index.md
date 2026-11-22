@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 16
-- **Last Active**: 2026-11-20
+- **Total Sessions**: 17
+- **Last Active**: 2026-11-22
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~422 | Active |
+| `journal-1.md` | ~557 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 17 | 2026-11-22 | 菜单 i18nKey 多语言链路（iam 配置 → /auth/menus → 宿主渲染） | `f7dad1a`, `6a94233`, `3eca5d0` | `main` |
 | 16 | 2026-11-20 | 11-06-iam-api-rbac 补做收尾验收并归档 | `70ef8db` | `feat/skills-marketplace-toolbar` |
 | 15 | 2026-11-20 | 11-14-skills-marketplace-refactor 集成验收与归档 | `a0676e7` | `feat/skills-marketplace-toolbar` |
 | 14 | 2026-11-20 | 11-14-footer-marketing 检查与收尾 | `39ae48e`, `35b330d` | `feat/skills-marketplace-toolbar` |

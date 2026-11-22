@@ -523,3 +523,35 @@ skills-web 权限系统对齐 iam-web：删除订阅式权限内核（utils/perm
 ### Status
 
 [OK] **Completed**
+
+
+## Session 17: 菜单 i18nKey 多语言链路（iam 配置 → /auth/menus → 宿主渲染）
+<!-- trellis-session: v=2 fp=a533acc497a01b75 -->
+
+**Date**: 2026-11-22
+**Task**: 菜单 i18nKey 多语言链路（iam 配置 → /auth/menus → 宿主渲染）
+**Branch**: `main`
+
+### Summary
+
+打通菜单国际化链路：menus 表加 i18n_key 列（0007 迁移，回填 seed 5 节点），iam edge fn 透传、iam 管理页加「国际化键」输入框与表格列、宿主 transformMenu 映射到 MenuItem.i18nKey，经既有 menuTitle() 渲染期解析。edge fn 不做语言分支（接口语言无关），切语言走既有整页刷新链路。spec 补 4 层可执行契约与验证矩阵。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `f7dad1a` | feat(project): 菜单 i18nKey 多语言链路（iam 配置 → /auth/menus → 宿主渲染） |
+| `6a94233` | test(project): 菜单 i18nKey 链路测试 + mock 契约同步 |
+| `3eca5d0` | docs(project): 菜单 i18nKey 跨层链路契约（4 层 + 验证矩阵） |
+
+### Testing
+
+- [OK] iam-web 60/60、portal-web 191/191；两包 tsc + build + lint 全绿；edge fn tsc 通过；语言包两包 key 树一致；迁移回填条件对 0004 种子行逐条校验各命中 1 条
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- AC8（切语言后导航文案同步）未做浏览器实测——需部署迁移 + edge fn 后人工验证；后台已建节点（如 skills app）的 i18nKey 需 admin 自行补，译文走外部 packUrls
