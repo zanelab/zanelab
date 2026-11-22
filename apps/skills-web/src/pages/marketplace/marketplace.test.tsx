@@ -243,20 +243,16 @@ describe('MarketplacePage', () => {
     await user.click(screen.getByRole('button', { name: '筛选' }));
     expect(box.checked).toBe(true);
     // 若此处追加 `drawer-open`，daisyUI 会把 .drawer-side 从覆盖层翻成内联列
-    // （内容被挤窄 + 遮罩透明 + 横向溢出）
-    expect(drawer?.className).toBe('drawer lg:drawer-open');
+    // （内容被挤窄 + 遮罩透明 + 横向溢出）。侧栏默认收起（filtersCollapsed
+    // 初始为 true），小屏开合不追加该类（模板串留尾随空格，trim 后比对）
+    expect(drawer?.className.trim()).toBe('drawer');
   });
 
-  it('桌面收起/展开筛选：drawer 容器按 filtersCollapsed 摘除 lg:drawer-open', async () => {
+  it('桌面默认收起侧栏：展开/收起按 filtersCollapsed 增删 lg:drawer-open', async () => {
     const user = userEvent.setup();
     const { container } = renderPage();
     const drawer = container.querySelector('.drawer');
-    expect(drawer?.className).toContain('lg:drawer-open');
-    expect(
-      screen.queryByRole('button', { name: '展开筛选' }),
-    ).not.toBeInTheDocument();
-
-    await user.click(screen.getByRole('button', { name: '收起筛选' }));
+    // 默认收起：首屏只有「展开筛选」入口，容器不带 lg:drawer-open
     expect(drawer?.className).not.toContain('lg:drawer-open');
     expect(
       screen.getByRole('button', { name: '展开筛选' }),
@@ -267,6 +263,12 @@ describe('MarketplacePage', () => {
     expect(
       screen.queryByRole('button', { name: '展开筛选' }),
     ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: '收起筛选' }));
+    expect(drawer?.className).not.toContain('lg:drawer-open');
+    expect(
+      screen.getByRole('button', { name: '展开筛选' }),
+    ).toBeInTheDocument();
   });
 
   it('卡片自持层叠上下文：卡内浮层 z-index 不逃逸到页面级（抽屉被穿透的回归）', () => {
@@ -292,8 +294,11 @@ describe('MarketplacePage', () => {
     expect(card).toHaveClass('isolate');
   });
 
-  it('收起/展开按钮的图标经 AppIcon 解析（svg + path 存在）', () => {
+  it('收起/展开按钮的图标经 AppIcon 解析（svg + path 存在）', async () => {
+    const user = userEvent.setup();
     const { container } = renderPage();
+    // 侧栏默认收起：先展开，才能拿到「收起筛选」按钮
+    await user.click(screen.getByRole('button', { name: '展开筛选' }));
     const btn = screen.getByRole('button', { name: '收起筛选' });
     // layout-sidebar-collapse 在 BUILTIN_ICONS 中；解析失败会渲染 null
     expect(btn.querySelectorAll('svg path').length).toBeGreaterThan(0);

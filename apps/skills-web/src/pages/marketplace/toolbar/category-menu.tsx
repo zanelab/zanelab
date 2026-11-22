@@ -6,6 +6,7 @@ import {
   FILTER_GROUPS,
   type SkillFilterGroup,
 } from '../data';
+import { FOCUS_RING_CLASS } from './focus-ring';
 
 /**
  * 弹层进出场过渡时长（ms）。与面板的 `motion-safe:duration-[350ms]` 类同步
@@ -189,7 +190,7 @@ export function CategoryMenu({
           aria-haspopup="menu"
           aria-expanded={open}
           aria-controls={open ? 'skills-category-panel' : undefined}
-          className="border-base-300 bg-base-100 hover:bg-base-content/5 focus-visible:outline-base-content inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-3.5 text-[13px] font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-solid"
+          className={`border-base-300 bg-base-100 hover:bg-base-content/5 inline-flex h-[42px] shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-4 text-[13px] font-semibold transition-colors ${FOCUS_RING_CLASS}`}
           onClick={() => onOpenChange(!open)}
         >
           分类

@@ -43,7 +43,8 @@ export function MarketplacePage() {
   const [query, setQuery] = useState('');
   const [drawerOpen, setDrawerOpen] = useState(false);
   // 桌面端收起筛选侧栏。纯页面内 state：不持久化（localStorage / store 都不用）。
-  const [filtersCollapsed, setFiltersCollapsed] = useState(false);
+  // 默认收起：首屏聚焦内容列，侧栏经「筛选」按钮展开（R：默认隐藏筛选）。
+  const [filtersCollapsed, setFiltersCollapsed] = useState(true);
   // 分类下拉的开合归页面持有：控件行的 z 序（见上）依赖它
   const [categoryOpen, setCategoryOpen] = useState(false);
 
@@ -99,7 +100,7 @@ export function MarketplacePage() {
                     type="button"
                     // 胶囊形与 SortTabs 同款（sort-tabs.tsx：h-8 rounded-full
                     // border-base-300 bg-base-100 px-3.5 text-[13px] font-semibold）
-                    className="border-base-300 bg-base-100 hover:bg-base-content/5 inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-3.5 text-[13px] font-semibold transition-colors lg:hidden"
+                    className="border-base-300 bg-base-100 hover:bg-base-content/5 inline-flex h-[42px] shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-4 text-[13px] font-semibold transition-colors lg:hidden"
                     onClick={() => setDrawerOpen(true)}
                   >
                     筛选
@@ -115,7 +116,7 @@ export function MarketplacePage() {
                     <button
                       type="button"
                       aria-label="展开筛选"
-                      className="border-base-300 bg-base-100 hover:bg-base-content/5 inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-3.5 text-[13px] font-semibold transition-colors max-lg:hidden"
+                      className="border-base-300 bg-base-100 hover:bg-base-content/5 inline-flex h-[42px] shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-4 text-[13px] font-semibold transition-colors max-lg:hidden"
                       onClick={() => setFiltersCollapsed(false)}
                     >
                       <AppIcon
