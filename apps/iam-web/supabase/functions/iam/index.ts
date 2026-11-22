@@ -391,13 +391,16 @@ async function authLogout(req: Request, lang: string): Promise<Response> {
 
 // ==================== 菜单管理（RBAC，见 migrations/0001） ====================
 
-/** menus 表行（任务 11-04 修订后的新契约，初始化迁移 0001 的列集） */
+/** menus 表行（任务 11-04 修订后的新契约，初始化迁移 0001 的列集；
+ *  i18n_key 为 0007 新增——菜单多语言翻译键，宿主 menuTitle() 渲染期解析） */
 interface MenuRow {
   id: number;
   pid: number | null;
   /** 语义权限码（system:menu:list）；目录/菜单=进入权限、按钮=操作权限、空=公开 */
   permission: string | null;
   name: string;
+  /** 国际化键（menus.system.users 等点串，0007）；空 = 渲染回退 name 原文 */
+  i18n_key: string | null;
   component: string;
   uri: string | null;
   type: 'app' | 'menu' | 'button' | 'group';
@@ -414,6 +417,8 @@ interface MenuInput {
   /** 语义权限码（system:menu:list 等；空 = 公开） */
   permission?: string | null;
   name?: string;
+  /** 国际化键（0007）；空串/null = 不配（渲染回退 name） */
+  i18n_key?: string | null;
   component?: string | null;
   uri?: string | null;
   type?: MenuRow['type'];
@@ -425,7 +430,7 @@ interface MenuInput {
 }
 
 const MENU_COLUMNS =
-  'id,pid,permission,name,component,uri,type,sort,icon,active_icon,hidden,scopes';
+  'id,pid,permission,name,i18n_key,component,uri,type,sort,icon,active_icon,hidden,scopes';
 
 /**
  * 类型联动校验矩阵（任务 11-04，用户提示词 F3）：
@@ -731,6 +736,13 @@ function parseMenuInput(
   if (body.pid !== undefined)
     input.pid = body.pid === null ? null : Number(body.pid);
   if (body.name !== undefined) input.name = String(body.name).trim();
+  // i18nKey（camelCase，前端 MenuInput 形态）与 i18n_key（snake_case，DB 列）
+  // 双形态入参兼容（与 activeIcon 同款）。trim 后空串归一 null——表单空 input
+  // 产出 ''，语义等同「未配」，DB 存 null 让回填迁移的 is null 守卫正确识别。
+  const rawI18nKey = body.i18n_key !== undefined ? body.i18n_key : body.i18nKey;
+  if (rawI18nKey !== undefined)
+    input.i18n_key =
+      rawI18nKey === null ? null : String(rawI18nKey).trim() || null;
   if (body.component !== undefined)
     input.component = body.component === null ? null : String(body.component);
   if (body.uri !== undefined)

@@ -5,10 +5,14 @@
  * 错误语义；路径常量进 api/endpoints.ts。鉴权头由传输层注入（集成态宿主拦截器 /
  * 独立态本地客户端的 Bearer 逻辑），本层不感知身份。
  *
- * MenuItemRecord 对齐旧项目 RawMenuItem 契约（13 字段）——portal 侧同名类型是
+ * MenuItemRecord 对齐旧项目 RawMenuItem 契约——portal 侧同名类型是
  * 私有实现不导出，且 apps 间禁止互相 import，故在此按契约复制定义
  * （apps/portal-web/src/api/menu.ts:8-25，字段语义以其注释为准）。
  * 宿主 fetchMenus 将来切数据源时 transformMenu 无需改动。
+ *
+ * 字段归一（mapRow）：服务端 snake_case（active_icon / i18n_key）→ 前端
+ * camelCase（activeIcon / i18nKey）——DB 列名与接口 JSON 均为 snake_case，
+ * 前端契约是 camelCase，与既有 activeIcon 处理同构。
  */
 import { post, get, put, del } from '../utils/http';
 import { apiPrefix } from './prefix';
@@ -19,13 +23,16 @@ import {
   MENUS_ITEM_PATH,
 } from './endpoints';
 
-/** 菜单节点（任务 11-04 修订契约：初始化迁移 0001 的 menus 表列集）。 */
+/** 菜单节点（任务 11-04 修订契约：初始化迁移 0001 的 menus 表列集；
+ *  i18nKey 为 0007 新增——菜单多语言翻译键）。 */
 export interface MenuItemRecord {
   id: number;
   pid: number | null;
   /** 语义权限码（system:menu:list）；目录/菜单=进入权限、按钮=操作权限、空=公开 */
   permission: string | null;
   name: string;
+  /** 国际化键（menus.system.users 等点串）；空 = 渲染回退 name 原文 */
+  i18nKey: string | null; // snake_case i18n_key 经归一化转 camelCase
   component: string | null;
   uri: string | null;
   type: 'app' | 'menu' | 'button' | 'group';
@@ -43,6 +50,8 @@ export interface MenuInput {
   /** 语义权限码（system:menu:list 等；空 = 公开） */
   permission?: string | null;
   name: string;
+  /** 国际化键（选填）；空/null = 不配（渲染回退 name） */
+  i18nKey?: string | null;
   component?: string | null;
   uri?: string | null;
   type: MenuItemRecord['type'];
@@ -82,19 +91,34 @@ function toError(error: unknown): Error {
   return new Error(extractMsg(error));
 }
 
-/** 服务端 snake_case（active_icon）→ 前端 camelCase（activeIcon），递归子树。
- *  入参用宽松形态（服务端原始行可能带 active_icon），出参收敛到 MenuItemRecord。 */
-type RawMenuNode = Omit<MenuItemRecord, 'activeIcon' | 'children'> & {
+/** 服务端 snake_case（active_icon / i18n_key）→ 前端 camelCase（activeIcon /
+ *  i18nKey），递归子树。入参用宽松形态（服务端原始行可能带 snake 字段），
+ *  出参收敛到 MenuItemRecord。
+ *
+ * 双形态入参兼容（与既有 activeIcon 同款）：线上 edge fn 返回 snake_case
+ * （active_icon / i18n_key），而独立态 mock 直接持有 camelCase 形态的行
+ * ——两种来源都要接住，故 snake 缺失时回落到已有的 camelCase 值。 */
+type RawMenuNode = Omit<
+  MenuItemRecord,
+  'activeIcon' | 'i18nKey' | 'children'
+> & {
   active_icon?: string | null;
+  i18n_key?: string | null;
+  /** camelCase 形态（独立态 mock 直接持有前端契约的行） */
+  activeIcon?: string | null;
+  i18nKey?: string | null;
   children?: RawMenuNode[] | null;
 };
 
-function mapActiveIcon(nodes: RawMenuNode[]): MenuItemRecord[] {
-  return nodes.map(({ active_icon, children, ...rest }) => ({
-    ...rest,
-    activeIcon: active_icon ?? null,
-    children: children?.length ? mapActiveIcon(children) : null,
-  }));
+function mapRow(nodes: RawMenuNode[]): MenuItemRecord[] {
+  return nodes.map(
+    ({ active_icon, i18n_key, activeIcon, i18nKey, children, ...rest }) => ({
+      ...rest,
+      activeIcon: active_icon ?? activeIcon ?? null,
+      i18nKey: i18n_key ?? i18nKey ?? null,
+      children: children?.length ? mapRow(children) : null,
+    }),
+  );
 }
 
 export const menusApi = {
@@ -110,7 +134,7 @@ export const menusApi = {
       throw toError(e);
     }
     const data = normalize<MenuItemRecord[]>(res);
-    if (Array.isArray(data)) return mapActiveIcon(data);
+    if (Array.isArray(data)) return mapRow(data);
     const envelope = res as { msg?: string } | undefined;
     throw new Error(envelope?.msg);
   },
@@ -130,7 +154,7 @@ export const menusApi = {
     }
     const data = normalize<MenuItemRecord[]>(res);
     // 成功时 data 是数组；非数组（异常 envelope 未解包等）按失败上抛
-    if (Array.isArray(data)) return mapActiveIcon(data);
+    if (Array.isArray(data)) return mapRow(data);
     const envelope = res as { msg?: string } | undefined;
     throw new Error(envelope?.msg);
   },
@@ -145,7 +169,7 @@ export const menusApi = {
     }
     const data = normalize<MenuItemRecord>(res);
     if (data && typeof data === 'object' && 'id' in data)
-      return mapActiveIcon([data])[0];
+      return mapRow([data])[0];
     throw new Error((data as { msg?: string } | undefined)?.msg);
   },
 
@@ -159,7 +183,7 @@ export const menusApi = {
     }
     const data = normalize<MenuItemRecord>(res);
     if (data && typeof data === 'object' && 'id' in data)
-      return mapActiveIcon([data])[0];
+      return mapRow([data])[0];
     throw new Error((data as { msg?: string } | undefined)?.msg);
   },
 

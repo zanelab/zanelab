@@ -83,6 +83,8 @@
       "nameRequired": "Menu name is required",
       "colPermission": "Permission",
       "permissionPlaceholder": "e.g. system:menu:list (empty=public)",
+      "colI18nKey": "i18n Key",
+      "i18nKeyPlaceholder": "e.g. menus.system.users (empty=not set, show name)",
       "public": "public",
       "visible": "Shown",
       "colVisible": "Visible"

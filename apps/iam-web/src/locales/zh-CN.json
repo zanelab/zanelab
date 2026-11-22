@@ -83,6 +83,8 @@
       "nameRequired": "菜单名称不能为空",
       "colPermission": "权限码",
       "permissionPlaceholder": "例：system:menu:list（空=公开）",
+      "colI18nKey": "国际化键",
+      "i18nKeyPlaceholder": "例：menus.system.users（空=不配，按名称显示）",
       "public": "公开",
       "visible": "显示",
       "colVisible": "可见"

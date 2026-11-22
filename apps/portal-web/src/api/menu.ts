@@ -10,6 +10,11 @@ interface RawMenuItem {
   /** 语义权限码（system:menu:list）；空 = 公开 */
   permission: string | null;
   name: string;
+  /**
+   * 国际化键（iam menus.i18n_key，0007 起）——语言包点串（如 menus.system.users）；
+   * 空 = 未配，渲染期回退 name 原文（menuTitle 三态语义）。
+   */
+  i18n_key?: string | null;
   /** app 节点 = 子应用注册键（home/iam，与 config.microApps 键一致）；menu = 本地组件路径 */
   component: string | null;
   uri: string | null;
@@ -108,6 +113,8 @@ function transformMenu(
     return {
       id: raw.id,
       name: raw.name,
+      // button 节点也带 i18nKey——其 name 同样进菜单文案展示点（用户下拉/面包屑）
+      i18nKey: raw.i18n_key ?? undefined,
       path: '', // 无 path → toShellMenus/buildMenuRoutes 自然跳过
       permission: raw.permission || undefined,
     };
@@ -143,6 +150,9 @@ function transformMenu(
   const item: MenuItem = {
     id: raw.id,
     name: raw.name,
+    // 菜单多语言翻译键（iam menus.i18n_key）：渲染期经 menuTitle() 解析——
+    // 命中语言包取翻译，缺条目回退 name 原文（null → undefined = 未配）
+    i18nKey: raw.i18n_key ?? undefined,
     path,
     icon: raw.icon || undefined,
     activeIcon: raw.active_icon || undefined,

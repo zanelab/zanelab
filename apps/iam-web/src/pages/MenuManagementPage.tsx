@@ -34,6 +34,7 @@ interface MenuFormState {
   pid: number | null;
   permission: string; // 语义权限码（system:menu:list；空=公开）
   name: string;
+  i18nKey: string; // 国际化键（menus.system.users 等点串；空=不配，渲染回退 name）
   component: string; // 组件名称（app/menu 类型动态显示）
   uri: string;
   type: MenuItemRecord['type'];
@@ -49,6 +50,7 @@ const EMPTY_FORM: MenuFormState = {
   pid: null,
   permission: '',
   name: '',
+  i18nKey: '',
   component: '',
   uri: '',
   type: 'app', // 用户指定默认应用
@@ -207,6 +209,7 @@ export function MenuManagementPage() {
       pid: row.pid ?? 0,
       permission: row.permission ?? '',
       name: row.name,
+      i18nKey: row.i18nKey ?? '',
       component: row.component ?? '',
       uri: row.uri ?? '',
       type: row.type,
@@ -270,6 +273,8 @@ export function MenuManagementPage() {
       pid: form.pid === 0 ? null : form.pid,
       permission: form.permission.trim() || null,
       name: form.name.trim(),
+      // i18nKey 选填：空串归一 null（edge fn 侧亦做同样归一，双保险）
+      i18nKey: form.i18nKey.trim() || null,
       uri: matrix.uri === 'hidden' ? null : form.uri.trim() || null,
       type: form.type,
       sort: Number(form.sort) || 0,
@@ -400,6 +405,14 @@ export function MenuManagementPage() {
               </span>
             )}
           </td>
+          {/* i18nKey 列：空 = 未配（宿主渲染回退 name 原文） */}
+          <td>
+            {node.i18nKey ? (
+              <span className="font-mono text-xs">{node.i18nKey}</span>
+            ) : (
+              <span className="text-base-content/30 text-xs">—</span>
+            )}
+          </td>
           <td>
             <span className="badge badge-outline badge-sm">
               {t(
@@ -525,6 +538,7 @@ export function MenuManagementPage() {
               <th>{t('iam.menu.colIcon')}</th>
               <th>{t('iam.menu.colUri')}</th>
               <th>{t('iam.menu.colPermission')}</th>
+              <th>{t('iam.menu.colI18nKey')}</th>
               <th>{t('iam.menu.colType')}</th>
               <th>{t('iam.menu.colVisible')}</th>
               <th>{t('iam.menu.colSort')}</th>
@@ -720,6 +734,20 @@ export function MenuManagementPage() {
                   value={form.permission}
                   onChange={(e) =>
                     setForm({ ...form, permission: e.target.value })
+                  }
+                />
+              </label>
+              {/* 国际化键（选填，空=不配）——菜单多语言翻译键，宿主按当前语言
+                  从语言包解析标题；语言包缺该键时回退 name 原文 */}
+              <label className="flex flex-col gap-1">
+                <span className="text-sm">{t('iam.menu.colI18nKey')}</span>
+                <input
+                  type="text"
+                  placeholder={t('iam.menu.i18nKeyPlaceholder')}
+                  className="input input-sm bg-base-200 w-full font-mono"
+                  value={form.i18nKey}
+                  onChange={(e) =>
+                    setForm({ ...form, i18nKey: e.target.value })
                   }
                 />
               </label>
