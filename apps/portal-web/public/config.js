@@ -35,7 +35,7 @@ window.__APP_CONFIG__ = {
   preferences: {
     app: {
       locale: 'zh-CN',
-      enablePreferences: false,
+      enablePreferences: true,
     },
     tabbar: {
       enable: false,
@@ -49,6 +49,10 @@ window.__APP_CONFIG__ = {
       themeToggle: true,
       notification: true,
       timezone: true,
+    },
+    theme: {
+      mode: "auto",
+      radius: "1"
     },
     shortcutKeys: {
       enable: true,
@@ -66,7 +70,8 @@ window.__APP_CONFIG__ = {
   iconPackUrl: '/icons/pack.json',
   i18n: {
     packUrls: {
-
+      'zh-CN': '/i18n/zh-CN.json',
+      'en-US': '/i18n/en-US.json',
     },
   },
   microApps: {
