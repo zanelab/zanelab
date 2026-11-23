@@ -30,7 +30,7 @@
 | [状态管理](./state-management.md) | zustand store、token/菜单加载、qiankun 全局状态同步 |
 | [类型安全](./type-safety.md) | zod schema 推导配置类型、共享类型、`window` 全局类型扩展 |
 | [环境变量与运行时配置](./env-config-guidelines.md) | 部署期 `config.js` vs 开发期 `.env` 的分层判据、env 生效矩阵、开关迁移 |
-| [HTTP 与数据请求](./http-api-guidelines.md) | Axios 封装、拦截器、401 单飞刷新、业务错误码、只读共享实例 |
+| [HTTP 与数据请求](./http-api-guidelines.md) | Axios 封装、拦截器、401 单飞刷新、业务错误码、只读共享实例、Supabase 网关鉴权/edge fn 写路径、迁移序号 |
 | [国际化 i18n](./i18n-guidelines.md) | 双语语言包组织、useTranslation/i18n.t 消费、菜单 i18nKey、切语言链路 |
 | [微前端与子应用](./microfrontend-guidelines.md) | 菜单驱动注册、props 契约、全局状态、子应用接入规范 |
 | [质量规范](./quality-guidelines.md) | 测试策略、禁用模式、评审清单 |

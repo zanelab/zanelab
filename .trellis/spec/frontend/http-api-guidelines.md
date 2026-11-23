@@ -84,6 +84,35 @@ window.__http = httpProxy;
 - **网关 401 与业务 401 status 相同，必须看响应体区分**：网关鉴权失败（部署配置错误，`source === '@supabase/server'`）≠ 会话失效（Edge Fn envelope `{code:1004,msg}`）。前者**绝不触发 handleLogout/跳登录**（保留登录态 + console.error 修复指引 + notify 明确提示），后者才走失效链路。教训：网关 401 曾被 `classifyRefreshError` 归为 invalid，导致**任何有效会话每次刷新页面都被强制登出**（启动期 refresh 必被网关拦截）。
 - apikey 的 key 来源是**运行时配置**（portal `config.js` 的 `api.publishableKey`）/ **构建期 env**（iam 独立态 `VITE_API_KEY`），与拦截器注入同源、单点读取；未配置时**发请求前即失败**并给出修复指引，不发注定被拦的请求。
 
+## Supabase edge fn 写路径：camel→snake 列映射（2026-11-23 沉淀）
+
+**症状**：edge fn 的 create/update 对真实 DB 全部失败（PostgREST `PGRST204`，"column outputTypes 不存在"），而 vitest 全绿——mock 的 `pickInput` 自带了映射，**mock 通过 ≠ fn 正确**，这条断裂只在云端联调时暴露。
+
+**根因**：fn 的入参解析层（`parseSkillInput`， camelCase——对外 API 契约）与写入层（`.insert(input)` / `.update({...input})`，DB 列 snake_case）之间没有显式映射，PostgREST 不会帮你转列名。
+
+**契约**（skills fn 参考实现 `apps/skills-web/supabase/functions/skills/index.ts`）：
+
+```ts
+// 入参解析层产出 camel（API 契约），写库前经 toRowValues 映射为 snake 列名
+function toRowValues(input: SkillInput): Record<string, unknown> {
+  return { ...input, output_types: input.outputTypes }; // ← camel→snake 仅此处
+}
+// skillsCreate/skillsUpdate 一律 .insert(toRowValues(input)) / .update(toRowValues(input))
+```
+
+- **两处同步点**：`toRowValues`（fn 侧）与 mock `pickInput`（`src/mocks/skill-handlers.ts`）各自持有 camel↔snake 映射，**注释互相标注「与对方同步」**——新增入参字段时两处一起改，漏一处就是「测试绿、线上断」。
+- fn 侧跑不进 vitest（Deno 运行时），守护手段是 `tsc -p supabase/functions/tsconfig.json` + 云端联调；映射函数写成纯函数（不碰 `Deno.env`、不碰 req），将来抽测才有可能。
+- Wrong：`parseSkillInput` 之后直接 `.insert(input)`——类型层完全合法（`Record<string, unknown>` 什么都塞得进），编译期零报警，只有运行时 PGRST204。
+
+## Supabase 迁移序号：先查目录再定号（2026-11-23 沉淀）
+
+**Common Mistake：迁移文件版本号撞号 → 已应用环境静默跳过**
+
+- **症状**：迁移文件在、SQL 语法对、`supabase migration up` 报 up-to-date/no-op 不报错，但表/数据就是没出现。
+- **原因**：新迁移与既有迁移撞了序号（本次 `0007_seed_skills_buttons.sql` 撞 `0007_menu_i18n_key.sql`）。supabase 按目录内**已记录的版本号**判断是否已应用——已应用过 0007 的环境（本地 migration 表或云端）直接跳过同号新文件，**无任何告警**。
+- **修复**：重号为下一个空闲号（→ `0008_seed_skills_buttons.sql`），头注释注明「原 0007 撞号重编，不得改回」。
+- **预防**：新建迁移**之前**必跑 `ls apps/<app>/supabase/migrations/`（跨分支合并场景再看 `git log --oneline` 该目录），取最大号 +1；序号只要求目录内唯一且递增，不要求日期连续。
+
 ## 接口函数的书写（src/api/）
 
 - 请求地址一律取 `appConfig.api.<endpoint>`（如 `menusEndpoint`），**不硬编码路径**（§10：接口路径都可在配置覆盖）。
