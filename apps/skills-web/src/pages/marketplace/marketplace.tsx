@@ -1,13 +1,22 @@
-import { useMemo, useState, type CSSProperties } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type CSSProperties,
+} from 'react';
 import { AppIcon } from '@zanelab/ui';
 import { useTranslation } from 'react-i18next';
-import { SKILLS, type SkillItem, type SkillSort } from './data';
+import { type SkillItem, type SkillSort } from './data';
 import {
   filterSkills,
   searchSkills,
   sortSkills,
   toggleFilter,
 } from './filters';
+import { skillsApi } from '../../api/skills';
+import { toSkillItem } from './record';
+import { DeleteConfirmModal, SkillFormModal } from './modal/skill-form-modal';
 import { FilterSidebar } from './filter-sidebar';
 import { MarketplaceFooter } from './footer/footer';
 import { SortTabs } from './sort-tabs';
@@ -29,7 +38,9 @@ import { getProps } from '../../props';
  * 遮罩压暗页面其余部分而控件行保持可见可点（AC7），且弹层因此以控件行为定位基准。
  *
  * 结果列：筛选（组内 OR、组间 AND）→ 搜索（子串，与筛选 AND）→ 排序，全部是
- * filters.ts 的纯函数；数据为静态种子（data.ts）。
+ * filters.ts 的纯函数；数据经 skillsApi.list() 拉取（null = 加载中，失败落
+ * 错误态 + 重试）——11-23-skills-crud-mock R5。新建/编辑/删除经 SkillFormModal /
+ * DeleteConfirmModal，成功后 reloadKey++ 触发重拉（单一重拉驱动点）。
  * 计数口径统一为**总数**（对齐参考稿「620 个 Skills」）——标题徽章与小屏确认按钮
  * 同显总数；筛选/搜索后的结果反馈只由卡片网格承载（已去 chips，无 N/M 计数）。
  * 侧栏结构：`drawer-side` 的唯一子元素就是 `FilterSidebar` 的 aside（不再套外层
@@ -41,6 +52,46 @@ import { getProps } from '../../props';
  */
 export function MarketplacePage() {
   const { t } = useTranslation();
+  // ---- 数据拉取（skillsApi.list）：null = 加载中；'' = 无错误 ----
+  const [skills, setSkills] = useState<SkillItem[] | null>(null);
+  const [error, setError] = useState('');
+  const [reloadKey, setReloadKey] = useState(0);
+  const reload = useCallback(() => setReloadKey((k) => k + 1), []);
+
+  useEffect(() => {
+    // alive 守卫：卸载/重拉竞态下不回写过期响应
+    let alive = true;
+    setSkills(null);
+    setError('');
+    skillsApi
+      .list()
+      .then((rows) => {
+        if (alive) setSkills(rows.map(toSkillItem));
+      })
+      .catch((e: unknown) => {
+        if (alive)
+          setError((e as Error).message || t('skills.market.loadError'));
+      });
+    return () => {
+      alive = false;
+    };
+    // t 进依赖：错误兜底文案随语言重建（重拉时取当前语言）
+  }, [reloadKey, t]);
+
+  // ---- 弹窗状态（页面层持有：成功后统一走 reload + 关闭）----
+  const [formOpen, setFormOpen] = useState(false);
+  const [editing, setEditing] = useState<SkillItem | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<SkillItem | null>(null);
+
+  const openCreate = () => {
+    setEditing(null);
+    setFormOpen(true);
+  };
+  const openEdit = (skill: SkillItem) => {
+    setEditing(skill);
+    setFormOpen(true);
+  };
+
   const [active, setActive] = useState<Record<string, string[]>>({});
   const [sort, setSort] = useState<SkillSort>('recommended');
   const [query, setQuery] = useState('');
@@ -64,9 +115,12 @@ export function MarketplacePage() {
     '--page-radius': `${prefs.radius}rem`,
   } as CSSProperties;
 
+  const total = skills?.length ?? 0;
+
   const visible: SkillItem[] = useMemo(
-    () => sortSkills(searchSkills(filterSkills(SKILLS, active), query), sort),
-    [active, query, sort],
+    () =>
+      sortSkills(searchSkills(filterSkills(skills ?? [], active), query), sort),
+    [skills, active, query, sort],
   );
 
   const activeCount = Object.values(active).reduce((n, v) => n + v.length, 0);
@@ -94,7 +148,7 @@ export function MarketplacePage() {
                     {t('skills.market.title')}
                   </h1>
                   <span className="bg-base-content/6 text-base-content/55 inline-flex h-6 items-center rounded-full px-2.5 text-xs font-semibold tabular-nums">
-                    {t('skills.market.countSuffix', { count: SKILLS.length })}
+                    {t('skills.market.countSuffix', { count: total })}
                   </span>
                 </div>
                 <p className="text-base-content/50 mt-1 text-[13px]">
@@ -155,7 +209,7 @@ export function MarketplacePage() {
                   </div>
                   {/* 上传入口：无权限（宿主注入且不含码）即整块不渲染 */}
                   <Permission code="skills:skill:create">
-                    <UploadButton />
+                    <UploadButton onCreate={openCreate} />
                   </Permission>
                 </div>
               </div>
@@ -164,10 +218,36 @@ export function MarketplacePage() {
             {/* 结果区标题（参考稿大纲：页面 h1 + sr-only h2 + 卡片 h3） */}
             <h2 className="sr-only">{t('skills.market.srTitle')}</h2>
 
-            {visible.length > 0 ? (
+            {/* 加载态 / 错误态（接口拉取，11-23-skills-crud-mock R5） */}
+            {skills === null ? (
+              <div
+                role="status"
+                className="text-base-content/50 flex items-center justify-center gap-2 py-16 text-sm"
+              >
+                <span className="loading loading-spinner loading-sm" />
+                {t('skills.market.loading')}
+              </div>
+            ) : error ? (
+              <div
+                role="alert"
+                className="flex flex-col items-center gap-3 py-16 text-sm"
+              >
+                <span className="text-error">
+                  {error || t('skills.market.loadError')}
+                </span>
+                <button type="button" className="btn btn-sm" onClick={reload}>
+                  {t('skills.market.retry')}
+                </button>
+              </div>
+            ) : visible.length > 0 ? (
               <div className="grid grid-cols-1 items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {visible.map((skill) => (
-                  <SkillCard key={skill.id} skill={skill} />
+                  <SkillCard
+                    key={skill.id}
+                    skill={skill}
+                    onEdit={openEdit}
+                    onDelete={setDeleteTarget}
+                  />
                 ))}
               </div>
             ) : (
@@ -176,8 +256,9 @@ export function MarketplacePage() {
               </div>
             )}
 
-            {/* 页脚营销区（参考站 section.mt-16）：纯展示，不受筛选/搜索影响 */}
-            <MarketplaceFooter />
+            {/* 页脚营销区（参考站 section.mt-16）：纯展示，不受筛选/搜索影响；
+                统计数字随拉取数据（skills 就绪后才渲染页脚） */}
+            {skills ? <MarketplaceFooter skills={skills} /> : null}
           </main>
         </div>
 
@@ -195,10 +276,29 @@ export function MarketplacePage() {
             onToggle={onToggle}
             onClose={() => setDrawerOpen(false)}
             onCollapse={() => setFiltersCollapsed(true)}
-            totalCount={SKILLS.length}
+            totalCount={total}
           />
         </div>
       </div>
+
+      {/* 新建/编辑 + 删除确认弹窗（页面层持有状态；成功回调统一重拉列表） */}
+      <SkillFormModal
+        open={formOpen}
+        editing={editing}
+        onClose={() => setFormOpen(false)}
+        onSaved={() => {
+          setFormOpen(false);
+          reload();
+        }}
+      />
+      <DeleteConfirmModal
+        target={deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onSaved={() => {
+          setDeleteTarget(null);
+          reload();
+        }}
+      />
     </div>
   );
 }

@@ -1,12 +1,14 @@
 import { AppIcon } from '@zanelab/ui';
 import { useTranslation } from 'react-i18next';
-import { overviewSection } from './content';
+import { overviewSection, overviewStats } from './content';
+import type { SkillItem } from '../data';
 
 /**
  * 页脚第 1 段「什么是 Agent Skills 市场？」：
  * 居中段头（h2 24→30px + 说明段）+ 四张特性卡（小屏 1 列 / sm 2 列 / lg 4 列）。
  * 卡片无图片素材 → 上部 aspect-[4/3] 语义色渐变块 + 居中 AppIcon（沿用 D3）；
  * 纯展示：无 hover 位移；无 primary（名额归卡片「免费」徽章，渐变基调也避开）。
+ * 统计数字（总数/免费数）由页面把拉取后的列表传入（content.ts overviewStats）。
  */
 
 const FEATURE_TONE_CLASS = [
@@ -16,9 +18,9 @@ const FEATURE_TONE_CLASS = [
   'from-warning/25 to-warning/5',
 ];
 
-export function OverviewSection() {
+export function OverviewSection({ skills }: { skills: SkillItem[] }) {
   const { t } = useTranslation();
-  const section = overviewSection(t);
+  const section = overviewSection(t, overviewStats(skills));
   return (
     <div className="flex flex-col items-center gap-7">
       <div className="mx-auto flex max-w-[680px] flex-col items-center gap-2.5 text-center">

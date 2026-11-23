@@ -36,6 +36,15 @@ export default defineConfig(({ command, mode }) => {
           secure: false,
           rewrite: (p) => p.replace(/^\/iam/, ''),
         },
+        // skills 子应用接口代理：与 iam 规则同构并列（剥 /skills 前缀）。
+        // 共享同一 VITE_PROXY_TARGET（指云时两条规则都到云网关）；本地双 dev
+        // server 联调用 skills 侧 VITE_USE_MOCK，不走代理分流。
+        '/skills/functions/v1': {
+          target: proxyTarget || 'http://localhost:8084',
+          changeOrigin: true,
+          secure: false,
+          rewrite: (p) => p.replace(/^\/skills/, ''),
+        },
       },
     },
     build: {

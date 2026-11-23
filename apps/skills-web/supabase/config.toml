@@ -1,0 +1,42 @@
+# skills Edge Function — Supabase 配置
+# ====================================
+# 本文件仅供本地开发（supabase start / supabase functions serve）。
+# 云部署配置由 CLI 参数 + 控制台独立管理，config.toml 不影响云端。
+#
+# ══════════════════════════════════════
+# 本地开发
+# ══════════════════════════════════════
+#   supabase start                          # 启动本地 Supabase 容器
+#   supabase db reset                       # 应用 migrations/（0001 建表 + 0002 种子）
+#   supabase functions serve skills --no-verify-jwt  # 本地调试 Edge Function
+#
+# ══════════════════════════════════════
+# 云部署（skills 是**独立可部署项目**——不依赖 iam 项目的迁移/函数）
+# ══════════════════════════════════════
+#   supabase link --project-ref <ref>           # 关联云项目（一次性）
+#   supabase db push                            # 应用 migrations/
+#   supabase functions deploy skills --no-verify-jwt --project-ref <ref>
+#
+#   部署后函数 URL: https://<ref>.supabase.co/functions/v1/skills
+#   控制台需确认：
+#     - Edge Functions → skills → Settings: Verify JWT = 关闭
+#       （--no-verify-jwt 部署标志自动设置此项；也可在控制台手动切换）
+#
+# ══════════════════════════════════════
+# 与 iam 项目的关系（任务 11-23-skills-crud-mock 结构决策）
+# ══════════════════════════════════════
+# 本目录是 skills-web 自己的 Supabase 项目（独立部署单元）：
+# - migrations/ 只管 skills 表；functions/ 只放 skills 函数
+# - 权限码（skills:skill:create/update/delete）的**按钮节点**仍种在 iam 项目
+#   （RBAC 的菜单树是 iam 的域——权限判定读 iam 的 role_permissions；
+#   skills fn 只做「JWT → 权限码」校验，不持有角色表）
+# - skills fn 与 iam fn 共用同一个 Supabase 项目吗？——**部署期决定**：
+#   skills-web 独立部署时指自己的项目；部署在 zanelab 主项目时与 iam 同库
+#   （supabaseAdmin key 指谁就查谁的角色表，鉴权即通）
+
+project_id = "zanelab-skills"
+
+[functions.skills]
+# GET 列表/详情是匿名端点（公开读，父任务决策 D1）；写端点在函数内自校验
+# JWT + 权限码，不需要网关层 JWT 校验
+verify_jwt = false

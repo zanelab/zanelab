@@ -22,6 +22,23 @@ let root: Root | null = null;
 let unsubscribeLocale: (() => void) | null = null;
 
 /**
+ * mock worker 启动（幂等；iam main.tsx startMockWorker 同款）：独立 dev 态与
+ * 集成态都要拦——MSW 的 Service Worker 注册在**页面 origin** 上，只拦页面自身
+ * fetch。集成态（qiankun）请求发自 portal 页面（:5173）经宿主 vite proxy 转发，
+ * 转发请求是 **vite server 层**的 HTTP——唯一拦截点是 5173 origin 上的 SW。
+ * worker 只在独立分支启动的话，集成态没有任何拦截者 → 转发落到 8084 vite
+ * server（无路由）→ 404（iam 2026-10-26 实测踩坑）。
+ * 同一进程只 start 一次（MSW 重复 start 幂等，这里显式守卫防竞态）。
+ */
+let workerStarted = false;
+async function startMockWorker() {
+  if (workerStarted) return;
+  workerStarted = true;
+  const { worker } = await import('./mocks/browser');
+  await worker.start({ onUnhandledRequest: 'bypass' });
+}
+
+/**
  * 接线基座语言（iam main.tsx setupLocale 同款）：初始语言取
  * props.preferences.locale，运行期经 onHostStateChange 订阅快照增量（宿主
  * register.ts 的推送快照含 preferences 外观子集，locale 变更会进来）。
@@ -73,6 +90,10 @@ renderWithQiankun({
     // i18n 初始化/复挂载对齐 + 语言订阅（React 渲染前，iam main.tsx 同款顺序）
     setupLocale(getProps());
     setupHostMessagePacks(getProps());
+    // 集成态也要启动 worker：mock 拦截点在页面 origin 的 SW（见函数注释）
+    if (import.meta.env.DEV && import.meta.env.VITE_USE_MOCK === 'true') {
+      void startMockWorker();
+    }
     render(props as SkillsProps);
   },
   update() {},
@@ -96,6 +117,10 @@ if (!qiankunWindow.__POWERED_BY_QIANKUN__) {
   // → Permission 视作独立态，一律放行（后端 403 兜底）
   void (async () => {
     setupI18n(); // undefined → 缺省 zh-CN（packUrls 空 → 懒加载 no-op）
+    // mock 启动独立分支同样调用（幂等，见 startMockWorker 注释）
+    if (import.meta.env.DEV && import.meta.env.VITE_USE_MOCK === 'true') {
+      await startMockWorker();
+    }
     render({ basename: '/' });
   })();
 }

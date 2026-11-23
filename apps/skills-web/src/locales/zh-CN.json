@@ -10,7 +10,10 @@
       "closeFilter": "关闭筛选",
       "viewAll": "查看 {{count}} 个 Skills",
       "empty": "没有符合筛选条件的 Skills，试试清除部分筛选或换个搜索关键词。",
-      "srTitle": "Agent Skills 市场"
+      "srTitle": "Agent Skills 市场",
+      "loading": "加载中…",
+      "retry": "重试",
+      "loadError": "加载失败，请重试"
     },
     "toolbar": {
       "category": "分类",
@@ -72,7 +75,39 @@
       "installCount": "安装数",
       "likeCount": "点赞数",
       "like": "喜欢 {{title}}",
-      "bookmark": "收藏 {{title}}"
+      "bookmark": "收藏 {{title}}",
+      "edit": "编辑 {{title}}",
+      "delete": "删除 {{title}}"
+    },
+    "form": {
+      "createTitle": "新建 Skill",
+      "editTitle": "编辑 Skill",
+      "fieldTitle": "名称",
+      "titlePlaceholder": "技能名称，例如：产品官网生成器",
+      "free": "免费",
+      "featured": "精选",
+      "outputTypes": "输出类型",
+      "roles": "角色",
+      "scenes": "使用场景",
+      "agents": "兼容 Agent",
+      "rating": "评分",
+      "tone": "缩略图基调",
+      "titleRequired": "请填写技能名称",
+      "save": "保存",
+      "saveFailed": "保存失败，请重试",
+      "cancel": "取消",
+      "deleteTitle": "删除 Skill",
+      "deleteConfirm": "确定删除「{{title}}」？该操作不可撤销。",
+      "delete": "删除",
+      "deleteFailed": "删除失败，请重试"
+    },
+    "tone": {
+      "primary": "主色",
+      "secondary": "次色",
+      "accent": "强调色",
+      "info": "信息色",
+      "success": "成功色",
+      "warning": "警告色"
     },
     "footer": {
       "overview": {
@@ -153,12 +188,6 @@
           }
         }
       }
-    },
-    "upload": {
-      "title": "上传 skills",
-      "body": "上传功能待接入：后端上传接口尚未提供，这里只是一个占位入口。接入后可在此选择 skill 包、填写名称与简介，再提交审核。",
-      "confirm": "知道了",
-      "close": "关闭"
     }
   }
 }

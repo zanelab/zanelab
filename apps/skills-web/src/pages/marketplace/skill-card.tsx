@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { AppIcon } from '@zanelab/ui';
 import { useTranslation } from 'react-i18next';
 import { AGENT_LABEL, type OutputType, type SkillItem } from './data';
+import { Permission } from '../../components/permission';
 
 /**
  * 技能卡片（参考稿网格单元）：无卡片容器——`aspect-video` 缩略图自身承载
@@ -10,6 +11,8 @@ import { AGENT_LABEL, type OutputType, type SkillItem } from './data';
  * hover / focus-within 时卡片上浮，右上浮出 喜欢 / 收藏 两个圆钮。
  * 缩略图无真实图（无后端/无静态资源），用语义色渐变占位。
  * 喜欢/收藏无后端，仅页面内本地状态（`aria-pressed` 如实反映，不当已持久化）。
+ * 编辑/删除操作钮（11-23-skills-crud-mock R5）：同一 hover 层追加两个圆钮，
+ * 各自包 Permission（update/delete 码）——无权限整钮不渲染；点击回调页面层。
  */
 
 const TONE_CLASS: Record<SkillItem['tone'], string> = {
@@ -32,7 +35,13 @@ const OUTPUT_ICON: Record<OutputType, string> = {
 /** 标题行最多展示的头像圆片数，其余折叠为 "+N" */
 const MAX_AGENT_AVATARS = 3;
 
-export function SkillCard({ skill }: { skill: SkillItem }) {
+export interface SkillCardProps {
+  skill: SkillItem;
+  onEdit?: (skill: SkillItem) => void;
+  onDelete?: (skill: SkillItem) => void;
+}
+
+export function SkillCard({ skill, onEdit, onDelete }: SkillCardProps) {
   const { t } = useTranslation();
   const [liked, setLiked] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
@@ -111,6 +120,33 @@ export function SkillCard({ skill }: { skill: SkillItem }) {
           >
             <AppIcon name="bookmark" className="size-4" />
           </button>
+          {/* 编辑/删除（11-23-skills-crud-mock R5）：有回调且权限码命中才渲染。
+              Permissions 在卡片内部判定（而非调用方拆卡）——显隐与卡片 hover 层
+              的 DOM 结构强耦合，拆到外面会破坏浮层形态。 */}
+          {onEdit ? (
+            <Permission code="skills:skill:update">
+              <button
+                type="button"
+                aria-label={t('skills.card.edit', { title: skill.title })}
+                onClick={() => onEdit(skill)}
+                className="btn btn-circle btn-sm btn-ghost bg-base-100/60 text-base-content/60 hover:text-base-content backdrop-blur-md"
+              >
+                <AppIcon name="edit" className="size-4" />
+              </button>
+            </Permission>
+          ) : null}
+          {onDelete ? (
+            <Permission code="skills:skill:delete">
+              <button
+                type="button"
+                aria-label={t('skills.card.delete', { title: skill.title })}
+                onClick={() => onDelete(skill)}
+                className="btn btn-circle btn-sm btn-ghost bg-base-100/60 text-base-content/60 hover:text-error backdrop-blur-md"
+              >
+                <AppIcon name="trash" className="size-4" />
+              </button>
+            </Permission>
+          ) : null}
         </div>
       </div>
 

@@ -10,7 +10,10 @@
       "closeFilter": "Close filters",
       "viewAll": "View {{count}} Skills",
       "empty": "No Skills match the current filters. Try clearing some filters or searching with different keywords.",
-      "srTitle": "Agent Skills Marketplace"
+      "srTitle": "Agent Skills Marketplace",
+      "loading": "Loading…",
+      "retry": "Retry",
+      "loadError": "Failed to load Skills. Please retry."
     },
     "toolbar": {
       "category": "Categories",
@@ -72,7 +75,39 @@
       "installCount": "Installs",
       "likeCount": "Likes",
       "like": "Like {{title}}",
-      "bookmark": "Bookmark {{title}}"
+      "bookmark": "Bookmark {{title}}",
+      "edit": "Edit {{title}}",
+      "delete": "Delete {{title}}"
+    },
+    "form": {
+      "createTitle": "New Skill",
+      "editTitle": "Edit Skill",
+      "fieldTitle": "Name",
+      "titlePlaceholder": "Skill name, e.g. Product site generator",
+      "free": "Free",
+      "featured": "Featured",
+      "outputTypes": "Output types",
+      "roles": "Roles",
+      "scenes": "Use cases",
+      "agents": "Compatible agents",
+      "rating": "Rating",
+      "tone": "Thumbnail tone",
+      "titleRequired": "Please enter a skill name",
+      "save": "Save",
+      "saveFailed": "Save failed. Please retry.",
+      "cancel": "Cancel",
+      "deleteTitle": "Delete Skill",
+      "deleteConfirm": "Delete \"{{title}}\"? This action cannot be undone.",
+      "delete": "Delete",
+      "deleteFailed": "Delete failed. Please retry."
+    },
+    "tone": {
+      "primary": "Primary",
+      "secondary": "Secondary",
+      "accent": "Accent",
+      "info": "Info",
+      "success": "Success",
+      "warning": "Warning"
     },
     "footer": {
       "overview": {
@@ -153,12 +188,6 @@
           }
         }
       }
-    },
-    "upload": {
-      "title": "Upload skills",
-      "body": "Upload is not wired up yet: the backend upload API is still pending, so this is a placeholder entry. Once ready, you will pick a skill package here, fill in the name and description, and submit for review.",
-      "confirm": "Got it",
-      "close": "Close"
     }
   }
 }

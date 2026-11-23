@@ -52,6 +52,35 @@ export interface SkillsProps {
   ) => () => void;
   /** 宿主运行时语言包（config.js i18n.packUrls；键 = 语言代码，值 = JSON URL） */
   i18n?: { packUrls?: Record<string, string> };
+  /**
+   * 集成态显式 API 前缀（部署期直连 Supabase 时由部署 config.js 传 ''：宿主共享
+   * 实例的 endpoint 已含完整路径，再拼 basename 派生前缀会双前缀 404）。
+   * **空串合法**——解析按 `typeof === 'string'` 判定而非真值（见 api/prefix.ts）；
+   * 未传回退 props.basename 派生。
+   */
+  apiPrefix?: string;
+  /** 宿主共享 http 通道（RequestClient 只读代理；结构与 iam props.ts 的 HostHttpClient 同形） */
+  http?: HostHttpClient;
+  [key: string]: unknown;
+}
+
+/**
+ * 宿主共享 http 通道的结构化子集（iam props.ts 的 HostHttpClient 平移——
+ * 按消费面声明同形子集，方法签名与 RequestClient 公开方法对齐）。
+ */
+export interface HostHttpClient {
+  get: <T = unknown>(url: string, config?: unknown) => Promise<T>;
+  post: <T = unknown>(
+    url: string,
+    data?: unknown,
+    config?: unknown,
+  ) => Promise<T>;
+  put: <T = unknown>(
+    url: string,
+    data?: unknown,
+    config?: unknown,
+  ) => Promise<T>;
+  delete: <T = unknown>(url: string, config?: unknown) => Promise<T>;
   [key: string]: unknown;
 }
 

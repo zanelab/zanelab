@@ -8,17 +8,22 @@
  *
  * 文案口径：以参考站 skillry.dev/zh/skills 页脚为底稿改写（任务决策 B2）——
  * 凡涉及 Skillry 品牌、会员计划、CLI/ZIP 安装、"采集站对比"的表述按本项目实际改写；
- * 数字从 ../data.ts 派生（总数 / 免费数 / agent 数），不写死第二份事实源。
- * 分类入口与大卡条目均为纯展示（决策 B3）：不挂路由、不触发筛选、无箭头。
+ * 数字从拉取后的列表派生（overviewSection 入参，总数 / 免费数 / agent 数），不写死
+ * 第二份事实源。分类入口与大卡条目均为纯展示（决策 B3）：不挂路由、不触发筛选、无箭头。
  */
 
 import type { TFunction } from 'i18next';
-import { AGENT_LABEL, FILTER_GROUPS, SKILLS } from '../data';
+import { AGENT_LABEL, FILTER_GROUPS, type SkillItem } from '../data';
 
-/** 派生计数（演示种子口径；接真后端后此处随接口层迁移） */
-const total = SKILLS.length;
-const freeCount = SKILLS.filter((skill) => skill.free).length;
-const agentCount = Object.keys(AGENT_LABEL).length;
+/** 第 1 段派生计数（skillsApi.list() 的入参派生，11-23-skills-crud-mock：
+ *  数字随拉取数据走，不再模块顶层落静态种子——「模块顶层不落数据」同款约束）。 */
+export function overviewStats(skills: SkillItem[]) {
+  return {
+    total: skills.length,
+    freeCount: skills.filter((skill) => skill.free).length,
+    agentCount: Object.keys(AGENT_LABEL).length,
+  };
+}
 
 export interface OverviewFeature {
   icon: string;
@@ -43,8 +48,12 @@ export interface FaqItem {
   answer: string;
 }
 
-/** 第 1 段：什么是 Agent Skills 市场？ */
-export function overviewSection(t: TFunction) {
+/** 第 1 段：什么是 Agent Skills 市场？（数字入参：拉取后的列表派生，见 overviewStats） */
+export function overviewSection(
+  t: TFunction,
+  stats: ReturnType<typeof overviewStats>,
+) {
+  const { total, freeCount, agentCount } = stats;
   return {
     title: t('skills.footer.overview.title'),
     description: t('skills.footer.overview.description'),

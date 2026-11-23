@@ -14,15 +14,42 @@ import { setProps } from '../../props';
 import { MarketplacePage } from './marketplace';
 import { TRANSITION_MS } from './toolbar/category-menu';
 
+/** 表单弹窗定位（<dialog aria-labelledby="skill-form-title">；jsdom 下 dialog
+ *  无隐式 role，角色查询不可用——用 aria-labelledby 锚定）。 */
+function formDialog() {
+  return document
+    .getElementById('skill-form-title')!
+    .closest('dialog') as HTMLDialogElement;
+}
+/** 删除确认弹窗定位（同上，aria-labelledby="skill-delete-title"）。 */
+function deleteDialog() {
+  return document
+    .getElementById('skill-delete-title')!
+    .closest('dialog') as HTMLDialogElement;
+}
+/** 表单弹窗是否在文档中（waitFor 关闭断言用；不抛错）。 */
+function formDialogOrNull() {
+  return document.getElementById('skill-form-title');
+}
+/** 删除确认弹窗是否在文档中（同上）。 */
+function deleteDialogOrNull() {
+  return document.getElementById('skill-delete-title');
+}
+
 // jsdom 无布局引擎，网格列数/粘性定位类名只做存在性断言；
 // 交互行为（筛选收窄 / 排序 / 空态）是本页核心契约，断言不依赖类名。
+// 11-23-skills-crud-mock：数据改经 skillsApi.list() 异步拉取（MSW node server
+// 拦截，src/test/setup.ts 全局起停）——renderPage 等待列表就绪再返回。
 
-function renderPage() {
-  return render(
+async function renderPage() {
+  const utils = render(
     <MemoryRouter>
       <MarketplacePage />
     </MemoryRouter>,
   );
+  // 列表就绪的锚点 = 计数徽章（总数口径「14 个 Skills」，与种子条数一致）
+  await screen.findByText('14 个 Skills');
+  return utils;
 }
 
 /** 卡片列表（`article`）；卡片标题是 h3，与侧栏分组标题（h3）区分开 */
@@ -57,8 +84,8 @@ function categoryOverlay() {
 }
 
 describe('MarketplacePage', () => {
-  it('渲染标题、总数徽章与卡片网格，且无「已经到底了。」页脚', () => {
-    renderPage();
+  it('渲染标题、总数徽章与卡片网格，且无「已经到底了。」页脚', async () => {
+    await renderPage();
     expect(
       screen.getByRole('heading', { level: 1, name: 'Agent Skills 市场' }),
     ).toBeInTheDocument();
@@ -70,8 +97,8 @@ describe('MarketplacePage', () => {
     expect(screen.queryByText('已经到底了。')).not.toBeInTheDocument();
   });
 
-  it('渲染全部排序选项，默认选中「推荐」', () => {
-    renderPage();
+  it('渲染全部排序选项，默认选中「推荐」', async () => {
+    await renderPage();
     const tabs = screen.getAllByRole('tab');
     expect(tabs.map((t) => t.textContent)).toEqual([
       '推荐',
@@ -82,8 +109,8 @@ describe('MarketplacePage', () => {
     expect(tabs[0]).toHaveAttribute('aria-selected', 'true');
   });
 
-  it('渲染技能卡片（标题 + 免费徽章）', () => {
-    renderPage();
+  it('渲染技能卡片（标题 + 免费徽章）', async () => {
+    await renderPage();
     expect(screen.getByText('薄荷暗夜软件产品官网')).toBeInTheDocument();
     // 「免费」同时出现在侧栏选项里，故限定在卡片内计数：14 条种子中 12 条免费
     expect(
@@ -94,8 +121,8 @@ describe('MarketplacePage', () => {
     ).toHaveLength(2);
   });
 
-  it('卡片含媒体类型圆标与统计浮层', () => {
-    renderPage();
+  it('卡片含媒体类型圆标与统计浮层', async () => {
+    await renderPage();
     const first = cards()[0];
     // 媒体类型圆标带 sr-only 文案（outputTypes[0]）
     expect(within(first).getByText('网页')).toHaveClass('sr-only');
@@ -104,8 +131,8 @@ describe('MarketplacePage', () => {
     expect(within(first).getByText('6')).toBeInTheDocument();
   });
 
-  it('侧栏渲染 5 个筛选分组（含「按使用场景」与「按 Agent」）', () => {
-    const { container } = renderPage();
+  it('侧栏渲染 5 个筛选分组（含「按使用场景」与「按 Agent」）', async () => {
+    const { container } = await renderPage();
     const aside = sidebar(container);
     expect(aside.getByText('按输出类型')).toBeInTheDocument();
     expect(aside.getByText('按角色')).toBeInTheDocument();
@@ -134,7 +161,7 @@ describe('MarketplacePage', () => {
 
   it('勾选「免费」筛选：卡片收窄到 12 条', async () => {
     const user = userEvent.setup();
-    renderPage();
+    await renderPage();
     await user.click(option('免费'));
     expect(cards()).toHaveLength(12);
     expect(screen.queryByText('融资路演幻灯片生成')).not.toBeInTheDocument();
@@ -146,7 +173,7 @@ describe('MarketplacePage', () => {
 
   it('切到「热门」排序：热门（452 下载）排第一', async () => {
     const user = userEvent.setup();
-    renderPage();
+    await renderPage();
     await user.click(screen.getByRole('tab', { name: '热门' }));
     expect(
       within(cards()[0]).getByRole('heading', { level: 3 }),
@@ -164,7 +191,7 @@ describe('MarketplacePage', () => {
     ['评分最高', ['融资路演幻灯片生成', '薄荷暗夜软件产品官网']],
   ])('排序「%s」切换生效：卡片网格重排', async (tab, expected) => {
     const user = userEvent.setup();
-    renderPage();
+    await renderPage();
     await user.click(screen.getByRole('tab', { name: tab }));
     expect(
       cards()
@@ -181,7 +208,7 @@ describe('MarketplacePage', () => {
 
   it('免费 × 教师（组间 AND）→ 只剩课堂教学课件助手', async () => {
     const user = userEvent.setup();
-    renderPage();
+    await renderPage();
     await user.click(option('免费'));
     await user.click(option('教师'));
     // 种子里免费 × 教师恰好 1 条
@@ -192,7 +219,7 @@ describe('MarketplacePage', () => {
 
   it('免费 × 顾问（组间 AND 无交集）→ 空态提示、无卡片', async () => {
     const user = userEvent.setup();
-    renderPage();
+    await renderPage();
     // 顾问只有 1 条（融资路演幻灯片生成）且付费 → 免费 × 顾问 = 空
     await user.click(option('免费'));
     await user.click(option('顾问'));
@@ -202,7 +229,7 @@ describe('MarketplacePage', () => {
 
   it('场景组参与筛选：知识解释与教学 → 2 条（不与角色值交叉命中）', async () => {
     const user = userEvent.setup();
-    renderPage();
+    await renderPage();
     await user.click(option('知识解释与教学'));
     // 种子里带该场景的是 融资路演幻灯片生成 + 课堂教学课件助手
     expect(cards()).toHaveLength(2);
@@ -210,8 +237,8 @@ describe('MarketplacePage', () => {
     expect(screen.queryByText('薄荷暗夜软件产品官网')).not.toBeInTheDocument();
   });
 
-  it('侧栏只有一层 aside，且底色与页面同底（不用 base-100 白面板）', () => {
-    const { container } = renderPage();
+  it('侧栏只有一层 aside，且底色与页面同底（不用 base-100 白面板）', async () => {
+    const { container } = await renderPage();
     const asides = container.querySelectorAll('aside');
     expect(asides).toHaveLength(1);
     // drawer-side 不承担撑宽职责：唯一的 aside 必须是它的直接子元素
@@ -220,8 +247,8 @@ describe('MarketplacePage', () => {
     expect(asides[0]).not.toHaveClass('bg-base-100');
   });
 
-  it('侧栏分组分隔线用可见语义描边色（不与侧栏底色同色）', () => {
-    const { container } = renderPage();
+  it('侧栏分组分隔线用可见语义描边色（不与侧栏底色同色）', async () => {
+    const { container } = await renderPage();
     // 5 个分组：推荐 / 按输出类型 / 按角色 / 按使用场景 / 按 Agent
     const groups = container.querySelectorAll('aside section');
     expect(groups).toHaveLength(5);
@@ -234,7 +261,7 @@ describe('MarketplacePage', () => {
 
   it('小屏打开抽屉不给容器追加 drawer-open（小屏开合只走隐藏复选框）', async () => {
     const user = userEvent.setup();
-    const { container } = renderPage();
+    const { container } = await renderPage();
     const drawer = container.querySelector('.drawer');
     const box = document.getElementById(
       'skills-filter-drawer',
@@ -251,7 +278,7 @@ describe('MarketplacePage', () => {
 
   it('桌面默认收起侧栏：展开/收起按 filtersCollapsed 增删 lg:drawer-open', async () => {
     const user = userEvent.setup();
-    const { container } = renderPage();
+    const { container } = await renderPage();
     const drawer = container.querySelector('.drawer');
     // 默认收起：首屏只有「展开筛选」入口，容器不带 lg:drawer-open
     expect(drawer?.className).not.toContain('lg:drawer-open');
@@ -272,8 +299,8 @@ describe('MarketplacePage', () => {
     ).toBeInTheDocument();
   });
 
-  it('卡片自持层叠上下文：卡内浮层 z-index 不逃逸到页面级（抽屉被穿透的回归）', () => {
-    renderPage();
+  it('卡片自持层叠上下文：卡内浮层 z-index 不逃逸到页面级（抽屉被穿透的回归）', async () => {
+    await renderPage();
     const card = cards()[0];
     /** 取元素上的 z-index 工具类（z-10 / z-[15] / z-30 …） */
     const zTokens = (el: Element) =>
@@ -297,7 +324,7 @@ describe('MarketplacePage', () => {
 
   it('收起/展开按钮的图标经 AppIcon 解析（svg + path 存在）', async () => {
     const user = userEvent.setup();
-    const { container } = renderPage();
+    const { container } = await renderPage();
     // 侧栏默认收起：先展开，才能拿到「收起筛选」按钮
     await user.click(screen.getByRole('button', { name: '展开筛选' }));
     const btn = screen.getByRole('button', { name: '收起筛选' });
@@ -313,13 +340,13 @@ describe('MarketplacePage', () => {
 // jsdom 无布局引擎，锁「变量注入 + 值来源」两个契约点：
 // 变量挂页面根 div 的内联 style；值取 props.preferences.radius，未下发用缺省。
 describe('MarketplacePage —— radius 主题联动', () => {
-  it('独立态（无 props）：--page-radius 用中性缺省 0.5rem', () => {
-    const { container } = renderPage();
+  it('独立态（无 props）：--page-radius 用中性缺省 0.5rem', async () => {
+    const { container } = await renderPage();
     const root = container.firstElementChild as HTMLElement;
     expect(root.style.getPropertyValue('--page-radius')).toBe('0.5rem');
   });
 
-  it('集成态：--page-radius 跟随 props.preferences.radius（宿主 rem 字符串）', () => {
+  it('集成态：--page-radius 跟随 props.preferences.radius（宿主 rem 字符串）', async () => {
     setProps({
       preferences: {
         mode: 'light',
@@ -334,7 +361,7 @@ describe('MarketplacePage —— radius 主题联动', () => {
         locale: 'zh-CN',
       },
     });
-    const { container, unmount } = renderPage();
+    const { container, unmount } = await renderPage();
     const root = container.firstElementChild as HTMLElement;
     expect(root.style.getPropertyValue('--page-radius')).toBe('1.25rem');
     unmount();
@@ -346,8 +373,8 @@ describe('MarketplacePage —— radius 主题联动', () => {
 // 控件区自身分左右两栏。jsdom 无布局引擎，这里锁的是一行归属与 DOM 顺序
 // （视觉左右分栏与真实 z 序由 CDP 实测，见任务验收记录）。
 describe('MarketplacePage —— 标题区两行与控件区两栏', () => {
-  it('标题块独占一行，控件区在另一行，且标题块内无任何控件', () => {
-    const { container } = renderPage();
+  it('标题块独占一行，控件区在另一行，且标题块内无任何控件', async () => {
+    const { container } = await renderPage();
     const header = container.querySelector('header') as HTMLElement;
     const rows = [...header.children] as HTMLElement[];
     expect(rows).toHaveLength(2);
@@ -360,8 +387,8 @@ describe('MarketplacePage —— 标题区两行与控件区两栏', () => {
     expect(rows[1].querySelector('button')).not.toBeNull();
   });
 
-  it('左栏 DOM 顺序为 筛选 → 搜索 → 分类，且与右侧 排序/上传 分属两个容器', () => {
-    const { container } = renderPage();
+  it('左栏 DOM 顺序为 筛选 → 搜索 → 分类，且与右侧 排序/上传 分属两个容器', async () => {
+    const { container } = await renderPage();
     const header = container.querySelector('header') as HTMLElement;
     const controls = [
       screen.getByRole('button', { name: '筛选' }),
@@ -387,7 +414,7 @@ describe('MarketplacePage —— 标题区两行与控件区两栏', () => {
 
   it('搜索无结果时复用空态块，文案同时覆盖筛选与搜索', async () => {
     const user = userEvent.setup();
-    renderPage();
+    await renderPage();
     const input = screen.getByRole('searchbox', { name: '搜索 Skills' });
     await user.type(input, '不存在的关键词');
     expect(screen.queryAllByRole('article')).toHaveLength(0);
@@ -401,7 +428,7 @@ describe('MarketplacePage —— 标题区两行与控件区两栏', () => {
 describe('MarketplacePage —— 搜索', () => {
   it('title / roles / scenes 命中并实时收窄卡片网格，清空后恢复', async () => {
     const user = userEvent.setup();
-    renderPage();
+    await renderPage();
     const input = screen.getByRole('searchbox', { name: '搜索 Skills' });
 
     await user.type(input, '薄荷');
@@ -421,7 +448,7 @@ describe('MarketplacePage —— 搜索', () => {
 
   it('搜索 × 筛选叠加为 AND', async () => {
     const user = userEvent.setup();
-    renderPage();
+    await renderPage();
     const input = screen.getByRole('searchbox', { name: '搜索 Skills' });
 
     // 「教师」只有 1 条（课堂教学课件助手），且是免费的
@@ -441,7 +468,7 @@ describe('MarketplacePage —— 搜索', () => {
 
   it('搜索 agent 全称（Cursor）与缩写码（CU）等价', async () => {
     const user = userEvent.setup();
-    renderPage();
+    await renderPage();
     const input = screen.getByRole('searchbox', { name: '搜索 Skills' });
     await user.type(input, 'Cursor');
     // 种子里 agents 含 CU 的 11 条
@@ -459,7 +486,7 @@ describe('MarketplacePage —— 搜索', () => {
 describe('MarketplacePage —— 分类下拉', () => {
   it('受控开合：点开出现 4 个分组 tab 与遮罩，再点收起', async () => {
     const user = userEvent.setup();
-    renderPage();
+    await renderPage();
     expect(categoryMenu()).not.toBeInTheDocument();
     expect(categoryOverlay()).toBeNull();
 
@@ -488,7 +515,7 @@ describe('MarketplacePage —— 分类下拉', () => {
 
   it('切换左栏分组：右栏条目随之变化，tabpanel 与被选 tab 关联', async () => {
     const user = userEvent.setup();
-    renderPage();
+    await renderPage();
     await user.click(openCategoryMenu());
 
     expect(categoryPanel()).toHaveAttribute('aria-labelledby', 'cat-tab-scene');
@@ -512,7 +539,7 @@ describe('MarketplacePage —— 分类下拉', () => {
 
   it('点条目：应用对应筛选值并关闭弹层', async () => {
     const user = userEvent.setup();
-    renderPage();
+    await renderPage();
     await user.click(openCategoryMenu());
     await user.click(
       within(categoryPanel()).getByRole('button', {
@@ -527,7 +554,7 @@ describe('MarketplacePage —— 分类下拉', () => {
 
   it('点条目（按 Agent 组）：筛选生效，agent 值与其它字段不交叉命中', async () => {
     const user = userEvent.setup();
-    renderPage();
+    await renderPage();
     await user.click(openCategoryMenu());
     await user.click(screen.getByRole('tab', { name: '按 Agent' }));
     await user.click(
@@ -542,7 +569,7 @@ describe('MarketplacePage —— 分类下拉', () => {
 
   it('Esc 关闭弹层（焦点在弹层内）', async () => {
     const user = userEvent.setup();
-    renderPage();
+    await renderPage();
     await user.click(openCategoryMenu());
     const firstTab = within(categoryMenu() as HTMLElement).getAllByRole(
       'tab',
@@ -561,7 +588,7 @@ describe('MarketplacePage —— 分类下拉', () => {
   // 还没执行，直接 expect(trigger).toHaveFocus() 会偶发失败。
   it('关闭弹层后焦点归还「分类」触发器（不留焦点在 body 上）', async () => {
     const user = userEvent.setup();
-    renderPage();
+    await renderPage();
     const trigger = openCategoryMenu();
 
     // 路径一：Esc
@@ -591,7 +618,7 @@ describe('MarketplacePage —— 分类下拉', () => {
 
   it('点击遮罩关闭弹层', async () => {
     const user = userEvent.setup();
-    renderPage();
+    await renderPage();
     await user.click(openCategoryMenu());
     await user.click(categoryOverlay() as HTMLElement);
     expect(categoryOverlay()).toBeNull();
@@ -600,7 +627,7 @@ describe('MarketplacePage —— 分类下拉', () => {
 
   it('进场过渡契约：终态类 + 0.35s 缩放淡入参数，压制 daisyUI 自带淡入 keyframe', async () => {
     const user = userEvent.setup();
-    renderPage();
+    await renderPage();
     await user.click(openCategoryMenu());
     const panel = document.getElementById(
       'skills-category-panel',
@@ -622,7 +649,7 @@ describe('MarketplacePage —— 分类下拉', () => {
 
   it('出场过渡：closing 相位保留挂载但切断交互，350ms 后卸载', async () => {
     const user = userEvent.setup();
-    renderPage();
+    await renderPage();
     await user.click(openCategoryMenu());
     const panel = document.getElementById(
       'skills-category-panel',
@@ -643,7 +670,7 @@ describe('MarketplacePage —— 分类下拉', () => {
 
   it('出场中途快速重开：出场定时器被清理，弹层恢复打开且不再被误卸载', async () => {
     const user = userEvent.setup();
-    renderPage();
+    await renderPage();
     await user.click(openCategoryMenu());
     // fireEvent 同步无延时：关→开间隔为 0，稳定落在出场计时窗口内
     fireEvent.click(openCategoryMenu());
@@ -660,7 +687,7 @@ describe('MarketplacePage —— 分类下拉', () => {
 
   it('打开时控件行抬升到遮罩之上（z-50），且遮罩不在控件行内', async () => {
     const user = userEvent.setup();
-    const { container } = renderPage();
+    const { container } = await renderPage();
     const row = (container.querySelector('header') as HTMLElement)
       .children[1] as HTMLElement;
     expect(row.className).not.toContain('z-50');
@@ -675,7 +702,7 @@ describe('MarketplacePage —— 分类下拉', () => {
 
   it('弹层宽度受内容列约束（窄屏不横向溢出）：w-[min(688px,100%)] + 窄屏单列堆叠', async () => {
     const user = userEvent.setup();
-    const { container } = renderPage();
+    const { container } = await renderPage();
     await user.click(openCategoryMenu());
     const panel = container.querySelector(
       '#skills-category-panel',
@@ -711,8 +738,8 @@ describe('MarketplacePage —— 页脚营销区', () => {
     return heading.closest('section') as HTMLElement;
   }
 
-  it('三段营销区齐全：段标题 + 特性卡 4 张 + 分类入口 4 个 + FAQ 5 条', () => {
-    renderPage();
+  it('三段营销区齐全：段标题 + 特性卡 4 张 + 分类入口 4 个 + FAQ 5 条', async () => {
+    await renderPage();
     expect(sectionHeadings().map((h) => h.textContent)).toEqual([
       '什么是 Agent Skills 市场？',
       '浏览 Agent Skills 库',
@@ -725,8 +752,8 @@ describe('MarketplacePage —— 页脚营销区', () => {
     expect(within(promo).getByText('4 个 Agent')).toBeInTheDocument();
   });
 
-  it('纯展示（B3）：页脚内无链接、无按钮、无可聚焦元素', () => {
-    const { container } = renderPage();
+  it('纯展示（B3）：页脚内无链接、无按钮、无可聚焦元素', async () => {
+    const { container } = await renderPage();
     const promo = promoSection();
     expect(promo.querySelector('a')).toBeNull();
     expect(promo.querySelector('button')).toBeNull();
@@ -735,8 +762,8 @@ describe('MarketplacePage —— 页脚营销区', () => {
     expect(container).toBeTruthy();
   });
 
-  it('FAQ 可开合：默认全部收起，点击问题后展开', () => {
-    renderPage();
+  it('FAQ 可开合：默认全部收起，点击问题后展开', async () => {
+    await renderPage();
     const promo = promoSection();
     const items = [...promo.querySelectorAll('details')];
     expect(items).toHaveLength(5);
@@ -748,8 +775,8 @@ describe('MarketplacePage —— 页脚营销区', () => {
     expect(items[1].open).toBe(false);
   });
 
-  it('文案无参考站品牌残留（Skillry / 会员 / CLI / ZIP）', () => {
-    renderPage();
+  it('文案无参考站品牌残留（Skillry / 会员 / CLI / ZIP）', async () => {
+    await renderPage();
     const promo = promoSection();
     const text = promo.textContent ?? '';
     ['Skillry', '会员', 'CLI', 'ZIP', '采集站'].forEach((word) => {
@@ -767,40 +794,40 @@ describe('MarketplacePage —— 上传入口权限', () => {
   const uploadButton = () =>
     screen.queryByRole('button', { name: '上传 skills' });
 
-  it('① 无宿主（permissions 未注入）→ 显示', () => {
-    renderPage();
+  it('① 无宿主（permissions 未注入）→ 显示', async () => {
+    await renderPage();
     expect(uploadButton()).toBeInTheDocument();
   });
 
-  it('② 宿主注入且含 skills:skill:create → 显示', () => {
+  it('② 宿主注入且含 skills:skill:create → 显示', async () => {
     setProps({ permissions: ['skills:skill:list', 'skills:skill:create'] });
-    renderPage();
+    await renderPage();
     expect(uploadButton()).toBeInTheDocument();
   });
 
-  it('③ 宿主注入但不含该码 → 隐藏', () => {
+  it('③ 宿主注入但不含该码 → 隐藏', async () => {
     setProps({ permissions: ['skills:skill:list'] });
-    renderPage();
+    await renderPage();
     expect(uploadButton()).not.toBeInTheDocument();
   });
 
-  it('③b 空数组（有宿主但无权限）→ 隐藏：空数组不等于「无宿主」', () => {
+  it('③b 空数组（有宿主但无权限）→ 隐藏：空数组不等于「无宿主」', async () => {
     setProps({ permissions: [] });
-    renderPage();
+    await renderPage();
     expect(uploadButton()).not.toBeInTheDocument();
   });
 
-  it('④ 含通配 * → 显示', () => {
+  it('④ 含通配 * → 显示', async () => {
     setProps({ permissions: ['*'] });
-    renderPage();
+    await renderPage();
     expect(uploadButton()).toBeInTheDocument();
   });
 
   // 纯快照语义：无订阅，权限码变化要经重新渲染才反映（宿主 remount / update 重渲）。
   // 锁定「每次 render 重读 getProps()」而非首次渲染冻结快照。
-  it('重新渲染时重读 props：先有权限渲染，改为无权限后重渲即隐藏', () => {
+  it('重新渲染时重读 props：先有权限渲染，改为无权限后重渲即隐藏', async () => {
     setProps({ permissions: ['skills:skill:create'] });
-    const { rerender } = renderPage();
+    const { rerender } = await renderPage();
     expect(uploadButton()).toBeInTheDocument();
 
     act(() => setProps({ permissions: ['skills:skill:list'] }));
@@ -812,25 +839,157 @@ describe('MarketplacePage —— 上传入口权限', () => {
     expect(uploadButton()).not.toBeInTheDocument();
   });
 
-  it('点击打开占位对话框；文案说明待接入；Esc 与关闭按钮都能关', async () => {
+  // 11-23-skills-crud-mock R5：占位对话框改造为新建表单弹窗（SkillFormModal）。
+  // 点「上传 skills」→ 表单弹窗出现（标题 + 名称输入 + 保存/取消）；Esc 与
+  // 取消按钮都能关（受控 dialog.modal-open，jsdom 无 <dialog> 实现同样成立）。
+  it('点击「上传 skills」打开新建表单弹窗；Esc 与取消按钮都能关', async () => {
     const user = userEvent.setup();
     setProps({ permissions: ['skills:skill:create'] });
-    const { container } = renderPage();
-    const dialog = container.querySelector('dialog') as HTMLDialogElement;
-    expect(dialog).not.toHaveAttribute('open');
+    await renderPage();
+    expect(screen.queryByText('新建 Skill')).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: '上传 skills' }));
-    expect(dialog).toHaveAttribute('open');
-    expect(within(dialog).getByText(/上传功能待接入/)).toBeInTheDocument();
+    const dialog = formDialog();
+    expect(
+      within(dialog).getByRole('heading', { name: '新建 Skill' }),
+    ).toBeInTheDocument();
+    expect(
+      within(dialog).getByRole('textbox', { name: /名称/ }),
+    ).toBeInTheDocument();
 
-    // 原生 modal 的 Esc 由浏览器负责；jsdom 无 <dialog> 实现，由组件兜底
+    // Esc 关闭（受控 keyDown 兜底；真实浏览器原生 Esc 由 <dialog> 处理）
     fireEvent.keyDown(dialog, { key: 'Escape' });
-    expect(dialog).not.toHaveAttribute('open');
+    await waitFor(() =>
+      expect(screen.queryByText('新建 Skill')).not.toBeInTheDocument(),
+    );
+
+    // 重开 + 取消按钮关闭
+    await user.click(screen.getByRole('button', { name: '上传 skills' }));
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    await user.click(
+      within(screen.getByRole('dialog')).getByRole('button', { name: '取消' }),
+    );
+    await waitFor(() =>
+      expect(screen.queryByText('新建 Skill')).not.toBeInTheDocument(),
+    );
+  });
+});
+
+// 11-23-skills-crud-mock R5：新建/编辑/删除全链路（MSW mock 内存态）。
+// 权限语义：卡片操作钮包 Permission（update/delete 码）——注入码才可见。
+describe('MarketplacePage —— 技能 CRUD（表单弹窗 + 删除确认）', () => {
+  afterEach(() => setProps({}));
+
+  it('新建：填表提交 → mock 落库 → 列表重拉出新条目（计数徽章 15）', async () => {
+    const user = userEvent.setup();
+    setProps({ permissions: ['*'] });
+    localStorage.setItem('iam_token', 'mock-admin');
+    await renderPage();
 
     await user.click(screen.getByRole('button', { name: '上传 skills' }));
-    expect(dialog).toHaveAttribute('open');
-    await user.click(within(dialog).getByRole('button', { name: '知道了' }));
-    expect(dialog).not.toHaveAttribute('open');
+    const dialog = formDialog();
+    await user.type(
+      within(dialog).getByRole('textbox', { name: /名称/ }),
+      '自动化测试技能',
+    );
+    await user.click(within(dialog).getByRole('button', { name: '保存' }));
+
+    // 弹窗关闭 + 列表重拉（mock 内存态含新条目；计数 14 → 15）
+    await waitFor(() => expect(formDialogOrNull()).toBeNull());
+    await screen.findByText('自动化测试技能');
+    expect(screen.getByText('15 个 Skills')).toBeInTheDocument();
+    localStorage.removeItem('iam_token');
+  });
+
+  it('编辑：卡片操作钮打开弹窗回填 → 改标题保存 → 列表显示新标题', async () => {
+    const user = userEvent.setup();
+    setProps({ permissions: ['*'] });
+    localStorage.setItem('iam_token', 'mock-admin');
+    await renderPage();
+
+    // 第一张卡片（推荐序第一条 = 薄荷暗夜软件产品官网）的编辑钮
+    const firstCard = cards()[0];
+    await user.click(
+      within(firstCard).getByRole('button', {
+        name: /编辑 薄荷暗夜软件产品官网/,
+      }),
+    );
+    const dialog = formDialog();
+    expect(
+      within(dialog).getByRole('heading', { name: '编辑 Skill' }),
+    ).toBeInTheDocument();
+    const title = within(dialog).getByRole('textbox', {
+      name: /名称/,
+    }) as HTMLInputElement;
+    // 回填：初值 = 行 title
+    expect(title.value).toBe('薄荷暗夜软件产品官网');
+
+    await user.clear(title);
+    await user.type(title, '薄荷暗夜官网（改）');
+    await user.click(within(dialog).getByRole('button', { name: '保存' }));
+
+    await waitFor(() => expect(formDialogOrNull()).toBeNull());
+    await screen.findByText('薄荷暗夜官网（改）');
+    localStorage.removeItem('iam_token');
+  });
+
+  it('删除：确认弹窗 → 确认后列表重拉少一条', async () => {
+    const user = userEvent.setup();
+    setProps({ permissions: ['*'] });
+    localStorage.setItem('iam_token', 'mock-admin');
+    await renderPage();
+    expect(screen.getByText('14 个 Skills')).toBeInTheDocument();
+
+    await user.click(
+      within(cards()[0]).getByRole('button', {
+        name: /删除 薄荷暗夜软件产品官网/,
+      }),
+    );
+    const dialog = deleteDialog();
+    expect(
+      within(dialog).getByText(/确定删除「薄荷暗夜软件产品官网」/),
+    ).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('button', { name: '删除' }));
+
+    await waitFor(() => expect(deleteDialogOrNull()).toBeNull());
+    await waitFor(() =>
+      expect(screen.getByText('13 个 Skills')).toBeInTheDocument(),
+    );
+    expect(screen.queryByText('薄荷暗夜软件产品官网')).not.toBeInTheDocument();
+    localStorage.removeItem('iam_token');
+  });
+
+  it('权限显隐：无 update/delete 码时卡片操作钮不渲染（create 码只给上传按钮）', async () => {
+    setProps({ permissions: ['skills:skill:create'] });
+    await renderPage();
+    expect(
+      screen.getByRole('button', { name: '上传 skills' }),
+    ).toBeInTheDocument();
+    // 全部卡片都没有 编辑/删除 钮
+    expect(
+      screen.queryByRole('button', { name: /^编辑 / }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /^删除 / }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('保存失败留在弹窗：无 token 提交新建 → 接口 401 msg 显示在弹窗内', async () => {
+    const user = userEvent.setup();
+    setProps({ permissions: ['*'] });
+    // 不注入 token：mock 写操作 401「请先登录」
+    await renderPage();
+    await user.click(screen.getByRole('button', { name: '上传 skills' }));
+    const dialog = formDialog();
+    await user.type(
+      within(dialog).getByRole('textbox', { name: /名称/ }),
+      '匿名技能',
+    );
+    await user.click(within(dialog).getByRole('button', { name: '保存' }));
+    // 弹窗不关 + 错误 alert 展示接口 msg（POST 异步：waitFor 等 alert 出现）
+    expect(await within(dialog).findByText('请先登录')).toBeInTheDocument();
+    // 清理：关掉弹窗避免残留
+    await user.click(within(dialog).getByRole('button', { name: '取消' }));
   });
 });
 
@@ -838,7 +997,7 @@ describe('MarketplacePage —— 上传入口权限', () => {
 // languageChanged 驱动重渲染）。setup.ts 全局 zh-CN 初始化——用例内切 en 再切回。
 describe('MarketplacePage —— 多语言', () => {
   it('切到 en-US：标题/分类/筛选按钮显示英文；切回 zh-CN 恢复', async () => {
-    const { unmount } = renderPage();
+    const { unmount } = await renderPage();
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
       'Agent Skills 市场',
     );
