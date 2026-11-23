@@ -145,6 +145,30 @@ menuTitle(menu); // 有 key 命中→翻译；缺条目→回退 name；无 key�
 - qiankun 全局状态快照含 locale 维度，语言变化推送给子应用（「无变化不推送」语义，见 [微前端与子应用](./microfrontend-guidelines.md)）。
 - 语言持久化由 preferences store 的 zustand persist 承担（`admin-preferences`），整页刷新后 i18n init 读回。
 
+## 子应用接入 i18n（qiankun 子应用模板，11-23-skills-i18n-radius）
+
+> 新子应用要接多语言时**平移 iam/skills 版**，不重写。两处已验证的落地：
+> `apps/iam-web/src/locales/i18n.ts`、`apps/skills-web/src/locales/i18n.ts`（逐行同构，仅命名/注释差异）。
+
+**运行时四件套**（`src/locales/i18n.ts` 公开 API，签名对齐宿主同款）：
+
+- `resolveXxxLocale(locale?)`：normalizeLocale 归一（@zanelab/utils，`zh_CN`/`zh-CN` 都认）→ 未命中 null
+- `setupI18n(propsLocale?)`：mount/独立态两入口统一调用；`isInitialized` 分支只对齐语言不重复 init（i18next 二次 init 丢 resources 订阅）
+- `setLocale(locale?)`：唯一切换入口；**同值 no-op**（宿主快照是全量推送，locale 未变不得触发 changeLanguage）+ `<html lang>` 同步 + packUrls 懒加载触发
+- `injectMessagePacks(urls)` / `loadMessagePack(lng)`：外部语言包懒加载（props.i18n.packUrls 下发；先标记再 fetch，失败 console.warn 降级内置，加载后对当前语言补发 `languageChanged` 驱动 t() 直调点重渲染）
+
+**main.tsx 接线三要点**（iam main.tsx `setupLocale`/`setupHostAssets` 同款）：
+
+1. mount 里 `setupLocale(getProps())`（初始语言 + onHostStateChange 订阅）→ **unmount 必须 `unsubscribeLocale?.()`**（重复挂载订阅累积）
+2. 独立态分支也要调 `setupI18n()`（无参 → 缺省 zh-CN）——t() 必须有实例，否则组件渲染 key 字符串
+3. **组件不得 import main.tsx**（qiankun 入口在 jsdom 与 vite-plugin-qiankun 冲突）——i18n 模块独立于入口，测试直接 import
+
+**测试接线**：`src/test/setup.ts` 全局 `setupI18n()`（缺省 zh-CN）——既有用例的
+中文文案断言不改即过（译文与原硬编码逐字一致是文案抽取的验收标准）。
+已知顺序细节：mount 里 `setupI18n`（拉初始语言包）先于 `injectMessagePacks`
+（注入 URL 表）→ 首次 mount 外部包静默跳过。iam/skills 均如此（内置包覆盖
+全部文案时无影响）；子应用有第三方 i18nKey 时应交换两个调用的顺序。
+
 ## 新文案入包流程
 
 1. zh-CN 用现文案建 key，en-US 同步补翻译（同一改动内两包一起改，不留「先中文后补英文」的中间态）。

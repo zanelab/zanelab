@@ -213,6 +213,24 @@ useEffect(() => {
 > 后果：用 `data-theme=dark` 单开验证，会看到**深色主题下侧栏分隔线是浅色的**（对比度 13.9:1 的亮线），据此得出"深色对比度有缺陷"的结论——实测证明那是**假象**（真实深色态下为 `rgb(68,71,75)`，与底色对比度 1.076 的细线）。
 > 验证深色时同时设二者，并把 `colorScheme` 一起设上。
 
+### 子应用主题联动：--page-radius 模式（11-23-skills-i18n-radius）
+
+qiankun 子应用消费宿主圆角偏好的**固定模式**（iam 管理页与 skills 市场页两处落地）：
+
+```tsx
+// 派生：props.preferences.radius（rem 字符串）→ 中性缺省兜底 → 根 div 内联变量
+const prefs = { radius: '0.5', ...(props.preferences as Record<string, unknown> | undefined) } as { radius?: string };
+<div style={{ '--page-radius': `${prefs.radius}rem` } as CSSProperties}>...</div>
+// 消费：大圆角容器 rounded-2xl/3xl/[20px] → rounded-(--page-radius)
+```
+
+- **变量声明 ≠ 联动生效**：只内联变量、不改容器类名，宿主改 radius 不会有任何可见变化——
+  「找齐消费点」是本模式的完整步骤（11-23 check 阶段实测漏掉过）。实施时 grep
+  `rounded-(2xl|3xl|\[2[0-9]px\])` 逐处判定。
+- **不跟随的圆角**：胶囊控件（`rounded-full`，功能性外形）与小装饰圆角
+  （`rounded-[9px]`/`rounded-xl` 图标块、行条目——联动会让小元素变形）。
+- 子应用独立态（无 props.preferences）：中性缺省 `'0.5'`，不崩。
+
 ## 反面模式
 
 - 组件里硬编码权限码集合，而不是读 `state.menu.permissions`。

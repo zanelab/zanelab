@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/frontend/i18n-guidelines.md", "reason": "i18n 运行时约定、消费方式、菜单/选项数组 label 渲染期解析、两包 key 树比对脚本——本任务核心规范（skills-web 首次接入 i18n）"}
+{"file": ".trellis/spec/frontend/microfrontend-guidelines.md", "reason": "子应用 props 契约与全局状态订阅约定（preferences/onHostStateChange 消费边界）"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "提交前质量要求（tsc/vitest/build/lint）；测试里 daisyUI 类名规避"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "组件写法与权限控制约定（文案改造不破坏 Permission 语义）"}
