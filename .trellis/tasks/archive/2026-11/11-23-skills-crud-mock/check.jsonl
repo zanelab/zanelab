@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/frontend/http-api-guidelines.md", "reason": "检查 http 组装合规（不自建 axios、apikey 注入同源）、接口路径走 endpoints 常量"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "全量质量检查（tsc/vitest/build/lint）；独立运行性验证"}
+{"file": ".trellis/spec/frontend/microfrontend-guidelines.md", "reason": "检查 props 消费收敛、集成态/独立态双形态"}
+{"file": ".trellis/spec/frontend/i18n-guidelines.md", "reason": "检查 UI 文案无硬编码中文"}

@@ -1,0 +1,6 @@
+{"file": ".trellis/spec/frontend/http-api-guidelines.md", "reason": "RequestClient 组装模式、拦截器顺序语义、Supabase 网关 apikey 约定（skills-web http 通道首次新建，全部平移 iam）"}
+{"file": ".trellis/spec/frontend/microfrontend-guidelines.md", "reason": "props.http 只读代理契约、独立运行性红线（props 消费收敛在 utils/http.ts）"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "测试策略（MSW 集成测试）、daisyUI 类名规避、评审清单"}
+{"file": ".trellis/spec/frontend/type-safety.md", "reason": "snake→camel 归一约定与 any 边界"}
+{"file": ".trellis/spec/frontend/i18n-guidelines.md", "reason": "表单/错误文案走 t()（依赖子①语言包）；x-client-info 语言头约定"}
+{"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "DB→edge fn→api→UI 四层数据流边界契约先行"}
