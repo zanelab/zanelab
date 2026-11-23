@@ -555,3 +555,34 @@ skills-web 权限系统对齐 iam-web：删除订阅式权限内核（utils/perm
 ### Next Steps
 
 - AC8（切语言后导航文案同步）未做浏览器实测——需部署迁移 + edge fn 后人工验证；后台已建节点（如 skills app）的 i18nKey 需 admin 自行补，译文走外部 packUrls
+
+
+## Session 18: 子任务① skills-web i18n + radius 主题联动
+<!-- trellis-session: v=2 fp=521858795714b583 -->
+
+**Date**: 2026-11-23
+**Task**: 子任务① skills-web i18n + radius 主题联动
+**Branch**: `main`
+
+### Summary
+
+父任务 11-22-skills-i18n-theme-crud 子任务①完成：skills-web 平移 iam-web i18n 方案（props.preferences.locale + onHostStateChange，独立态缺省 zh-CN），13 个市场页文件文案入包（两包各 90 key 树一致，zh-CN 逐字一致——既有 84 用例断言零修改全过）；data.ts 选项去 label 渲染期 t() 派生；radius 经 --page-radius 联动（props.preferences.radius，大容器跟随、胶囊不动）。check 阶段发现并修复『变量已声明未消费』（8 处容器改 rounded-(--page-radius)）。spec 沉淀子应用 i18n 接入模板 + --page-radius 模式。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `0b85eaa` | feat(@zanelab/skills-web): i18n 双语运行时 + radius 主题联动（任务 11-23-skills-i18n-radius） |
+| `28d9513` | docs(project): 子应用 i18n 接入模板 + --page-radius 主题联动模式（任务①产物） |
+
+### Testing
+
+- [OK] skills-web 95/95（新增 i18n 单测/radius 双态/切语言）；tsc/build/lint 全绿；portal 191/191、iam 60/60 无回归；语言包 key 树 diff 空
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- 子任务②（11-23-skills-crud-mock）待启动：skills 表迁移 + edge fn + api 层 + VITE_USE_MOCK mocks + Modal 表单；其表单文案依赖本任务语言包
