@@ -586,3 +586,26 @@ skills-web 权限系统对齐 iam-web：删除订阅式权限内核（utils/perm
 ### Next Steps
 
 - 子任务②（11-23-skills-crud-mock）待启动：skills 表迁移 + edge fn + api 层 + VITE_USE_MOCK mocks + Modal 表单；其表单文案依赖本任务语言包
+
+
+## Session 19: 子任务② 技能 CRUD（Supabase edge fn + VITE_USE_MOCK）
+<!-- trellis-session: v=2 fp=6887552368b0f60d -->
+
+**Date**: 2026-11-24
+**Task**: 子任务② 技能 CRUD（Supabase edge fn + VITE_USE_MOCK）
+**Branch**: `main`
+
+### Summary
+
+父任务 11-22-skills-i18n-theme-crud 子任务②完成：skills 表迁移（0001 表+RLS/0002 种子 14 条）、edge fn（iam 骨架平移，5 端点鉴权+camel→snake 写入映射）、api 层（endpoints 零依赖/前缀 props.basename 派生）、MSW mocks（VITE_USE_MOCK dev 守卫）、页面接线（SKILLS 常量删除全量改 api 拉取，loading/错误/空态）、skill-form-modal（新建/编辑/删除确认，文案走 t()，Permission 守卫）、iam 0008 按钮节点（0007 撞号重编）、portal /skills/functions/v1 代理。check 修 2 HIGH（edge fn 写路径 PGRST204、迁移序号静默跳过）+1 MEDIUM（config.js 误回退还原）；spec 沉淀 2 条至 http-api-guidelines。验证：skills-web 110/110、portal 191/191、三包 tsc/build/lint 绿。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `aa9a5cb` | feat(@zanelab/skills-web): 技能 CRUD——Supabase 迁移/edge fn + api/mocks + 页面接线 + 表单弹窗（任务 11-23-skills-crud-mock） |
+| `5242fd8` | docs(project): edge fn 写路径 camel→snake 列映射 + 迁移序号防撞沉淀（任务②产物） |
+
+### Status
+
+[OK] **Completed**

@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 18
-- **Last Active**: 2026-11-23
+- **Total Sessions**: 19
+- **Last Active**: 2026-11-24
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~588 | Active |
+| `journal-1.md` | ~611 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 19 | 2026-11-24 | 子任务② 技能 CRUD（Supabase edge fn + VITE_USE_MOCK） | `aa9a5cb`, `5242fd8` | `main` |
 | 18 | 2026-11-23 | 子任务① skills-web i18n + radius 主题联动 | `0b85eaa`, `28d9513` | `main` |
 | 17 | 2026-11-22 | 菜单 i18nKey 多语言链路（iam 配置 → /auth/menus → 宿主渲染） | `f7dad1a`, `6a94233`, `3eca5d0` | `main` |
 | 16 | 2026-11-20 | 11-06-iam-api-rbac 补做收尾验收并归档 | `70ef8db` | `feat/skills-marketplace-toolbar` |
