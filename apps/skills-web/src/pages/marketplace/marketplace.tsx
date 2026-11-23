@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type CSSProperties } from 'react';
 import { AppIcon } from '@zanelab/ui';
+import { useTranslation } from 'react-i18next';
 import { SKILLS, type SkillItem, type SkillSort } from './data';
 import {
   filterSkills,
@@ -15,6 +16,7 @@ import { CategoryMenu } from './toolbar/category-menu';
 import { SearchInput } from './toolbar/search-input';
 import { UploadButton } from './toolbar/upload-button';
 import { Permission } from '../../components/permission';
+import { getProps } from '../../props';
 
 /**
  * Agent Skills 市场页（skills-web 首页，布局对齐参考稿）：
@@ -38,6 +40,7 @@ import { Permission } from '../../components/permission';
  * 遮罩变透明并产生横向溢出；小屏开合只交给受控的 `drawer-toggle`。
  */
 export function MarketplacePage() {
+  const { t } = useTranslation();
   const [active, setActive] = useState<Record<string, string[]>>({});
   const [sort, setSort] = useState<SkillSort>('recommended');
   const [query, setQuery] = useState('');
@@ -47,6 +50,19 @@ export function MarketplacePage() {
   const [filtersCollapsed, setFiltersCollapsed] = useState(true);
   // 分类下拉的开合归页面持有：控件行的 z 序（见上）依赖它
   const [categoryOpen, setCategoryOpen] = useState(false);
+
+  // 主题圆角联动（iam 管理页 --page-radius 同款模式）：宿主
+  // props.preferences.radius（rem 字符串）→ 页面根内联 CSS 变量 → 大圆角容器
+  // rounded-(--page-radius)。独立态无 props → 中性缺省 '0.5'。
+  // 胶囊控件保持 rounded-full 不跟随（iam 同款取舍：大容器表达主题圆角，
+  // 小控件保持功能形态）。
+  const prefs = {
+    radius: '0.5',
+    ...(getProps().preferences as Record<string, unknown> | undefined),
+  } as { radius?: string };
+  const pageRadiusStyle = {
+    '--page-radius': `${prefs.radius}rem`,
+  } as CSSProperties;
 
   const visible: SkillItem[] = useMemo(
     () => sortSkills(searchSkills(filterSkills(SKILLS, active), query), sort),
@@ -59,7 +75,7 @@ export function MarketplacePage() {
     setActive((prev) => toggleFilter(prev, group, value));
 
   return (
-    <div className="bg-base-200 min-h-dvh">
+    <div className="bg-base-200 min-h-dvh" style={pageRadiusStyle}>
       <div className={`drawer ${filtersCollapsed ? '' : 'lg:drawer-open'}`}>
         <input
           id="skills-filter-drawer"
@@ -75,16 +91,14 @@ export function MarketplacePage() {
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
                   <h1 className="text-base-content text-xl font-semibold tracking-tight sm:text-2xl">
-                    Agent Skills 市场
+                    {t('skills.market.title')}
                   </h1>
                   <span className="bg-base-content/6 text-base-content/55 inline-flex h-6 items-center rounded-full px-2.5 text-xs font-semibold tabular-nums">
-                    {SKILLS.length} 个 Skills
+                    {t('skills.market.countSuffix', { count: SKILLS.length })}
                   </span>
                 </div>
                 <p className="text-base-content/50 mt-1 text-[13px]">
-                  Agent Skills 也叫 Claude Skills，适用于 Claude
-                  Code、Codex、Cursor、Antigravity，以及所有能读取 SKILL.md 的
-                  Agent。
+                  {t('skills.market.subtitle')}
                 </p>
               </div>
 
@@ -103,7 +117,7 @@ export function MarketplacePage() {
                     className="border-base-300 bg-base-100 hover:bg-base-content/5 inline-flex h-[42px] shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-4 text-[13px] font-semibold transition-colors lg:hidden"
                     onClick={() => setDrawerOpen(true)}
                   >
-                    筛选
+                    {t('skills.market.filter')}
                     {activeCount > 0 ? (
                       <span className="badge badge-neutral badge-xs">
                         {activeCount}
@@ -115,7 +129,7 @@ export function MarketplacePage() {
                   {filtersCollapsed ? (
                     <button
                       type="button"
-                      aria-label="展开筛选"
+                      aria-label={t('skills.market.expandFilter')}
                       className="border-base-300 bg-base-100 hover:bg-base-content/5 inline-flex h-[42px] shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-4 text-[13px] font-semibold transition-colors max-lg:hidden"
                       onClick={() => setFiltersCollapsed(false)}
                     >
@@ -123,7 +137,7 @@ export function MarketplacePage() {
                         name="layout-sidebar-expand"
                         className="size-3.5"
                       />
-                      筛选
+                      {t('skills.market.filter')}
                     </button>
                   ) : null}
                   <SearchInput value={query} onChange={setQuery} />
@@ -148,7 +162,7 @@ export function MarketplacePage() {
             </header>
 
             {/* 结果区标题（参考稿大纲：页面 h1 + sr-only h2 + 卡片 h3） */}
-            <h2 className="sr-only">Agent Skills 市场</h2>
+            <h2 className="sr-only">{t('skills.market.srTitle')}</h2>
 
             {visible.length > 0 ? (
               <div className="grid grid-cols-1 items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -157,8 +171,8 @@ export function MarketplacePage() {
                 ))}
               </div>
             ) : (
-              <div className="border-base-300 text-base-content/50 rounded-2xl border border-dashed py-16 text-center text-sm">
-                没有符合筛选条件的 Skills，试试清除部分筛选或换个搜索关键词。
+              <div className="border-base-300 text-base-content/50 rounded-(--page-radius) border border-dashed py-16 text-center text-sm">
+                {t('skills.market.empty')}
               </div>
             )}
 
@@ -173,7 +187,7 @@ export function MarketplacePage() {
               小屏：覆盖层 + 滑入面板（确认条在面板底部，见 filter-sidebar.tsx） */}
           <label
             htmlFor="skills-filter-drawer"
-            aria-label="关闭筛选"
+            aria-label={t('skills.market.closeFilter')}
             className="drawer-overlay"
           />
           <FilterSidebar

@@ -1,4 +1,5 @@
 import { AppIcon } from '@zanelab/ui';
+import { useTranslation } from 'react-i18next';
 import { FOCUS_RING_HAS_CLASS } from './focus-ring';
 
 /**
@@ -23,6 +24,7 @@ interface SearchInputProps {
 }
 
 export function SearchInput({ value, onChange }: SearchInputProps) {
+  const { t } = useTranslation();
   return (
     <label
       className={`border-base-300 bg-base-100 inline-flex h-[42px] w-44 min-w-0 shrink-0 cursor-text items-center gap-2 rounded-full border px-4 sm:w-56 ${FOCUS_RING_HAS_CLASS}`}
@@ -32,8 +34,8 @@ export function SearchInput({ value, onChange }: SearchInputProps) {
         type="search"
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        placeholder="搜索 Skills"
-        aria-label="搜索 Skills"
+        placeholder={t('skills.toolbar.search')}
+        aria-label={t('skills.toolbar.search')}
         className="text-base-content placeholder:text-base-content/45 min-w-0 flex-1 bg-transparent text-[13px] outline-none"
       />
     </label>

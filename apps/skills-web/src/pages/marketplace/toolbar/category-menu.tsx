@@ -1,11 +1,13 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AppIcon } from '@zanelab/ui';
+import { useTranslation } from 'react-i18next';
 import {
   CATEGORY_MENU_ORDER,
   FILTER_GROUPS,
   type SkillFilterGroup,
 } from '../data';
+import { optionLabel } from '../option-label';
 import { FOCUS_RING_CLASS } from './focus-ring';
 
 /**
@@ -97,6 +99,7 @@ export function CategoryMenu({
   active,
   onToggle,
 }: CategoryMenuProps) {
+  const { t } = useTranslation();
   const [group, setGroup] = useState<SkillFilterGroup['id']>(MENU_GROUPS[0].id);
   const [phase, setPhase] = useState<Phase>('closed');
   const rootRef = useRef<HTMLDivElement>(null);
@@ -193,7 +196,7 @@ export function CategoryMenu({
           className={`border-base-300 bg-base-100 hover:bg-base-content/5 inline-flex h-[42px] shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-4 text-[13px] font-semibold transition-colors ${FOCUS_RING_CLASS}`}
           onClick={() => onOpenChange(!open)}
         >
-          分类
+          {t('skills.toolbar.category')}
           <AppIcon
             name="chevron-down"
             className={`size-3.5 transition-transform ${open ? 'rotate-180' : ''}`}
@@ -209,7 +212,7 @@ export function CategoryMenu({
             inert={phase === 'closing'}
             className={[
               // 定位与外观（block 压过 daisyUI 关闭态的 display:none，见组件头注释）
-              'dropdown-content border-base-300 bg-base-100 absolute top-full left-0 mt-2 block w-[min(688px,100%)] origin-top animate-none rounded-[20px] border p-2.5 shadow-2xl',
+              'dropdown-content border-base-300 bg-base-100 absolute top-full left-0 mt-2 block w-[min(688px,100%)] origin-top animate-none rounded-(--page-radius) border p-2.5 shadow-2xl',
               animating
                 ? 'motion-safe:transition-[opacity,scale] motion-safe:duration-[350ms] motion-safe:ease-[cubic-bezier(0.22,1,0.36,1)]'
                 : 'transition-none',
@@ -223,8 +226,8 @@ export function CategoryMenu({
               {/* 左栏：分组 tablist（选中项浮起，与参考站的分组切换一致） */}
               <div
                 role="tablist"
-                aria-label="分类"
-                className="bg-base-200 flex flex-col gap-1 rounded-2xl p-1.5"
+                aria-label={t('skills.toolbar.category')}
+                className="bg-base-200 flex flex-col gap-1 rounded-(--page-radius) p-1.5"
               >
                 {MENU_GROUPS.map((item) => {
                   const selected = item.id === current.id;
@@ -245,7 +248,7 @@ export function CategoryMenu({
                           : 'text-base-content/60 hover:bg-base-100/60'
                       }`}
                     >
-                      {item.title}
+                      {t(`skills.group.${item.id}`)}
                     </button>
                   );
                 })}
@@ -256,7 +259,7 @@ export function CategoryMenu({
                 role="tabpanel"
                 id="skills-category-tabpanel"
                 aria-labelledby={`cat-tab-${current.id}`}
-                className="border-base-300 bg-base-200/60 flex min-h-[296px] flex-col rounded-2xl border p-3"
+                className="border-base-300 bg-base-200/60 flex min-h-[296px] flex-col rounded-(--page-radius) border p-3"
               >
                 <div className="grid grid-cols-1 content-start gap-1.5 sm:grid-cols-2">
                   {current.options.map((option) => {
@@ -287,7 +290,7 @@ export function CategoryMenu({
                           />
                         </span>
                         <span className="text-base-content/75 min-w-0 flex-1 truncate">
-                          {option.label}
+                          {optionLabel(t, current.id, option.value)}
                         </span>
                       </button>
                     );

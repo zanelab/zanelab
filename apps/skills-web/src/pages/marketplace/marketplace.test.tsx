@@ -9,6 +9,7 @@ import {
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it } from 'vitest';
+import i18n from '../../locales/i18n';
 import { setProps } from '../../props';
 import { MarketplacePage } from './marketplace';
 import { TRANSITION_MS } from './toolbar/category-menu';
@@ -305,6 +306,39 @@ describe('MarketplacePage', () => {
     expect(
       container.querySelectorAll('aside button svg').length,
     ).toBeGreaterThan(0);
+  });
+});
+
+// 11-23-skills-i18n-radius：主题圆角联动（iam 管理页 --page-radius 同款契约）。
+// jsdom 无布局引擎，锁「变量注入 + 值来源」两个契约点：
+// 变量挂页面根 div 的内联 style；值取 props.preferences.radius，未下发用缺省。
+describe('MarketplacePage —— radius 主题联动', () => {
+  it('独立态（无 props）：--page-radius 用中性缺省 0.5rem', () => {
+    const { container } = renderPage();
+    const root = container.firstElementChild as HTMLElement;
+    expect(root.style.getPropertyValue('--page-radius')).toBe('0.5rem');
+  });
+
+  it('集成态：--page-radius 跟随 props.preferences.radius（宿主 rem 字符串）', () => {
+    setProps({
+      preferences: {
+        mode: 'light',
+        colorPrimary: '',
+        colorDestructive: '',
+        colorSuccess: '',
+        colorWarning: '',
+        radius: '1.25',
+        fontSize: 14,
+        colorGrayMode: false,
+        colorWeakMode: false,
+        locale: 'zh-CN',
+      },
+    });
+    const { container, unmount } = renderPage();
+    const root = container.firstElementChild as HTMLElement;
+    expect(root.style.getPropertyValue('--page-radius')).toBe('1.25rem');
+    unmount();
+    setProps({}); // 复位，防污染后续用例（getter 语义读 savedProps）
   });
 });
 
@@ -797,5 +831,32 @@ describe('MarketplacePage —— 上传入口权限', () => {
     expect(dialog).toHaveAttribute('open');
     await user.click(within(dialog).getByRole('button', { name: '知道了' }));
     expect(dialog).not.toHaveAttribute('open');
+  });
+});
+
+// 11-23-skills-i18n-radius AC1 核心：切语言后市场页文案跟随（useTranslation 订阅
+// languageChanged 驱动重渲染）。setup.ts 全局 zh-CN 初始化——用例内切 en 再切回。
+describe('MarketplacePage —— 多语言', () => {
+  it('切到 en-US：标题/分类/筛选按钮显示英文；切回 zh-CN 恢复', async () => {
+    const { unmount } = renderPage();
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+      'Agent Skills 市场',
+    );
+    expect(screen.getByRole('button', { name: '分类' })).toBeInTheDocument();
+
+    await i18n.changeLanguage('en-US');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+      'Agent Skills Marketplace',
+    );
+    expect(
+      screen.getByRole('button', { name: 'Categories' }),
+    ).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Search Skills')).toBeInTheDocument();
+
+    await i18n.changeLanguage('zh-CN');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+      'Agent Skills 市场',
+    );
+    unmount();
   });
 });

@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import { AppIcon } from '@zanelab/ui';
+import { useTranslation } from 'react-i18next';
 import { openDialog, UploadPlaceholder } from '../modal/upload-placeholder';
 import { FOCUS_RING_ON_PRIMARY_CLASS } from './focus-ring';
 
@@ -10,6 +11,7 @@ import { FOCUS_RING_ON_PRIMARY_CLASS } from './focus-ring';
  * 一起隐藏）；点击只打开占位对话框——上传流程本身（无后端、无接口）不在本次范围。
  */
 export function UploadButton() {
+  const { t } = useTranslation();
   const dialogRef = useRef<HTMLDialogElement>(null);
   return (
     <>
@@ -23,7 +25,7 @@ export function UploadButton() {
         onClick={() => openDialog(dialogRef.current)}
       >
         <AppIcon name="plus" className="size-3.5" />
-        上传 skills
+        {t('skills.toolbar.upload')}
       </button>
       <UploadPlaceholder dialogRef={dialogRef} />
     </>

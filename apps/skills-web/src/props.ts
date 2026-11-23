@@ -11,6 +11,24 @@
  */
 
 /**
+ * 宿主下发的偏好外观子集（getter，每次 mount 取最新值）。
+ * 契约对齐宿主 register.ts 的 SubAppPreferences（10-25）；skills 只声明
+ * 全量字段（与宿主投影一致，不做字段裁剪——子应用后续消费面扩展不用再改这里）。
+ */
+export interface SubAppPreferences {
+  mode: 'light' | 'dark' | 'auto';
+  colorPrimary: string;
+  colorDestructive: string;
+  colorSuccess: string;
+  colorWarning: string;
+  radius: string; // rem 数值字符串，如 '0.5'
+  fontSize: number;
+  colorGrayMode: boolean;
+  colorWeakMode: boolean;
+  locale: string;
+}
+
+/**
  * 宿主注入的 props（结构类型，按 skills-web 实际消费面窄化）。
  * 独立态（不经基座直开）无 props，getProps() 恒为空对象。
  */
@@ -25,6 +43,15 @@ export interface SkillsProps {
   permissions?: string[];
   /** 集成态路由前缀（宿主 register.ts 显式传递，默认 activeRule） */
   basename?: string;
+  /** 宿主下发的偏好外观子集（getter，每次 mount 取最新值；见 SubAppPreferences） */
+  preferences?: SubAppPreferences;
+  /** 宿主全局状态订阅（快照含 preferences 外观子集；返回取消订阅函数） */
+  onHostStateChange?: (
+    cb: (state: Record<string, unknown>, prev: Record<string, unknown>) => void,
+    fireImmediately?: boolean,
+  ) => () => void;
+  /** 宿主运行时语言包（config.js i18n.packUrls；键 = 语言代码，值 = JSON URL） */
+  i18n?: { packUrls?: Record<string, string> };
   [key: string]: unknown;
 }
 

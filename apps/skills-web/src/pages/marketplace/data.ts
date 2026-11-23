@@ -10,19 +10,20 @@ export type OutputType = '网页' | '幻灯片' | '视频' | '图像';
 
 export type SkillSort = 'recommended' | 'latest' | 'popular' | 'rating';
 
-/** 筛选选项；icon 为 BUILTIN_ICONS 标识符，只有需要前置图标的分组才填 */
+/** 筛选选项；icon 为 BUILTIN_ICONS 标识符，只有需要前置图标的分组才填。
+ *  **不存文案**：label 在渲染期经 t() 派生（key = skills.option.<group>.<value>），
+ *  值域含中文（角色/场景/输出类型）——中文值是数据键（稳定、随数据走），不是文案。 */
 export interface SkillFilterOption {
   value: string;
-  label: string;
   count: number;
   icon?: string;
 }
 
 /** 筛选组 id；'scene' 见 research/reference-skillry-marketplace.md 差异 #10，
- *  'agent' 见 11-16 决策 D9/R7（agents 提升为可筛选维度） */
+ *  'agent' 见 11-16 决策 D9/R7（agents 提升为可筛选维度）。
+ *  **不存 title 文案**：分组标题渲染期 t(`skills.group.${id}`) 派生。 */
 export interface SkillFilterGroup {
   id: 'free' | 'featured' | 'output' | 'role' | 'scene' | 'agent';
-  title: string;
   /** 选项；value 即 SkillItem 上的匹配键 */
   options: SkillFilterOption[];
 }
@@ -48,11 +49,11 @@ export interface SkillItem {
   agents: string[];
 }
 
-export const SORT_OPTIONS: Array<{ value: SkillSort; label: string }> = [
-  { value: 'recommended', label: '推荐' },
-  { value: 'latest', label: '最新发布' },
-  { value: 'popular', label: '热门' },
-  { value: 'rating', label: '评分最高' },
+export const SORT_OPTIONS: Array<{ value: SkillSort }> = [
+  { value: 'recommended' },
+  { value: 'latest' },
+  { value: 'popular' },
+  { value: 'rating' },
 ];
 
 /**
@@ -79,56 +80,51 @@ export const FILTER_GROUPS: SkillFilterGroup[] = [
     id: 'free',
     // 参考稿首组标题即「推荐」（与排序胶囊的「推荐」同名）；首组无上分隔线，
     // 见 filter-sidebar.tsx 的 first-of-type:border-t-0
-    title: '推荐',
     options: [
-      { value: 'free', label: '免费', count: 42 },
-      { value: 'featured', label: '精选', count: 109 },
+      { value: 'free', count: 42 },
+      { value: 'featured', count: 109 },
     ],
   },
   {
     id: 'output',
-    title: '按输出类型',
     // 参考稿：仅本组选项行有 14px 前置图标（图形 = 输出媒介），其它分组无
     options: [
-      { value: '网页', label: '网页', count: 116, icon: 'monitor' },
-      { value: '幻灯片', label: '幻灯片', count: 61, icon: 'presentation' },
-      { value: '视频', label: '视频', count: 360, icon: 'video' },
-      { value: '图像', label: '图像', count: 83, icon: 'photo' },
+      { value: '网页', count: 116, icon: 'monitor' },
+      { value: '幻灯片', count: 61, icon: 'presentation' },
+      { value: '视频', count: 360, icon: 'video' },
+      { value: '图像', count: 83, icon: 'photo' },
     ],
   },
   {
     id: 'role',
-    title: '按角色',
     options: [
-      { value: '内容创作者', label: '内容创作者', count: 194 },
-      { value: '创始人', label: '创始人', count: 349 },
-      { value: '电商卖家', label: '电商卖家', count: 245 },
-      { value: '设计师', label: '设计师', count: 185 },
-      { value: '顾问', label: '顾问', count: 15 },
-      { value: '教师', label: '教师', count: 62 },
-      { value: '营销人员', label: '营销人员', count: 48 },
-      { value: '研究人员', label: '研究人员', count: 22 },
+      { value: '内容创作者', count: 194 },
+      { value: '创始人', count: 349 },
+      { value: '电商卖家', count: 245 },
+      { value: '设计师', count: 185 },
+      { value: '顾问', count: 15 },
+      { value: '教师', count: 62 },
+      { value: '营销人员', count: 48 },
+      { value: '研究人员', count: 22 },
     ],
   },
   {
     id: 'scene',
-    title: '按使用场景',
     options: [
-      { value: '内容与编辑发布', label: '内容与编辑发布', count: 151 },
-      { value: '知识解释与教学', label: '知识解释与教学', count: 36 },
-      { value: '品牌建立与视觉规范', label: '品牌建立与视觉规范', count: 59 },
-      { value: '社交内容与营销活动', label: '社交内容与营销活动', count: 51 },
+      { value: '内容与编辑发布', count: 151 },
+      { value: '知识解释与教学', count: 36 },
+      { value: '品牌建立与视觉规范', count: 59 },
+      { value: '社交内容与营销活动', count: 51 },
     ],
   },
   {
     // 11-16 R7/D9：agents 由「只画在卡片上」提升为可筛选维度。参考站的「按 Agent」
     // 只出现在分类下拉里，本组侧栏也渲染——这是用户明确选择的行为，不是照搬参考站。
-    // 选项由 AGENT_LABEL 派生（value = 缩写码 CC/CX/AG/CU，label = 全称）。
+    // 选项由 AGENT_LABEL 派生（value = 缩写码 CC/CX/AG/CU；label = 全称，
+    // 品牌名不翻译，渲染期直接用 AGENT_LABEL[value]）。
     id: 'agent',
-    title: '按 Agent',
-    options: Object.entries(AGENT_LABEL).map(([value, label]) => ({
+    options: Object.entries(AGENT_LABEL).map(([value]) => ({
       value,
-      label,
       count: AGENT_COUNT[value] ?? 0,
     })),
   },

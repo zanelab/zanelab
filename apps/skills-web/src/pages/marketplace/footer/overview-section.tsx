@@ -1,5 +1,6 @@
 import { AppIcon } from '@zanelab/ui';
-import { OVERVIEW_SECTION } from './content';
+import { useTranslation } from 'react-i18next';
+import { overviewSection } from './content';
 
 /**
  * 页脚第 1 段「什么是 Agent Skills 市场？」：
@@ -16,22 +17,24 @@ const FEATURE_TONE_CLASS = [
 ];
 
 export function OverviewSection() {
+  const { t } = useTranslation();
+  const section = overviewSection(t);
   return (
     <div className="flex flex-col items-center gap-7">
       <div className="mx-auto flex max-w-[680px] flex-col items-center gap-2.5 text-center">
         <h2 className="text-base-content text-center text-[24px] leading-[32px] font-semibold tracking-[-0.035em] text-balance sm:text-[30px] sm:leading-[38px]">
-          {OVERVIEW_SECTION.title}
+          {section.title}
         </h2>
         <p className="text-base-content/60 text-[15px] leading-[25px] text-pretty sm:text-[16px]">
-          {OVERVIEW_SECTION.description}
+          {section.description}
         </p>
       </div>
 
       <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {OVERVIEW_SECTION.features.map((feature, index) => (
+        {section.features.map((feature, index) => (
           <div
             key={feature.title}
-            className="border-base-300 bg-base-100/75 flex flex-col overflow-hidden rounded-2xl border"
+            className="border-base-300 bg-base-100/75 flex flex-col overflow-hidden rounded-(--page-radius) border"
           >
             {/* 图片位：语义色渐变占位（无真实图素材，D3） */}
             <div

@@ -1,4 +1,5 @@
 import type { MouseEvent, RefObject } from 'react';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 上传占位对话框（R8/D10：后端尚未提供上传接口，按钮只做入口占位）。
@@ -30,6 +31,7 @@ interface UploadPlaceholderProps {
 }
 
 export function UploadPlaceholder({ dialogRef }: UploadPlaceholderProps) {
+  const { t } = useTranslation();
   const close = () => closeDialog(dialogRef.current);
   /**
    * 关闭按钮：`method="dialog"` 的提交由浏览器负责关闭本对话框（modal 指南的
@@ -52,16 +54,15 @@ export function UploadPlaceholder({ dialogRef }: UploadPlaceholderProps) {
         if (event.key === 'Escape') close();
       }}
     >
-      <div className="modal-box">
+      <div className="modal-box rounded-(--page-radius)">
         <h3
           id="upload-placeholder-title"
           className="text-base-content text-lg font-semibold"
         >
-          上传 skills
+          {t('skills.upload.title')}
         </h3>
         <p className="text-base-content/60 mt-3 text-sm">
-          上传功能待接入：后端上传接口尚未提供，这里只是一个占位入口。
-          接入后可在此选择 skill 包、填写名称与简介，再提交审核。
+          {t('skills.upload.body')}
         </p>
         <div className="modal-action">
           <form method="dialog">
@@ -70,13 +71,13 @@ export function UploadPlaceholder({ dialogRef }: UploadPlaceholderProps) {
               className="btn btn-sm"
               onClick={closeByButton}
             >
-              知道了
+              {t('skills.upload.confirm')}
             </button>
           </form>
         </div>
       </div>
       <form method="dialog" className="modal-backdrop">
-        <button onClick={closeByButton}>关闭</button>
+        <button onClick={closeByButton}>{t('skills.upload.close')}</button>
       </form>
     </dialog>
   );

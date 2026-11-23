@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { AppIcon } from '@zanelab/ui';
+import { useTranslation } from 'react-i18next';
 import { AGENT_LABEL, type OutputType, type SkillItem } from './data';
 
 /**
@@ -32,6 +33,7 @@ const OUTPUT_ICON: Record<OutputType, string> = {
 const MAX_AGENT_AVATARS = 3;
 
 export function SkillCard({ skill }: { skill: SkillItem }) {
+  const { t } = useTranslation();
   const [liked, setLiked] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
 
@@ -48,7 +50,7 @@ export function SkillCard({ skill }: { skill: SkillItem }) {
     // （fixed, z-index:10）就会被卡片浮层（15/20/30）盖住，表现为内容穿透筛选面板。
     <article className="group relative isolate flex h-full min-w-0 flex-col transition-transform duration-300 focus-within:-translate-y-1 hover:-translate-y-1">
       {/* 缩略图：16:9 满铺（自身即卡片外形） */}
-      <div className="border-base-300 relative overflow-hidden rounded-2xl border">
+      <div className="border-base-300 relative overflow-hidden rounded-(--page-radius) border">
         <div
           className={`aspect-video w-full bg-gradient-to-br ${TONE_CLASS[skill.tone]}`}
         />
@@ -57,14 +59,14 @@ export function SkillCard({ skill }: { skill: SkillItem }) {
         <span
           className={`badge ${skill.free ? 'badge-primary' : 'badge-neutral'} badge-sm absolute top-2.5 left-2.5 z-20 font-semibold`}
         >
-          {skill.free ? '免费' : '付费'}
+          {skill.free ? t('skills.card.free') : t('skills.card.paid')}
         </span>
 
         {/* 右上 媒体类型圆标 */}
         {output ? (
           <span className="bg-base-100/60 text-base-content/60 absolute top-2.5 right-2.5 z-10 grid size-6 place-items-center rounded-full backdrop-blur-md">
             <AppIcon name={OUTPUT_ICON[output]} className="size-3.5" />
-            <span className="sr-only">{output}</span>
+            <span className="sr-only">{t(`skills.outputType.${output}`)}</span>
           </span>
         ) : null}
 
@@ -73,12 +75,12 @@ export function SkillCard({ skill }: { skill: SkillItem }) {
         <span className="absolute right-3 bottom-2.5 z-20 inline-flex items-center gap-2.5 text-[10px] font-semibold text-white tabular-nums">
           <span className="inline-flex items-center gap-1">
             <AppIcon name="download" className="size-3" />
-            <span className="sr-only">安装数</span>
+            <span className="sr-only">{t('skills.card.installCount')}</span>
             {skill.downloads}
           </span>
           <span className="inline-flex items-center gap-1">
             <AppIcon name="bookmark" className="size-3" />
-            <span className="sr-only">点赞数</span>
+            <span className="sr-only">{t('skills.card.likeCount')}</span>
             {skill.bookmarks}
           </span>
         </span>
@@ -89,7 +91,7 @@ export function SkillCard({ skill }: { skill: SkillItem }) {
         <div className="pointer-events-none absolute top-2.5 right-2.5 z-30 flex gap-1 opacity-0 transition-opacity group-focus-within:pointer-events-auto group-focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100">
           <button
             type="button"
-            aria-label={`喜欢 ${skill.title}`}
+            aria-label={t('skills.card.like', { title: skill.title })}
             aria-pressed={liked}
             onClick={() => setLiked((v) => !v)}
             className={`btn btn-circle btn-sm btn-ghost bg-base-100/60 backdrop-blur-md ${
@@ -100,7 +102,7 @@ export function SkillCard({ skill }: { skill: SkillItem }) {
           </button>
           <button
             type="button"
-            aria-label={`收藏 ${skill.title}`}
+            aria-label={t('skills.card.bookmark', { title: skill.title })}
             aria-pressed={bookmarked}
             onClick={() => setBookmarked((v) => !v)}
             className={`btn btn-circle btn-sm btn-ghost bg-base-100/60 backdrop-blur-md ${

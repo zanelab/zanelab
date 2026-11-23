@@ -1,5 +1,7 @@
 import { AppIcon } from '@zanelab/ui';
+import { useTranslation } from 'react-i18next';
 import { FILTER_GROUPS, type SkillFilterGroup } from './data';
+import { optionLabel } from './option-label';
 
 /**
  * 筛选侧栏（参考稿左栏）：全页**唯一**的 `aside` 层，宽度/内边距/底色/描边/滚动
@@ -36,14 +38,15 @@ function FilterSection({
   active: Record<string, string[]>;
   onToggle: (group: string, value: string) => void;
 }) {
+  const { t } = useTranslation();
   const values = active[group.id] ?? [];
   return (
     // 分隔线用 base-300：侧栏底色已改为 base-200（与页面同底），
     // base-200 描边与底色同色会整条不可见
     <section className="border-base-300 mt-4 border-t pt-4 first-of-type:mt-0 first-of-type:border-t-0 first-of-type:pt-0">
-      {group.title ? (
+      {group.options.length > 0 ? (
         <h3 className="text-base-content/40 mb-1.5 text-[11px] font-semibold">
-          {group.title}
+          {t(`skills.group.${group.id}`)}
         </h3>
       ) : null}
       <ul className="space-y-px">
@@ -78,7 +81,7 @@ function FilterSection({
                       : 'text-base-content/70 min-w-0 flex-1 truncate text-xs transition-colors'
                   }
                 >
-                  {option.label}
+                  {optionLabel(t, group.id, option.value)}
                 </span>
                 <span className="text-base-content/35 shrink-0 text-[11px] tabular-nums">
                   {option.count}
@@ -99,18 +102,19 @@ export function FilterSidebar({
   onCollapse,
   totalCount,
 }: FilterSidebarProps) {
+  const { t } = useTranslation();
   return (
     <aside className="bg-base-200 border-base-300 flex h-full w-72 flex-col border-r lg:h-dvh lg:w-60">
       {/* 唯一滚动层：面板高度固定，选项列表超长时只滚动这里（确认条不随之滚走） */}
       <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-4 pb-8">
         <div className="mb-2.5 flex items-center justify-between">
           <h2 className="text-base-content flex-1 text-xs font-semibold">
-            筛选
+            {t('skills.market.filter')}
           </h2>
           {/* 桌面：收起侧栏（对齐参考稿头部图标钮）；重新展开的入口在内容区标题行 */}
           <button
             type="button"
-            aria-label="收起筛选"
+            aria-label={t('skills.market.collapseFilter')}
             className="btn btn-ghost btn-circle btn-sm text-base-content/45 max-lg:hidden"
             onClick={onCollapse}
           >
@@ -119,7 +123,7 @@ export function FilterSidebar({
           {/* 小屏抽屉的关闭入口；桌面侧栏常驻，无需（对齐参考稿 lg:hidden 的关闭钮） */}
           <button
             type="button"
-            aria-label="关闭筛选"
+            aria-label={t('skills.market.closeFilter')}
             className="btn btn-ghost btn-circle btn-sm text-base-content/45 lg:hidden"
             onClick={onClose}
           >
@@ -146,7 +150,7 @@ export function FilterSidebar({
           className="btn btn-neutral w-full"
           onClick={onClose}
         >
-          查看 {totalCount} 个 Skills
+          {t('skills.market.viewAll', { count: totalCount })}
         </button>
       </div>
     </aside>

@@ -1,0 +1,164 @@
+{
+  "skills": {
+    "market": {
+      "title": "Agent Skills Marketplace",
+      "countSuffix": "{{count}} Skills",
+      "subtitle": "Agent Skills, also known as Claude Skills, work with Claude Code, Codex, Cursor, Antigravity, and any agent that can read SKILL.md.",
+      "filter": "Filters",
+      "expandFilter": "Expand filters",
+      "collapseFilter": "Collapse filters",
+      "closeFilter": "Close filters",
+      "viewAll": "View {{count}} Skills",
+      "empty": "No Skills match the current filters. Try clearing some filters or searching with different keywords.",
+      "srTitle": "Agent Skills Marketplace"
+    },
+    "toolbar": {
+      "category": "Categories",
+      "search": "Search Skills",
+      "upload": "Upload skills"
+    },
+    "sort": {
+      "recommended": "Recommended",
+      "latest": "Newest",
+      "popular": "Popular",
+      "rating": "Top rated"
+    },
+    "sortAria": "Sort",
+    "group": {
+      "free": "Recommended",
+      "featured": "Recommended",
+      "output": "By output type",
+      "role": "By role",
+      "scene": "By use case",
+      "agent": "By Agent"
+    },
+    "option": {
+      "free": {
+        "free": "Free",
+        "featured": "Featured"
+      },
+      "output": {
+        "网页": "Web page",
+        "幻灯片": "Slides",
+        "视频": "Video",
+        "图像": "Image"
+      },
+      "role": {
+        "内容创作者": "Content creator",
+        "创始人": "Founder",
+        "电商卖家": "E-commerce seller",
+        "设计师": "Designer",
+        "顾问": "Consultant",
+        "教师": "Teacher",
+        "营销人员": "Marketer",
+        "研究人员": "Researcher"
+      },
+      "scene": {
+        "内容与编辑发布": "Content & publishing",
+        "知识解释与教学": "Explaining & teaching",
+        "品牌建立与视觉规范": "Branding & visual identity",
+        "社交内容与营销活动": "Social content & campaigns"
+      }
+    },
+    "outputType": {
+      "网页": "Web page",
+      "幻灯片": "Slides",
+      "视频": "Video",
+      "图像": "Image"
+    },
+    "card": {
+      "free": "Free",
+      "paid": "Paid",
+      "installCount": "Installs",
+      "likeCount": "Likes",
+      "like": "Like {{title}}",
+      "bookmark": "Bookmark {{title}}"
+    },
+    "footer": {
+      "overview": {
+        "title": "What is the Agent Skills Marketplace?",
+        "description": "Every Skill in the marketplace ships with demo docs, so Claude Code, Codex, Cursor, Antigravity, and any agent that reads SKILL.md can generate web pages, slides, videos, and images directly.",
+        "features": {
+          "total": {
+            "title": "{{count}} Skills in total",
+            "description": "With demo data and usage docs"
+          },
+          "free": {
+            "title": "{{count}} free",
+            "description": "Free Skills in every output type, installed and run the same way"
+          },
+          "agent": {
+            "title": "{{count}} Agents",
+            "description": "Claude Code, Codex, Cursor, Antigravity, and more"
+          },
+          "manage": {
+            "title": "One entry point",
+            "description": "Browse, filter, and install Skills inside the portal"
+          }
+        }
+      },
+      "browse": {
+        "title": "Browse the Skills library",
+        "description": "Browse ready-made Skills by the output type you need, the Coding Agent you use, or your role.",
+        "entries": {
+          "slides": {
+            "title": "Slides & presentations",
+            "description": "Fundraising decks, classroom teaching, and reports"
+          },
+          "web": {
+            "title": "Web & front-end design",
+            "description": "Landing pages, product UI, and portfolios"
+          },
+          "video": {
+            "title": "Video & motion graphics",
+            "description": "Product promos and voiceover scripts"
+          },
+          "image": {
+            "title": "Image & visual generation",
+            "description": "Brand illustrations, posters, and social cards"
+          }
+        },
+        "cards": {
+          "agent": {
+            "heading": "By Coding Agent",
+            "sublabel": "Agents that support SKILL.md"
+          },
+          "role": {
+            "heading": "By role"
+          }
+        }
+      },
+      "faq": {
+        "title": "Marketplace FAQ",
+        "items": {
+          "what": {
+            "question": "What is the Agent Skills Marketplace?",
+            "answer": "The marketplace offers ready-to-install SKILL.md packages for Claude Code, Codex, Cursor, Antigravity, and more. Every Skill ships with demo data and usage docs so you can understand its purpose and output before installing."
+          },
+          "free": {
+            "question": "Are Skills free?",
+            "answer": "Every output type has installable free Skills. Free and paid Skills are installed and run exactly the same way."
+          },
+          "install": {
+            "question": "How do I install a Skill from the marketplace?",
+            "answer": "Open a Skill and follow its usage docs to hand the Skill folder to your agent for installation, then start using it in your sessions."
+          },
+          "agents": {
+            "question": "Which Coding Agents do these Skills support?",
+            "answer": "Every Skill is a standard SKILL.md folder, so it runs directly in Claude Code, Codex, Cursor, Antigravity, and any agent that supports Agent Skills."
+          },
+          "contribute": {
+            "question": "How do I add a new Skill to the marketplace?",
+            "answer": "Submit your Skill through the \"Upload skills\" entry at the top of the page. Once approved, it will be listed for your colleagues."
+          }
+        }
+      }
+    },
+    "upload": {
+      "title": "Upload skills",
+      "body": "Upload is not wired up yet: the backend upload API is still pending, so this is a placeholder entry. Once ready, you will pick a skill package here, fill in the name and description, and submit for review.",
+      "confirm": "Got it",
+      "close": "Close"
+    }
+  }
+}

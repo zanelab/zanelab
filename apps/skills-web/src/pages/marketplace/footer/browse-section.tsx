@@ -1,5 +1,6 @@
 import { AppIcon } from '@zanelab/ui';
-import { BROWSE_SECTION } from './content';
+import { useTranslation } from 'react-i18next';
+import { browseSection } from './content';
 
 /**
  * 页脚第 2 段「浏览 Agent Skills 库」：
@@ -20,23 +21,25 @@ const CARD_ICON_CLASS = 'from-info/25 to-info/5';
 const CARD_ROLE_ICON_CLASS = 'from-warning/25 to-warning/5';
 
 export function BrowseSection() {
+  const { t } = useTranslation();
+  const section = browseSection(t);
   return (
     <div className="flex flex-col items-center gap-7">
       <div className="mx-auto flex max-w-[720px] flex-col items-center gap-2.5 text-center">
         <h2 className="text-base-content text-center text-[24px] leading-[32px] font-semibold tracking-[-0.035em] text-balance sm:text-[30px] sm:leading-[38px]">
-          {BROWSE_SECTION.title}
+          {section.title}
         </h2>
         <p className="text-base-content/60 text-[15px] leading-[24px] sm:text-[16px]">
-          {BROWSE_SECTION.description}
+          {section.description}
         </p>
       </div>
 
       {/* 四个分类入口（纯展示 div） */}
       <div className="grid w-full grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
-        {BROWSE_SECTION.entries.map((entry, index) => (
+        {section.entries.map((entry, index) => (
           <div
             key={entry.title}
-            className="border-base-300 bg-base-100/75 flex items-center gap-3.5 rounded-2xl border p-3.5"
+            className="border-base-300 bg-base-100/75 flex items-center gap-3.5 rounded-(--page-radius) border p-3.5"
           >
             <div
               className={`grid size-[52px] shrink-0 place-items-center rounded-xl bg-gradient-to-br ${ENTRY_TONE_CLASS[index % ENTRY_TONE_CLASS.length]}`}
@@ -60,10 +63,10 @@ export function BrowseSection() {
 
       {/* 两张大卡（按 Coding Agent / 按职业角色），条目纯展示 */}
       <div className="grid w-full gap-5 lg:grid-cols-2">
-        {BROWSE_SECTION.cards.map((card, cardIndex) => (
+        {section.cards.map((card, cardIndex) => (
           <div
             key={card.heading}
-            className="border-base-300 bg-base-100/60 flex flex-col gap-3.5 rounded-2xl border p-5"
+            className="border-base-300 bg-base-100/60 flex flex-col gap-3.5 rounded-(--page-radius) border p-5"
           >
             <div className="flex items-center justify-between">
               <p className="text-base-content/50 text-[12px] font-semibold tracking-[0.1em] uppercase">
