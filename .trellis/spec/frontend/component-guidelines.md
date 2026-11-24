@@ -208,6 +208,16 @@ useEffect(() => {
 - **样式 token**：scrim `bg-black/40 + backdrop-blur-sm`、卡片 `bg-base-100` + `shadow-pop`、圆角 `rounded-(--page-radius)`（子应用跟随宿主 radius；组件内联 22px 兜底）。keyframes/shadow 定义在包内 `modal.css`，消费方 `import '@zanelab/ui/modal.css'` 一次（skills-web 独立态入口与 portal 宿主入口**两处都要 import**——集成态样式由宿主注入）。
 - **可达性**：卡片 `role=dialog` + `aria-modal` + `aria-labelledby`（title h2 的 id）；jsdom 有显式 role 即可 `getByRole`。**Field 的纵向布局用 `<label>` 包裹 children**（HTML 隐式关联给控件可访问名——byRole name 查询依赖它；横向布局给不了，需可访问名时调用方自加 aria-label）。测试定位器锚 `aria-labelledby` id + `closest('[role="dialog"]')`。
 
+## 长表单：按类型动态分节（11-24-skills-detail-schema）
+
+表单字段随「类型多选」动态增减时（技能表单按输出类型出专属分节），固定三条约定：
+
+- **state 归主组件，分节组件纯受控**：分节只渲染 + 回调 `onChange`，不持有内部 state——切换类型时值保留、提交时统一裁剪。分节拆独立文件（`modal/form-sections.tsx`），主文件只编排（`modal/form-state.ts` 持有类型与载荷装配）。
+- **切换不清值、提交才裁剪**：类型切换后旧类型的字段值留在 state（误触不丢数据），但**提交载荷按激活分节裁剪**——未激活类型的专属字段不落库（否则残留值会污染新条目）。裁剪逻辑集中在 `toSkillInput`（单一判定处）。
+- **表单结构与载荷装配分层**：`form-state.ts`（纯函数：类型 ↔ 分节映射、文本→数组解析、state→载荷）单独成文件并配单测——分节渲染难测，裁剪/解析规则好测且是契约所在。
+
+**通用载荷形态**：清单类字段用「每行一条」文本录入 → 提交前 split 成数组（`splitList`：逗号/中文逗号/换行分隔、去空去重）；URL 列表用 `kind|url` 形式（`image|https://…`）解析成媒体项。
+
 ## 主题
 
 - 主题由 daisyUI 主题系统提供：按项目 CSS（见 [目录结构](./directory-structure.md)）启用的主题，在 `<html data-theme="...">` 上切换；默认随 `config.layout.theme`（如 `dark`/`light`）。

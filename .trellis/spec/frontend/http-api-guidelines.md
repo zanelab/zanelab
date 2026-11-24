@@ -101,8 +101,46 @@ function toRowValues(input: SkillInput): Record<string, unknown> {
 ```
 
 - **两处同步点**：`toRowValues`（fn 侧）与 mock `pickInput`（`src/mocks/skill-handlers.ts`）各自持有 camel↔snake 映射，**注释互相标注「与对方同步」**——新增入参字段时两处一起改，漏一处就是「测试绿、线上断」。
+- **mock 侧必须有「snake 列名」断言用例**：api 层的 `mapRow` 会把未知的 camel 键**原样透传**，从归一后的对象看不出列名写错——只有直接读 mock 原始行（导出一个 `__getRawSkillRows()` 之类的测试口）才能断言「落库键是 snake、无 camel 残留」。这条用例是「mock 映射 ≠ fn 映射」的护栏（11-24 实现中 mock 曾漏 `taskExpression→task_expression` 等三列映射，靠人工比对发现）。
+- **同名列不必映射，但同名 ≠ 同义**：数组/JSONB 列（`media`/`tags`/`deliverables`）camel 与 snake 同名，直接整体赋值即可（结构由 API 契约层定义，fn **不拆解** JSONB 内部结构——避免 fn 里出现第二份结构知识）；但 `taskExpression→task_expression` 这类多词列必须显式登记。
 - fn 侧跑不进 vitest（Deno 运行时），守护手段是 `tsc -p supabase/functions/tsconfig.json` + 云端联调；映射函数写成纯函数（不碰 `Deno.env`、不碰 req），将来抽测才有可能。
 - Wrong：`parseSkillInput` 之后直接 `.insert(input)`——类型层完全合法（`Record<string, unknown>` 什么都塞得进），编译期零报警，只有运行时 PGRST204。
+
+## 内容型数据的 i18n 存储：主表基线 + 副表译文（2026-11-24 沉淀）
+
+**场景**：内容型实体（技能、商品、文章）有标题/摘要/长文等多语言字段，且列表页只读摘要、详情页读全文。
+
+**契约**（skills 参考实现：主表 `public.skills` + 副表 `public.skills_i18n`）：
+
+```sql
+-- 主表：存基线语言内容（zh-CN）+ 语言无关字段
+title text not null, summary text not null default '', description text not null default '',
+-- 副表：只存译文；字段为 null = 该 locale 无此译文 → 回落基线
+create table public.skills_i18n (
+  skill_id bigint not null references public.skills(id) on delete cascade,
+  locale text not null,
+  title text, summary text, description text, task_expression text,
+  primary key (skill_id, locale)
+);
+```
+
+- **列表接口不 join 副表**（性能契约：N+1 零成本）；**只有详情接口按 `?locale=` join**，命中则覆盖、字段为 null/空则保留基线——回落逻辑在服务端（fn 的 `applyI18n`）与 mock 侧各一份。
+- 写入侧：译文作为**独立载荷**（body.i18n = `{ locale: {字段} }`）随主记录提交，服务端 upsert 副表；主记录写入成功即算成功，副表失败不阻断主流程。
+- **可翻译性差异要在存储层显式**：枚举型标签用 JSONB 分桶（`{scenarios, tasks, highlights, styles}`——前三类存 i18n key 可翻译，`styles` 存原文不译）；自由文本字段存基线 + 副表。
+- **locale 来源不硬编码**：api 层从 i18n 运行时取当前语言（`i18n.language`），详情请求按需带 `?locale=`；缺省不带 = 返回基线。
+- 副表 RLS：读公开（与主表同）；写全部走 edge fn（service role 绕 RLS），与 iam menus 表同款。
+
+## 迁移：加列 + 旧数据折进新结构的幂等写法（2026-11-24 沉淀）
+
+- 加列一律 `add column if not exists`；建表 `create table if not exists`——迁移可重复执行。
+- **旧数据折进新结构要用值守卫**，否则第二次执行会覆盖用户已改的新值：
+  ```sql
+  update public.skills set tags = jsonb_build_object('scenarios', to_jsonb(scenes), 'tasks', to_jsonb(roles))
+  where tags = '{}'::jsonb and (coalesce(roles,'{}') <> '{}'::text[] or coalesce(scenes,'{}') <> '{}'::text[]);
+  ```
+  ——`where tags = '{}'` 是「还没折过」的哨兵值；折过的新值非空，不再命中。
+- 派生列与旧列同步（如 `free` 由 `price_kind` 推导）用 `where free <> (price_kind = 'free')` 收敛，重复执行无副作用。
+- 副表 upsert 用 `on conflict (skill_id, locale) do update` 幂等。
 
 ## Supabase 迁移序号：先查目录再定号（2026-11-23 沉淀）
 
