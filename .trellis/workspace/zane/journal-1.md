@@ -609,3 +609,26 @@ skills-web 权限系统对齐 iam-web：删除订阅式权限内核（utils/perm
 ### Status
 
 [OK] **Completed**
+
+
+## Session 20: Modal 弹窗组件下沉 packages/ui + skills-web 表单弹窗消费改造
+<!-- trellis-session: v=2 fp=b846e173ba81bde9 -->
+
+**Date**: 2026-11-24
+**Task**: Modal 弹窗组件下沉 packages/ui + skills-web 表单弹窗消费改造
+**Branch**: `main`
+
+### Summary
+
+参考站（127.0.0.1:55422 / skillry.dev）modal 结构抽成 @zanelab/ui 包组件：Modal 受控壳（createPortal 挂 body、z-[500] 层级高于宿主 header 200 且低于宿主全局浮层、data-modal-* 属性、Escape/scrim/关闭钮只回调不自行卸载、modal.css keyframes+shadow-pop 双入口 import）+ Field/ChipGroup/ModalActions 表单原语（零耦合：不引 i18next，文案全 props）。skills-web skill-form-modal 两弹窗换壳消费，对外 props/行为/aria 锚点零变化（测试断言零修改，仅定位器 closest 适配 div[role=dialog]、Field label 改 label 包裹保隐式关联）。spec 沉淀 Modal 包契约到 component-guidelines。用户偏好：后续不派发子代理，全部主代理 inline 执行（已存记忆）。验证：skills-web 110/110、portal 191/191、iam 60/60、四包 tsc/build 全绿。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `f51fa30` | feat(@zanelab/ui): Modal 弹窗外壳 + 表单原语下沉，skills-web 表单弹窗消费改造（任务 11-24-skills-modal-package） |
+| `538b57b` | docs(project): Modal 包组件契约沉淀——受控语义/portal 挂载/z 阶梯/可达性（任务产物） |
+
+### Status
+
+[OK] **Completed**
