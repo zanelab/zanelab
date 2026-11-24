@@ -5,7 +5,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./scrollbar.css": "./src/scrollbar/scrollbar.css"
+    "./scrollbar.css": "./src/scrollbar/scrollbar.css",
+    "./modal.css": "./src/modal/modal.css"
   },
   "types": "./src/index.ts",
   "files": [

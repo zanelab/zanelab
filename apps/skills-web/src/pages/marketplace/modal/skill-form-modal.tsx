@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ChipGroup, Field, Modal, ModalActions } from '@zanelab/ui';
 import {
   AGENT_LABEL,
   FILTER_GROUPS,
@@ -9,18 +10,20 @@ import {
 import { skillsApi, type SkillInput } from '../../../api/skills';
 
 /*
- * Skill 新建/编辑表单弹窗 + 删除确认弹窗（任务 11-23-skills-crud-mock R5/D3）。
+ * Skill 新建/编辑表单弹窗 + 删除确认弹窗（任务 11-23-skills-crud-mock R5/D3；
+ * 11-24-skills-modal-package 换 @zanelab/ui Modal 壳 + 表单原语消费）。
  *
- * 形态（iam-web RoleManagementPage 同款）：受控 `dialog.modal.modal-open`——
- * 不用原生 showModal()/`method="dialog"`：提交要走 skillsApi 异步链路，
- * 成功才关弹窗，失败留在弹窗内提示。条件渲染（open=false 不挂载）+ 显式
- * `open` 属性：open 属性是浏览器可达性语义（无障碍树可见）的来源，jsdom 的
- * 角色查询（byRole）也依赖它（无 open 的 dialog 按 spec 不渲染内容）。
+ * 形态：受控 Modal（packages/ui/src/modal——受控 open/onOpenChange，关闭时机
+ * 由调用方决定）。不用原生 showModal()/`method="dialog"`：提交要走 skillsApi
+ * 异步链路，成功才经 onSaved() 关弹窗（页面重拉列表），失败留在弹窗内提示。
+ * open=false 由 Modal 内部不挂载；aria-labelledby 锚点（skill-form-title /
+ * skill-delete-title）经 Modal labelledBy 保持——marketplace.test.tsx 期望
+ * 零修改。
  *
  * 职责拆分：
  * - SkillFormModal：新建/编辑双形态（mode 由调用方传 editing 行是否为 null）。
- *   提交 → skillsApi.create / update；成功 onSaved()（页面重拉列表 + 关弹窗）；
- *   失败 alert-error 展示接口 msg（Error(msg)，api 层已归一）。
+ *   提交 → skillsApi.create / update；成功 onSaved()；失败 ModalActions status
+ *   展示接口 msg（Error(msg)，api 层已归一）。
  * - DeleteConfirmModal：确认 → skillsApi.remove；成功 onSaved()；同上。
  * 权限显隐不在本组件——入口（上传按钮 / 卡片操作钮）各自包 Permission，
  * 本组件只在「已经打开」的前提下工作（守卫在触发点，单一判定处）。
@@ -128,8 +131,6 @@ export function SkillFormModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  if (!open) return null;
-
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
@@ -163,132 +164,18 @@ export function SkillFormModal({
   };
 
   return (
-    <dialog
-      className="modal modal-open"
-      open
-      aria-labelledby="skill-form-title"
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-      onKeyDown={(e) => e.key === 'Escape' && onClose()}
-    >
-      <div className="modal-box bg-base-100 max-w-120 rounded-(--page-radius)">
-        <h3
-          id="skill-form-title"
-          className="text-base-content text-lg font-semibold"
-        >
-          {editing ? t('skills.form.editTitle') : t('skills.form.createTitle')}
-        </h3>
-        <div className="mt-4 flex flex-col gap-3">
-          <label className="flex flex-col gap-1">
-            <span className="text-base-content text-sm">
-              <span className="text-error">*</span>{' '}
-              {t('skills.form.fieldTitle')}
-            </span>
-            <input
-              type="text"
-              className="input input-sm bg-base-200 w-full"
-              placeholder={t('skills.form.titlePlaceholder')}
-              value={form.title}
-              onChange={(e) => set('title', e.target.value)}
-            />
-          </label>
-
-          <div className="flex items-center gap-6">
-            <label className="flex cursor-pointer items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                className="checkbox checkbox-sm"
-                checked={form.free}
-                onChange={(e) => set('free', e.target.checked)}
-              />
-              {t('skills.form.free')}
-            </label>
-            <label className="flex cursor-pointer items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                className="checkbox checkbox-sm"
-                checked={form.featured}
-                onChange={(e) => set('featured', e.target.checked)}
-              />
-              {t('skills.form.featured')}
-            </label>
-          </div>
-
-          <CheckboxGroup
-            label={t('skills.form.outputTypes')}
-            options={OUTPUT_OPTIONS}
-            selected={form.outputTypes}
-            onToggle={(value) =>
-              set(
-                'outputTypes',
-                toggleValue(form.outputTypes, value) as OutputType[],
-              )
-            }
-          />
-          <CheckboxGroup
-            label={t('skills.form.roles')}
-            options={ROLE_OPTIONS}
-            selected={form.roles}
-            onToggle={(value) => set('roles', toggleValue(form.roles, value))}
-          />
-          <CheckboxGroup
-            label={t('skills.form.scenes')}
-            options={SCENE_OPTIONS}
-            selected={form.scenes}
-            onToggle={(value) => set('scenes', toggleValue(form.scenes, value))}
-          />
-          <CheckboxGroup
-            label={t('skills.form.agents')}
-            options={ALL_AGENTS}
-            labels={AGENT_LABEL}
-            selected={form.agents}
-            onToggle={(value) => set('agents', toggleValue(form.agents, value))}
-          />
-
-          <div className="flex items-center gap-6">
-            <label className="flex flex-col gap-1">
-              <span className="text-base-content text-sm">
-                {t('skills.form.rating')}
-              </span>
-              <select
-                className="select select-sm bg-base-200 w-28"
-                value={form.rating}
-                onChange={(e) => set('rating', Number(e.target.value))}
-              >
-                {[1, 2, 3, 4, 5].map((n) => (
-                  <option key={n} value={n}>
-                    {n}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className="text-base-content text-sm">
-                {t('skills.form.tone')}
-              </span>
-              <select
-                className="select select-sm bg-base-200 w-32"
-                value={form.tone}
-                onChange={(e) =>
-                  set('tone', e.target.value as SkillItem['tone'])
-                }
-              >
-                {TONES.map((tone) => (
-                  <option key={tone} value={tone}>
-                    {t(`skills.tone.${tone}`)}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-        </div>
-
-        {error ? (
-          <div role="alert" className="alert alert-error mt-3 text-sm">
-            <span>{error}</span>
-          </div>
-        ) : null}
-
-        <div className="modal-action">
+    <Modal
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) onClose();
+      }}
+      labelledBy="skill-form-title"
+      title={
+        editing ? t('skills.form.editTitle') : t('skills.form.createTitle')
+      }
+      widthClass="max-w-[480px]"
+      footer={
+        <ModalActions status={error || undefined}>
           <button
             type="button"
             className="btn btn-ghost btn-sm"
@@ -307,47 +194,104 @@ export function SkillFormModal({
             ) : null}
             {t('skills.form.save')}
           </button>
-        </div>
-      </div>
-    </dialog>
-  );
-}
+        </ModalActions>
+      }
+    >
+      <div className="flex flex-col gap-4 px-5 py-5">
+        <Field label={t('skills.form.fieldTitle')} required>
+          <input
+            type="text"
+            className="input input-sm bg-base-200 w-full"
+            placeholder={t('skills.form.titlePlaceholder')}
+            value={form.title}
+            onChange={(e) => set('title', e.target.value)}
+          />
+        </Field>
 
-/** 多选组（checkbox 行 + label 文案）：role/scene/output 走数据键 i18n，agent 用全称。 */
-function CheckboxGroup({
-  label,
-  options,
-  selected,
-  onToggle,
-  labels,
-}: {
-  label: string;
-  options: string[];
-  selected: string[];
-  onToggle: (value: string) => void;
-  /** 可选映射（agent 组：缩写码 → 品牌全称，不翻译）；缺省 = 原值 */
-  labels?: Record<string, string>;
-}) {
-  return (
-    <div className="flex flex-col gap-1">
-      <span className="text-base-content text-sm">{label}</span>
-      <div className="flex flex-wrap gap-x-4 gap-y-1.5">
-        {options.map((value) => (
-          <label
-            key={value}
-            className="flex cursor-pointer items-center gap-1.5 text-[13px]"
-          >
+        <div className="flex items-center gap-6">
+          <label className="text-base-content flex cursor-pointer items-center gap-2 text-sm">
             <input
               type="checkbox"
-              className="checkbox checkbox-xs"
-              checked={selected.includes(value)}
-              onChange={() => onToggle(value)}
+              className="checkbox checkbox-sm"
+              checked={form.free}
+              onChange={(e) => set('free', e.target.checked)}
             />
-            {labels?.[value] ?? value}
+            {t('skills.form.free')}
           </label>
-        ))}
+          <label className="text-base-content flex cursor-pointer items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              className="checkbox checkbox-sm"
+              checked={form.featured}
+              onChange={(e) => set('featured', e.target.checked)}
+            />
+            {t('skills.form.featured')}
+          </label>
+        </div>
+
+        <ChipGroup
+          label={t('skills.form.outputTypes')}
+          options={OUTPUT_OPTIONS.map((value) => ({ value, label: value }))}
+          selected={form.outputTypes}
+          onToggle={(value) =>
+            set(
+              'outputTypes',
+              toggleValue(form.outputTypes, value) as OutputType[],
+            )
+          }
+        />
+        <ChipGroup
+          label={t('skills.form.roles')}
+          options={ROLE_OPTIONS.map((value) => ({ value, label: value }))}
+          selected={form.roles}
+          onToggle={(value) => set('roles', toggleValue(form.roles, value))}
+        />
+        <ChipGroup
+          label={t('skills.form.scenes')}
+          options={SCENE_OPTIONS.map((value) => ({ value, label: value }))}
+          selected={form.scenes}
+          onToggle={(value) => set('scenes', toggleValue(form.scenes, value))}
+        />
+        <ChipGroup
+          label={t('skills.form.agents')}
+          options={ALL_AGENTS.map((value) => ({
+            value,
+            label: AGENT_LABEL[value] ?? value,
+          }))}
+          selected={form.agents}
+          onToggle={(value) => set('agents', toggleValue(form.agents, value))}
+        />
+
+        <div className="flex items-center gap-6">
+          <Field label={t('skills.form.rating')}>
+            <select
+              className="select select-sm bg-base-200 w-28"
+              value={form.rating}
+              onChange={(e) => set('rating', Number(e.target.value))}
+            >
+              {[1, 2, 3, 4, 5].map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label={t('skills.form.tone')}>
+            <select
+              className="select select-sm bg-base-200 w-32"
+              value={form.tone}
+              onChange={(e) => set('tone', e.target.value as SkillItem['tone'])}
+            >
+              {TONES.map((tone) => (
+                <option key={tone} value={tone}>
+                  {t(`skills.tone.${tone}`)}
+                </option>
+              ))}
+            </select>
+          </Field>
+        </div>
       </div>
-    </div>
+    </Modal>
   );
 }
 
@@ -373,9 +317,9 @@ export function DeleteConfirmModal({
     setError('');
     setDeleting(false);
   }, [target?.id, target === null]);
-  if (!target) return null;
 
   const submit = async () => {
+    if (!target) return;
     setDeleting(true);
     setError('');
     try {
@@ -389,29 +333,16 @@ export function DeleteConfirmModal({
   };
 
   return (
-    <dialog
-      className="modal modal-open"
-      open
-      aria-labelledby="skill-delete-title"
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-      onKeyDown={(e) => e.key === 'Escape' && onClose()}
-    >
-      <div className="modal-box bg-base-100 max-w-100 rounded-(--page-radius)">
-        <h3
-          id="skill-delete-title"
-          className="text-base-content text-lg font-semibold"
-        >
-          {t('skills.form.deleteTitle')}
-        </h3>
-        <p className="text-base-content/70 mt-3 text-sm">
-          {t('skills.form.deleteConfirm', { title: target.title })}
-        </p>
-        {error ? (
-          <div role="alert" className="alert alert-error mt-3 text-sm">
-            <span>{error}</span>
-          </div>
-        ) : null}
-        <div className="modal-action">
+    <Modal
+      open={target !== null}
+      onOpenChange={(next) => {
+        if (!next) onClose();
+      }}
+      labelledBy="skill-delete-title"
+      title={t('skills.form.deleteTitle')}
+      widthClass="max-w-[420px]"
+      footer={
+        <ModalActions status={error || undefined}>
           <button
             type="button"
             className="btn btn-ghost btn-sm"
@@ -430,8 +361,12 @@ export function DeleteConfirmModal({
             ) : null}
             {t('skills.form.delete')}
           </button>
-        </div>
+        </ModalActions>
+      }
+    >
+      <div className="text-base-content/70 px-5 py-5 text-sm">
+        {t('skills.form.deleteConfirm', { title: target?.title ?? '' })}
       </div>
-    </dialog>
+    </Modal>
   );
 }

@@ -13,6 +13,10 @@
 
 @import 'tailwindcss';
 
+/* Modal 组件动画/阴影（任务 11-24-skills-modal-package；keyframes+shadow-pop）。
+ * 独立态走本入口；集成态宿主 portal index.css 也 import 同一份（两处同步维护）。 */
+@import '@zanelab/ui/modal.css';
+
 /* Logo 等来自 @zanelab/ui 的组件类（Tailwind 4 按使用裁剪，须显式扫描） */
 @source '../../../packages/ui/src';
 

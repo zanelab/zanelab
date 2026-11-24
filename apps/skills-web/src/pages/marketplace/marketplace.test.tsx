@@ -14,18 +14,18 @@ import { setProps } from '../../props';
 import { MarketplacePage } from './marketplace';
 import { TRANSITION_MS } from './toolbar/category-menu';
 
-/** 表单弹窗定位（<dialog aria-labelledby="skill-form-title">；jsdom 下 dialog
- *  无隐式 role，角色查询不可用——用 aria-labelledby 锚定）。 */
+/** 表单弹窗定位（Modal 壳：aria-labelledby="skill-form-title" 的 h2 在
+ *  div[role=dialog] 卡片内——closest 找 role=dialog 容器）。 */
 function formDialog() {
   return document
     .getElementById('skill-form-title')!
-    .closest('dialog') as HTMLDialogElement;
+    .closest('[role="dialog"]') as HTMLElement;
 }
 /** 删除确认弹窗定位（同上，aria-labelledby="skill-delete-title"）。 */
 function deleteDialog() {
   return document
     .getElementById('skill-delete-title')!
-    .closest('dialog') as HTMLDialogElement;
+    .closest('[role="dialog"]') as HTMLElement;
 }
 /** 表单弹窗是否在文档中（waitFor 关闭断言用；不抛错）。 */
 function formDialogOrNull() {

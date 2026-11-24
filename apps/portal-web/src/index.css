@@ -1,5 +1,9 @@
 @import 'tailwindcss';
 
+/* Modal 组件动画/阴影（任务 11-24-skills-modal-package；keyframes+shadow-pop）。
+ * 集成态 skills-web 弹窗样式经本宿主入口生效；skills-web 独立态入口 import 同一份（两处同步维护）。 */
+@import '@zanelab/ui/modal.css';
+
 @source not '../../../docs';
 @source not '../../../tooling';
 @source not '../scripts';

@@ -1,0 +1,55 @@
+/* Modal 组件级样式（任务 11-24-skills-modal-package）。
+ *
+ * 消费方 import 一次：import '@zanelab/ui/modal.css'（参照 scrollbar.css 先例，
+ * packages/ui package.json exports 已登记）。
+ *
+ * 动画/阴影值取自参考站实测（.15s cubic-bezier(.4,0,.2,1)；shadow-pop
+ * 0 8px 30px #12131329），类名用组件私有前缀 modal-（不复刻参考站的
+ * animate-fade/animate-pop/shadow-pop 工具类名，避免与消费方 Tailwind
+ * 同名类冲突——skills-web 侧无这些工具类，iam/portal 也不该被暗示存在）。
+ *
+ * @media (prefers-reduced-motion: reduce) 关闭动画（无障碍基线）。
+ */
+
+@keyframes modal-fade-in {
+  0% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes modal-pop-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.985);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modal-fade {
+  animation: 0.15s cubic-bezier(0.4, 0, 0.2, 1) modal-fade-in;
+}
+
+.modal-pop {
+  animation: 0.15s cubic-bezier(0.4, 0, 0.2, 1) modal-pop-in;
+}
+
+.shadow-pop {
+  --tw-shadow: 0 8px 30px 0 #12131329;
+
+  box-shadow: var(--tw-shadow);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal-fade,
+  .modal-pop {
+    animation: none;
+  }
+}
