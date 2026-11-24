@@ -1,17 +1,34 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChipGroup, Field, Modal, ModalActions } from '@zanelab/ui';
+import { Modal, ModalActions } from '@zanelab/ui';
+import { AGENT_LABEL, FILTER_GROUPS, type SkillItem } from '../data';
+import { skillsApi } from '../../../api/skills';
 import {
-  AGENT_LABEL,
-  FILTER_GROUPS,
-  type OutputType,
-  type SkillItem,
-} from '../data';
-import { skillsApi, type SkillInput } from '../../../api/skills';
+  BasicSection,
+  CompatSection,
+  ContentSection,
+  I18nSection,
+  ImageSection,
+  MediaSection,
+  OutputSection,
+  PricingSection,
+  RequirementsSection,
+  SlidesSection,
+  TagsSection,
+  VideoSection,
+  WebSection,
+} from './form-sections';
+import {
+  activeSections,
+  INITIAL_SKILL_FORM,
+  toSkillInput,
+  type SkillFormState,
+} from './form-state';
 
 /*
  * Skill 新建/编辑表单弹窗 + 删除确认弹窗（任务 11-23-skills-crud-mock R5/D3；
- * 11-24-skills-modal-package 换 @zanelab/ui Modal 壳 + 表单原语消费）。
+ * 11-24-skills-modal-package 换 @zanelab/ui Modal 壳；
+ * 11-24-skills-detail-schema 详情页字段 + 按输出类型动态分节）。
  *
  * 形态：受控 Modal（packages/ui/src/modal——受控 open/onOpenChange，关闭时机
  * 由调用方决定）。不用原生 showModal()/`method="dialog"`：提交要走 skillsApi
@@ -20,81 +37,20 @@ import { skillsApi, type SkillInput } from '../../../api/skills';
  * skill-delete-title）经 Modal labelledBy 保持——marketplace.test.tsx 期望
  * 零修改。
  *
- * 职责拆分：
- * - SkillFormModal：新建/编辑双形态（mode 由调用方传 editing 行是否为 null）。
- *   提交 → skillsApi.create / update；成功 onSaved()；失败 ModalActions status
- *   展示接口 msg（Error(msg)，api 层已归一）。
- * - DeleteConfirmModal：确认 → skillsApi.remove；成功 onSaved()；同上。
+ * 分节：state 在本组件持有（分节组件纯受控），按 outputTypes 激活专属分节
+ * （web/slides/video/image，多选=并集；切换不清值，提交时裁剪——见 form-state.ts）。
+ *
  * 权限显隐不在本组件——入口（上传按钮 / 卡片操作钮）各自包 Permission，
  * 本组件只在「已经打开」的前提下工作（守卫在触发点，单一判定处）。
  */
 
-/** 表单初始值（新建缺省 / 编辑回填同一形状）。 */
-interface FormState {
-  title: string;
-  free: boolean;
-  featured: boolean;
-  outputTypes: OutputType[];
-  roles: string[];
-  scenes: string[];
-  agents: string[];
-  rating: number;
-  tone: SkillItem['tone'];
-}
-
-const TONES: SkillItem['tone'][] = [
-  'primary',
-  'secondary',
-  'accent',
-  'info',
-  'success',
-  'warning',
-];
-
-const ALL_AGENTS = Object.keys(AGENT_LABEL);
-
-const OUTPUT_OPTIONS = (
-  FILTER_GROUPS.find((group) => group.id === 'output')?.options ?? []
-).map((option) => option.value) as OutputType[];
-
-const ROLE_OPTIONS = (
-  FILTER_GROUPS.find((group) => group.id === 'role')?.options ?? []
-).map((option) => option.value);
-
-const SCENE_OPTIONS = (
-  FILTER_GROUPS.find((group) => group.id === 'scene')?.options ?? []
-).map((option) => option.value);
-
-const INITIAL_FORM: FormState = {
-  title: '',
-  free: true,
-  featured: false,
-  outputTypes: [],
-  roles: [],
-  scenes: [],
-  agents: [],
-  rating: 3,
-  tone: 'primary',
-};
-
-function formFromSkill(skill: SkillItem): FormState {
+/** 编辑回填：接口行 → 表单状态（缺省字段沿用 INITIAL）。 */
+function formFromSkill(skill: SkillItem): SkillFormState {
   return {
+    ...INITIAL_SKILL_FORM,
     title: skill.title,
-    free: skill.free,
-    featured: skill.featured,
-    outputTypes: [...skill.outputTypes],
-    roles: [...skill.roles],
-    scenes: [...skill.scenes],
-    agents: [...skill.agents],
-    rating: skill.rating,
-    tone: skill.tone,
+    outputTypes: skill.outputTypes,
   };
-}
-
-function toggleValue(list: string[], value: string): string[] {
-  return list.includes(value)
-    ? list.filter((v) => v !== value)
-    : [...list, value];
 }
 
 interface SkillFormModalProps {
@@ -115,14 +71,14 @@ export function SkillFormModal({
   const { t } = useTranslation();
   // 初值只在「从关到开」时快照（open 变 true 的 effect）：编辑中改字段不会被
   // 重渲染重置，也避免复用上一次打开的脏值
-  const [form, setForm] = useState<FormState>(INITIAL_FORM);
+  const [form, setForm] = useState<SkillFormState>(INITIAL_SKILL_FORM);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const wasOpen = useRef(false);
 
   useEffect(() => {
     if (open && !wasOpen.current) {
-      setForm(editing ? formFromSkill(editing) : INITIAL_FORM);
+      setForm(editing ? formFromSkill(editing) : INITIAL_SKILL_FORM);
       setError('');
       setSaving(false);
     }
@@ -131,8 +87,12 @@ export function SkillFormModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
-    setForm((prev) => ({ ...prev, [key]: value }));
+  const set = <K extends keyof SkillFormState>(
+    key: K,
+    value: SkillFormState[K],
+  ) => setForm((prev) => ({ ...prev, [key]: value }));
+
+  const sections = activeSections(form.outputTypes);
 
   const submit = async () => {
     if (!form.title.trim()) {
@@ -141,18 +101,8 @@ export function SkillFormModal({
     }
     setSaving(true);
     setError('');
-    const input: SkillInput = {
-      title: form.title.trim(),
-      free: form.free,
-      featured: form.featured,
-      outputTypes: form.outputTypes,
-      roles: form.roles,
-      scenes: form.scenes,
-      rating: form.rating,
-      tone: form.tone,
-      agents: form.agents,
-    };
     try {
+      const input = toSkillInput(form);
       if (editing) await skillsApi.update(editing.id, input);
       else await skillsApi.create(input);
       onSaved();
@@ -173,7 +123,7 @@ export function SkillFormModal({
       title={
         editing ? t('skills.form.editTitle') : t('skills.form.createTitle')
       }
-      widthClass="max-w-[480px]"
+      widthClass="max-w-[560px]"
       footer={
         <ModalActions status={error || undefined}>
           <button
@@ -197,101 +147,89 @@ export function SkillFormModal({
         </ModalActions>
       }
     >
-      <div className="flex flex-col gap-4 px-5 py-5">
-        <Field label={t('skills.form.fieldTitle')} required>
-          <input
-            type="text"
-            className="input input-sm bg-base-200 w-full"
-            placeholder={t('skills.form.titlePlaceholder')}
-            value={form.title}
-            onChange={(e) => set('title', e.target.value)}
+      <div className="flex flex-col gap-5 px-5 py-5">
+        <Section title={t('skills.form.section.basic')}>
+          <BasicSection form={form} set={set} />
+        </Section>
+
+        <Section title={t('skills.form.section.output')}>
+          <OutputSection form={form} set={set} groups={FILTER_GROUPS} />
+        </Section>
+
+        {/* 类型专属分节：按 outputTypes 激活（多选=并集） */}
+        {sections.includes('网页') ? (
+          <Section title={t('skills.form.section.web')}>
+            <WebSection form={form} set={set} />
+          </Section>
+        ) : null}
+        {sections.includes('幻灯片') ? (
+          <Section title={t('skills.form.section.slides')}>
+            <SlidesSection form={form} set={set} />
+          </Section>
+        ) : null}
+        {sections.includes('视频') ? (
+          <Section title={t('skills.form.section.video')}>
+            <VideoSection form={form} set={set} />
+          </Section>
+        ) : null}
+        {sections.includes('图像') ? (
+          <Section title={t('skills.form.section.image')}>
+            <ImageSection form={form} set={set} />
+          </Section>
+        ) : null}
+
+        <Section title={t('skills.form.section.content')}>
+          <ContentSection form={form} set={set} />
+        </Section>
+
+        <Section title={t('skills.form.section.requirements')}>
+          <RequirementsSection form={form} set={set} />
+        </Section>
+
+        <Section title={t('skills.form.section.tags')}>
+          <TagsSection form={form} set={set} />
+        </Section>
+
+        <Section title={t('skills.form.section.compat')}>
+          <CompatSection
+            form={form}
+            set={set}
+            groups={FILTER_GROUPS}
+            agentLabels={AGENT_LABEL}
           />
-        </Field>
+        </Section>
 
-        <div className="flex items-center gap-6">
-          <label className="text-base-content flex cursor-pointer items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              className="checkbox checkbox-sm"
-              checked={form.free}
-              onChange={(e) => set('free', e.target.checked)}
-            />
-            {t('skills.form.free')}
-          </label>
-          <label className="text-base-content flex cursor-pointer items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              className="checkbox checkbox-sm"
-              checked={form.featured}
-              onChange={(e) => set('featured', e.target.checked)}
-            />
-            {t('skills.form.featured')}
-          </label>
-        </div>
+        <Section title={t('skills.form.section.media')}>
+          <MediaSection form={form} set={set} />
+        </Section>
 
-        <ChipGroup
-          label={t('skills.form.outputTypes')}
-          options={OUTPUT_OPTIONS.map((value) => ({ value, label: value }))}
-          selected={form.outputTypes}
-          onToggle={(value) =>
-            set(
-              'outputTypes',
-              toggleValue(form.outputTypes, value) as OutputType[],
-            )
-          }
-        />
-        <ChipGroup
-          label={t('skills.form.roles')}
-          options={ROLE_OPTIONS.map((value) => ({ value, label: value }))}
-          selected={form.roles}
-          onToggle={(value) => set('roles', toggleValue(form.roles, value))}
-        />
-        <ChipGroup
-          label={t('skills.form.scenes')}
-          options={SCENE_OPTIONS.map((value) => ({ value, label: value }))}
-          selected={form.scenes}
-          onToggle={(value) => set('scenes', toggleValue(form.scenes, value))}
-        />
-        <ChipGroup
-          label={t('skills.form.agents')}
-          options={ALL_AGENTS.map((value) => ({
-            value,
-            label: AGENT_LABEL[value] ?? value,
-          }))}
-          selected={form.agents}
-          onToggle={(value) => set('agents', toggleValue(form.agents, value))}
-        />
+        <Section title={t('skills.form.section.pricing')}>
+          <PricingSection form={form} set={set} />
+        </Section>
 
-        <div className="flex items-center gap-6">
-          <Field label={t('skills.form.rating')}>
-            <select
-              className="select select-sm bg-base-200 w-28"
-              value={form.rating}
-              onChange={(e) => set('rating', Number(e.target.value))}
-            >
-              {[1, 2, 3, 4, 5].map((n) => (
-                <option key={n} value={n}>
-                  {n}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label={t('skills.form.tone')}>
-            <select
-              className="select select-sm bg-base-200 w-32"
-              value={form.tone}
-              onChange={(e) => set('tone', e.target.value as SkillItem['tone'])}
-            >
-              {TONES.map((tone) => (
-                <option key={tone} value={tone}>
-                  {t(`skills.tone.${tone}`)}
-                </option>
-              ))}
-            </select>
-          </Field>
-        </div>
+        <Section title={t('skills.form.section.i18n')}>
+          <I18nSection form={form} set={set} />
+        </Section>
       </div>
     </Modal>
+  );
+}
+
+/** 分节容器（标题 + 内容）。 */
+function Section({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="border-base-300 flex flex-col gap-2 border-t pt-4 first:border-t-0 first:pt-0">
+      <h3 className="text-base-content/60 text-xs font-semibold tracking-wider uppercase">
+        {title}
+      </h3>
+      {children}
+    </section>
   );
 }
 

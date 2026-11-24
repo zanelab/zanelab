@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { server } from '../mocks/server';
-import { resetSkillMock } from '../mocks/skill-handlers';
+import { resetSkillMock, __getRawSkillRows } from '../mocks/skill-handlers';
 import { skillsApi, type SkillInput } from './skills';
 import { http, HttpResponse } from 'msw';
 
@@ -173,3 +173,124 @@ describe('校验语义（镜像 Edge Fn 1014）', () => {
 
 // AUTH 封装保留（身份语义用例经 localStorage 注入；覆写用例直接 server.use）
 void AUTH;
+
+// ==================== 详情页字段 + i18n 回落（任务 11-24-skills-detail-schema） ====================
+
+describe('详情页字段契约（11-24）', () => {
+  beforeEach(() => {
+    localStorage.setItem('iam_token', 'mock-admin');
+  });
+  afterEach(() => {
+    localStorage.removeItem('iam_token');
+  });
+
+  it('列表返回基线内容（不 join 副表——有 en 译文时仍是基线标题）', async () => {
+    const rows = await skillsApi.list();
+    expect(rows[0].title).toBe('薄荷暗夜软件产品官网');
+  });
+
+  it('详情带 locale=en-US → 命中副表译文；不带 locale → 基线', async () => {
+    const translated = await skillsApi.get(1, 'en-US');
+    expect(translated.title).toBe('Mint Noir SaaS Site');
+    expect(translated.taskExpression).toBe(
+      'Use this Skill to build landing page.',
+    );
+
+    const base = await skillsApi.get(1);
+    expect(base.title).toBe('薄荷暗夜软件产品官网');
+  });
+
+  it('详情带未命中 locale（如 ja）→ 回落基线标题', async () => {
+    const row = await skillsApi.get(1, 'ja');
+    expect(row.title).toBe('薄荷暗夜软件产品官网');
+  });
+
+  it('create 带详情页字段 → 落库结构与输入一致（JSONB 列整体赋值 + camel→snake 映射）', async () => {
+    const created = await skillsApi.create({
+      title: '详情技能',
+      version: '2.1.0',
+      taskExpression: '制作视频',
+      summary: '摘要',
+      description: '描述',
+      priceKind: 'requires_key',
+      priceNote: 'Needs FAL_KEY',
+      requiresApiKey: ['FAL_KEY'],
+      score: 4.5,
+      reviewsCount: 12,
+      media: [{ kind: 'video', url: 'https://x/y.webp' }],
+      deliverables: ['交付一', '交付二'],
+      goodFit: ['适合团队'],
+      notFor: ['不适合个人'],
+      requirements: { bring: ['素材'], lastTested: 'v2.1.0 — Claude Code' },
+      tags: {
+        scenarios: ['web-design'],
+        tasks: ['build-landing-page'],
+        styles: ['Bento Grid'],
+      },
+      generatesWith: ['Claude Fable 5.2 (Anthropic)'],
+      usesTools: ['ChatCut'],
+    });
+    expect(created.version).toBe('2.1.0');
+    expect(created.priceKind).toBe('requires_key');
+    expect(created.requiresApiKey).toEqual(['FAL_KEY']);
+    expect(created.score).toBe(4.5);
+    expect(created.reviewsCount).toBe(12);
+    expect(created.media?.[0]).toEqual({
+      kind: 'video',
+      url: 'https://x/y.webp',
+    });
+    expect(created.deliverables).toEqual(['交付一', '交付二']);
+    expect(created.tags?.scenarios).toEqual(['web-design']);
+    expect(created.tags?.styles).toEqual(['Bento Grid']);
+    expect(created.generatesWith).toEqual(['Claude Fable 5.2 (Anthropic)']);
+    expect(created.requirements?.lastTested).toBe('v2.1.0 — Claude Code');
+  });
+
+  it('create 带 i18n 载荷 → 副表写入；详情按该 locale 返回译文', async () => {
+    const created = await skillsApi.create({
+      title: '基线标题',
+      i18n: { 'en-US': { title: 'English Title', summary: 'EN summary' } },
+    });
+    const translated = await skillsApi.get(created.id, 'en-US');
+    expect(translated.title).toBe('English Title');
+    expect(translated.summary).toBe('EN summary');
+    // 未填的字段回落基线
+    expect(translated.description).toBe('');
+  });
+});
+
+describe('写路径 snake 列名契约（11-24：mock 映射必须与 fn 一致）', () => {
+  beforeEach(() => {
+    localStorage.setItem('iam_token', 'mock-admin');
+  });
+  afterEach(() => {
+    localStorage.removeItem('iam_token');
+  });
+
+  it('camel 入参落库为 snake 列（无 camel 列名残留）', async () => {
+    await skillsApi.create({
+      title: '列名检查',
+      taskExpression: '用途句',
+      priceNote: 'Needs KEY',
+      tryOnlineUrl: 'https://demo',
+      requiresApiKey: ['KEY'],
+      generatesWith: ['Model'],
+      usesTools: ['Tool'],
+      goodFit: ['适合'],
+      notFor: ['不适合'],
+    });
+    const created = __getRawSkillRows()[0];
+    expect(created.task_expression).toBe('用途句');
+    expect(created.price_note).toBe('Needs KEY');
+    expect(created.try_online_url).toBe('https://demo');
+    expect(created.requires_api_key).toEqual(['KEY']);
+    expect(created.generates_with).toEqual(['Model']);
+    expect(created.uses_tools).toEqual(['Tool']);
+    expect(created.good_fit).toEqual(['适合']);
+    expect(created.not_for).toEqual(['不适合']);
+    // 无 camel 列名残留
+    expect(Object.keys(created)).not.toContain('taskExpression');
+    expect(Object.keys(created)).not.toContain('priceNote');
+    expect(Object.keys(created)).not.toContain('tryOnlineUrl');
+  });
+});
