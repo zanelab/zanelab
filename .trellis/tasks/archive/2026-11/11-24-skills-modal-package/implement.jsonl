@@ -1,0 +1,5 @@
+{"file": ".trellis/spec/frontend/directory-structure.md", "reason": "packages/ui 零耦合叶子组件归属红线（新 Modal/Field/Chip 原语不得依赖 stores/config/i18next）+ packages 目录约定"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "组件写法与权限控制约定（skills-web 消费侧弹窗改造需对齐）"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "测试策略与禁用模式（jsdom 弹窗锚定方式、vitest 断言不弱化）"}
+{"file": ".trellis/spec/frontend/i18n-guidelines.md", "reason": "skills.form.* 语言包消费约定（改造后文案仍走 t()，原语组件不得内置文案）"}
+{"file": ".trellis/spec/frontend/index.md", "reason": "核心不变式：apps 间无引用、独立运行性、props 消费收敛（确认 ui 包改动不触线）"}

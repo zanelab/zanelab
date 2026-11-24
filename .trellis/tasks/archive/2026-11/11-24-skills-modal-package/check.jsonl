@@ -1,0 +1,3 @@
+{"file": ".trellis/spec/frontend/directory-structure.md", "reason": "检查新组件零耦合（无 i18next/stores/config import）、导出收口 index.ts、样式入口约定（scrollbar.css 先例）"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "检查测试语义等价（marketplace.test.tsx 期望零修改）、四包 tsc/build/lint 验证矩阵"}
+{"file": ".trellis/spec/frontend/i18n-guidelines.md", "reason": "检查语言包 key 树不变、原语组件零文案"}
