@@ -1,0 +1,5 @@
+{"file": ".trellis/spec/frontend/http-api-guidelines.md", "reason": "edge fn 写路径 camel→snake 列映射契约（PGRST204 教训）+ 接口函数书写规范 + Supabase 迁移序号防撞规则"}
+{"file": ".trellis/spec/frontend/i18n-guidelines.md", "reason": "语言包组织与 key 树一致性约束；i18n key 候选驱动录入的落地方式"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "表单原语（Field/ChipGroup/ModalActions）+ Modal 壳消费约定；表单分节的组件拆分规范"}
+{"file": ".trellis/spec/frontend/microfrontend-guidelines.md", "reason": "子应用 props 契约（locale 来源：props.preferences.locale，locale 参数不得硬编码）+ api 层零依赖端点常量"}
+{"file": ".trellis/spec/frontend/directory-structure.md", "reason": "src/api 与 src/mocks 目录归属、packages 边界；迁移文件落点约定"}
