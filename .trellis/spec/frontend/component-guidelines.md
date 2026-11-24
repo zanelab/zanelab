@@ -198,6 +198,16 @@ useEffect(() => {
 > **测试要求**：三条关闭路径各断言一次 `expect(trigger).toHaveFocus()`。
 > 只测"弹层消失"测不出焦点丢失——DOM 断言与焦点断言是两回事。
 
+## Modal 包组件（11-24-skills-modal-package）
+
+模态弹窗优先消费 `@zanelab/ui` 的 `Modal`（`packages/ui/src/modal/`，daisyUI `dialog.modal-open` 手拼壳的替代）；表单弹窗配套原语 `Field` / `ChipGroup` / `ModalActions`（`packages/ui/src/form/`）。
+
+- **受控语义（硬契约）**：`open` + `onOpenChange`；组件**绝不自行卸载或内藏提交逻辑**——scrim 点击 / Escape / 关闭钮只回调 `onOpenChange(false)`，「异步提交成功才关、失败留弹窗」由调用方成功后才改 state 保证。`open=false` 直接不挂载（无 closing 过渡相位——业务表单弹窗不需要它，需要过渡动画的轻弹层才走上面的四相位模式）。
+- **createPortal 到 `document.body`**：qiankun 集成态下弹窗留在子应用容器内会被容器的 stacking context / overflow 裁剪；挂 body 才是真全屏浮层（先例：portal preferences-button）。
+- **层级阶梯（z 值选定依据，新增浮层前先查这张表）**：宿主布局基准 `preferences.app.zIndex` **默认 200**（header/sidebar ≈ 200±1，可经 config 调）→ 业务模态 `z-[500]`（@zanelab/ui Modal）→ global-search `z-999` → 锁屏 `z-2000` → 偏好抽屉 `z-9999`。业务弹窗低于宿主全局浮层是有意设计。
+- **样式 token**：scrim `bg-black/40 + backdrop-blur-sm`、卡片 `bg-base-100` + `shadow-pop`、圆角 `rounded-(--page-radius)`（子应用跟随宿主 radius；组件内联 22px 兜底）。keyframes/shadow 定义在包内 `modal.css`，消费方 `import '@zanelab/ui/modal.css'` 一次（skills-web 独立态入口与 portal 宿主入口**两处都要 import**——集成态样式由宿主注入）。
+- **可达性**：卡片 `role=dialog` + `aria-modal` + `aria-labelledby`（title h2 的 id）；jsdom 有显式 role 即可 `getByRole`。**Field 的纵向布局用 `<label>` 包裹 children**（HTML 隐式关联给控件可访问名——byRole name 查询依赖它；横向布局给不了，需可访问名时调用方自加 aria-label）。测试定位器锚 `aria-labelledby` id + `closest('[role="dialog"]')`。
+
 ## 主题
 
 - 主题由 daisyUI 主题系统提供：按项目 CSS（见 [目录结构](./directory-structure.md)）启用的主题，在 `<html data-theme="...">` 上切换；默认随 `config.layout.theme`（如 `dark`/`light`）。
