@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 20
-- **Last Active**: 2026-11-24
+- **Total Sessions**: 21
+- **Last Active**: 2026-11-25
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~634 | Active |
+| `journal-1.md` | ~657 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 21 | 2026-11-25 | skills 详情页数据模型重构 + 表单按输出类型动态分节 | `51a86e7`, `5854a77` | `main` |
 | 20 | 2026-11-24 | Modal 弹窗组件下沉 packages/ui + skills-web 表单弹窗消费改造 | `f51fa30`, `538b57b` | `main` |
 | 19 | 2026-11-24 | 子任务② 技能 CRUD（Supabase edge fn + VITE_USE_MOCK） | `aa9a5cb`, `5242fd8` | `main` |
 | 18 | 2026-11-23 | 子任务① skills-web i18n + radius 主题联动 | `0b85eaa`, `28d9513` | `main` |

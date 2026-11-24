@@ -632,3 +632,26 @@ skills-web 权限系统对齐 iam-web：删除订阅式权限内核（utils/perm
 ### Status
 
 [OK] **Completed**
+
+
+## Session 21: skills 详情页数据模型重构 + 表单按输出类型动态分节
+<!-- trellis-session: v=2 fp=49e657fd964f2e42 -->
+
+**Date**: 2026-11-25
+**Task**: skills 详情页数据模型重构 + 表单按输出类型动态分节
+**Branch**: `main`
+
+### Summary
+
+按 skillry.dev 详情页实测（web/slides/video/image 四类 + 中英 hreflang 对照）重构 skills 数据模型：迁移 0003（主表 +22 列：version/task_expression/summary/description/价格三态/score+reviews_count/7 个 JSONB 列/generates_with/uses_tools/try_online_url；skills_i18n 副表只存译文 + 旧 roles/scenes 折 tags 幂等守卫）；edge fn 扩 12 组 camel→snake 映射 + JSONB 整体赋值 + i18n upsert + 详情 locale 回落；api SkillRecord/SkillInput 扩展 + getById(id, locale?)（locale 取 i18n 运行时不硬编码）；mock 种子扩维度 + 富条目(id=1 参考站等价) + 副表回落 + 映射同步；表单 12 分节（基础/输出类型/四类专属/内容清单/准备事项/标签/兼容/媒体/定价/i18n 译文），按 outputTypes 动态渲染专属分节（切换不清值、提交裁剪），状态与载荷装配拆 form-state.ts（纯函数+单测）。check 发现并修 mock 侧漏 3 列 camel→snake 映射，并加「原始行 snake 列名」断言用例守住该契约。spec 沉淀：内容型 i18n 存储契约、迁移幂等写法、动态分节表单模式。验证：skills-web 128/128、portal 191/191、iam 60/60、四包 tsc/build/lint 全绿。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `51a86e7` | feat(@zanelab/skills-web): 技能详情页数据模型——迁移/edge fn/api/mock 契约 + 表单按类型动态分节（任务 11-24-skills-detail-schema） |
+| `5854a77` | docs(project): 内容型数据 i18n 存储契约 + 迁移幂等写法 + 动态分节表单模式沉淀（任务产物） |
+
+### Status
+
+[OK] **Completed**
