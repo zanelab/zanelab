@@ -3,6 +3,9 @@
  * 消费方 import 一次：import '@zanelab/ui/modal.css'（参照 scrollbar.css 先例，
  * packages/ui package.json exports 已登记）。
  *
+ * Modal 内容区使用包内 Scrollbar 组件——admin-scrollbar 样式随本文件
+ * @import scrollbar.css（消费方无需另引 scrollbar.css）。
+ *
  * 动画/阴影值取自参考站实测（.15s cubic-bezier(.4,0,.2,1)；shadow-pop
  * 0 8px 30px #12131329），类名用组件私有前缀 modal-（不复刻参考站的
  * animate-fade/animate-pop/shadow-pop 工具类名，避免与消费方 Tailwind
@@ -10,6 +13,8 @@
  *
  * @media (prefers-reduced-motion: reduce) 关闭动画（无障碍基线）。
  */
+
+@import '../scrollbar/scrollbar.css';
 
 @keyframes modal-fade-in {
   0% {

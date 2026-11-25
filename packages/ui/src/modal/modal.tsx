@@ -25,6 +25,7 @@
 import { useEffect, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { AppIcon } from '../icon/app-icon';
+import { Scrollbar } from '../scrollbar/scrollbar';
 
 export interface ModalProps {
   /** false 时不挂载（受控开关） */
@@ -89,9 +90,9 @@ export function Modal({
           aria-modal="true"
           aria-labelledby={labelledBy}
           style={{ '--page-radius': '22px' } as React.CSSProperties}
-          className={`modal-pop bg-base-100 border-base-300 shadow-pop relative w-full overflow-hidden rounded-(--page-radius) border ${widthClass}`}
+          className={`modal-pop bg-base-100 border-base-300 shadow-pop relative flex max-h-[90vh] w-full flex-col overflow-hidden rounded-(--page-radius) border ${widthClass}`}
         >
-          <div className="border-base-300 flex items-start justify-between gap-4 border-b px-5 py-4">
+          <div className="border-base-300 flex shrink-0 items-start justify-between gap-4 border-b px-5 py-4">
             <div>
               <h2
                 id={labelledBy}
@@ -117,10 +118,18 @@ export function Modal({
             ) : null}
           </div>
 
-          <div>{children}</div>
+          {/* 内容区：独立滚动（Scrollbar 组件——带 scrollbar-gutter: stable +
+              上下滚动阴影）。卡片限高 90vh，header/footer 固定不随内容滚走。 */}
+          <Scrollbar
+            className="min-h-0 flex-1 overflow-y-auto"
+            shadow
+            shadowBorder
+          >
+            {children}
+          </Scrollbar>
 
           {footer ? (
-            <div className="border-base-300 bg-base-200/50 border-t px-5 py-4">
+            <div className="border-base-300 bg-base-200/50 shrink-0 border-t px-5 py-4">
               {footer}
             </div>
           ) : null}
