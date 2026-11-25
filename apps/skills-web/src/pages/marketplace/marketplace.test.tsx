@@ -142,7 +142,7 @@ describe('MarketplacePage', () => {
     expect(
       aside.getByRole('checkbox', { name: /Claude Code/ }),
     ).toBeInTheDocument();
-    expect(screen.getAllByText('知识解释与教学').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('教学讲解').length).toBeGreaterThan(0);
 
     // 前置图标只在「按输出类型」组（参考稿：该组四个选项带图形）
     const rowIcons = (name: string) =>
@@ -154,7 +154,7 @@ describe('MarketplacePage', () => {
     expect(rowIcons('图像')).toBe(1);
     expect(rowIcons('免费')).toBe(0);
     expect(rowIcons('教师')).toBe(0);
-    expect(rowIcons('知识解释与教学')).toBe(0);
+    expect(rowIcons('教学讲解')).toBe(0);
     // 新增的「按 Agent」组也不带前置图标
     expect(rowIcons('Cursor')).toBe(0);
   });
@@ -227,10 +227,10 @@ describe('MarketplacePage', () => {
     expect(screen.queryAllByRole('article')).toHaveLength(0);
   });
 
-  it('场景组参与筛选：知识解释与教学 → 2 条（不与角色值交叉命中）', async () => {
+  it('场景组参与筛选：教学讲解 → 2 条（不与角色值交叉命中）', async () => {
     const user = userEvent.setup();
     await renderPage();
-    await user.click(option('知识解释与教学'));
+    await user.click(option('教学讲解'));
     // 种子里带该场景的是 融资路演幻灯片生成 + 课堂教学课件助手
     expect(cards()).toHaveLength(2);
     expect(screen.getByText('课堂教学课件助手')).toBeInTheDocument();
@@ -438,7 +438,7 @@ describe('MarketplacePage —— 搜索', () => {
     expect(screen.getByText('14 个 Skills')).toBeInTheDocument();
 
     await user.clear(input);
-    await user.type(input, '知识解释与教学');
+    await user.type(input, '教学讲解');
     expect(cards()).toHaveLength(2);
     expect(screen.getByText('课堂教学课件助手')).toBeInTheDocument();
 
@@ -521,7 +521,7 @@ describe('MarketplacePage —— 分类下拉', () => {
     expect(categoryPanel()).toHaveAttribute('aria-labelledby', 'cat-tab-scene');
     expect(
       within(categoryPanel()).getByRole('button', {
-        name: '知识解释与教学',
+        name: '教学讲解',
       }),
     ).toBeInTheDocument();
 
@@ -543,7 +543,7 @@ describe('MarketplacePage —— 分类下拉', () => {
     await user.click(openCategoryMenu());
     await user.click(
       within(categoryPanel()).getByRole('button', {
-        name: '知识解释与教学',
+        name: '教学讲解',
       }),
     );
     await waitFor(() => expect(categoryMenu()).not.toBeInTheDocument());
@@ -745,11 +745,11 @@ describe('MarketplacePage —— 页脚营销区', () => {
       '浏览 Agent Skills 库',
       'Agent Skills 市场常见问题',
     ]);
-    // 数字从 data.ts 派生（14 条种子 / 12 免费 / 4 个 Agent）
+    // 数字从 data.ts 派生（14 条种子 / 12 免费 / 10 个 Agent——任务 11-26 扩枚举）
     const promo = promoSection();
     expect(within(promo).getByText('共 14 个 Skills')).toBeInTheDocument();
     expect(within(promo).getByText('12 个免费')).toBeInTheDocument();
-    expect(within(promo).getByText('4 个 Agent')).toBeInTheDocument();
+    expect(within(promo).getByText('10 个 Agent')).toBeInTheDocument();
   });
 
   it('纯展示（B3）：页脚内无链接、无按钮、无可聚焦元素', async () => {
@@ -779,9 +779,12 @@ describe('MarketplacePage —— 页脚营销区', () => {
     await renderPage();
     const promo = promoSection();
     const text = promo.textContent ?? '';
-    ['Skillry', '会员', 'CLI', 'ZIP', '采集站'].forEach((word) => {
+    // 「Gemini CLI」是 agent 品牌全称（AGENT_LABEL 单一事实源，任务 11-26 扩入），
+    // 不是参考站 CLI 安装残留——残留检查排除该品牌名
+    ['Skillry', '会员', 'ZIP', '采集站'].forEach((word) => {
       expect(text).not.toContain(word);
     });
+    expect(text).not.toMatch(/(?<!Gemini )CLI/);
   });
 });
 

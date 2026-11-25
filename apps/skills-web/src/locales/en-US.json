@@ -57,10 +57,14 @@
         "研究人员": "Researcher"
       },
       "scene": {
-        "内容与编辑发布": "Content & publishing",
-        "知识解释与教学": "Explaining & teaching",
-        "品牌建立与视觉规范": "Branding & visual identity",
-        "社交内容与营销活动": "Social content & campaigns"
+        "网页设计": "Web design",
+        "产品发布": "Product launch",
+        "品牌识别": "Brand identity",
+        "客户汇报": "Client reporting",
+        "社交媒体": "Social media",
+        "研究传播": "Research communication",
+        "教学讲解": "Education explainers",
+        "内容发布": "Content publishing"
       }
     },
     "outputType": {
@@ -144,7 +148,10 @@
         "packageHint": ".zip up to 50MB",
         "mediaHint": "Images / videos, multiple, up to 50MB",
         "failed": "Upload failed, retry"
-      }
+      },
+      "tagsLabel": "Tags",
+      "tryOnlineUrl": "Try online URL",
+      "media": "Media"
     },
     "tone": {
       "primary": "Primary",

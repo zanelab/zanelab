@@ -1,6 +1,11 @@
 import { AppIcon } from '@zanelab/ui';
 import { useTranslation } from 'react-i18next';
-import { FILTER_GROUPS, type SkillFilterGroup } from './data';
+import {
+  FILTER_GROUPS,
+  computeFilterCounts,
+  type SkillFilterGroup,
+  type SkillItem,
+} from './data';
 import { optionLabel } from './option-label';
 
 /**
@@ -26,6 +31,8 @@ interface FilterSidebarProps {
   onCollapse: () => void;
   /** 小屏确认按钮的计数：与顶部计数徽章同口径（总数，非筛选后数量） */
   totalCount: number;
+  /** 当前技能全量数据（null = 加载中）——选项计数实时统计源（任务 11-26） */
+  skills: SkillItem[] | null;
 }
 
 /** 单组渲染 */
@@ -33,10 +40,12 @@ function FilterSection({
   group,
   active,
   onToggle,
+  counts,
 }: {
   group: SkillFilterGroup;
   active: Record<string, string[]>;
   onToggle: (group: string, value: string) => void;
+  counts: Record<string, number>;
 }) {
   const { t } = useTranslation();
   const values = active[group.id] ?? [];
@@ -84,7 +93,7 @@ function FilterSection({
                   {optionLabel(t, group.id, option.value)}
                 </span>
                 <span className="text-base-content/35 shrink-0 text-[11px] tabular-nums">
-                  {option.count}
+                  {counts[option.value] ?? 0}
                 </span>
               </label>
             </li>
@@ -101,8 +110,12 @@ export function FilterSidebar({
   onClose,
   onCollapse,
   totalCount,
+  skills,
 }: FilterSidebarProps) {
   const { t } = useTranslation();
+  // 计数随技能数据实时统计（mock/接口全量返回，客户端统计零额外请求；
+  // 上分页后口径需演进为服务端聚合——见 http-api-guidelines facet 演进点）
+  const counts = computeFilterCounts(skills ?? []);
   return (
     <aside className="bg-base-200 border-base-300 flex h-full w-72 flex-col border-r lg:h-dvh lg:w-60">
       {/* 唯一滚动层：面板高度固定，选项列表超长时只滚动这里（确认条不随之滚走） */}
@@ -137,6 +150,7 @@ export function FilterSidebar({
               group={group}
               active={active}
               onToggle={onToggle}
+              counts={counts[group.id]}
             />
           ))}
         </div>

@@ -68,7 +68,6 @@ const MENU_GROUPS: SkillFilterGroup[] = CATEGORY_MENU_ORDER.map((id) =>
 /** 条目缩略图位的语义色基调（参考站每条带 32px 缩略图；本应用无静态资源，延续 D3） */
 const GROUP_TONE: Record<SkillFilterGroup['id'], string> = {
   free: 'from-secondary/25 to-secondary/5',
-  featured: 'from-secondary/25 to-secondary/5',
   scene: 'from-info/25 to-info/5',
   role: 'from-secondary/25 to-secondary/5',
   output: 'from-success/25 to-success/5',
@@ -78,7 +77,6 @@ const GROUP_TONE: Record<SkillFilterGroup['id'], string> = {
 /** 条目图标：按输出类型沿用该组选项自带的图标，其余分组按组给一个语义近似的字形 */
 const GROUP_ICON: Record<SkillFilterGroup['id'], string> = {
   free: 'check',
-  featured: 'circle-check-big',
   scene: 'panel-left',
   role: 'user',
   output: 'monitor',

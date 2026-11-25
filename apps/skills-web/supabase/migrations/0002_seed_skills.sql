@@ -15,18 +15,18 @@ begin
   insert into public.skills
     (title, free, featured, output_types, roles, scenes, downloads, bookmarks, rating, tone, agents, updated_at)
   values
-    ('薄荷暗夜软件产品官网', true, false, ARRAY['网页']::text[], ARRAY['创始人','设计师']::text[], ARRAY['品牌建立与视觉规范']::text[], 340, 6, 5, 'primary', ARRAY['CC','CX','AG','CU']::text[], '2026-11-10'::date),
-    ('橙焙电单车商店', true, false, ARRAY['网页','图像']::text[], ARRAY['电商卖家']::text[], ARRAY['社交内容与营销活动','内容与编辑发布']::text[], 241, 8, 5, 'warning', ARRAY['CC','CX','AG','CU']::text[], '2026-11-08'::date),
-    ('清新绿药房商店', true, false, ARRAY['网页']::text[], ARRAY['电商卖家']::text[], ARRAY['社交内容与营销活动']::text[], 209, 7, 4, 'success', ARRAY['CC','CX','AG','CU']::text[], '2026-11-05'::date),
-    ('贴纸闪赠礼应用网站', true, false, ARRAY['网页','图像']::text[], ARRAY['设计师','内容创作者']::text[], ARRAY['品牌建立与视觉规范','社交内容与营销活动']::text[], 207, 5, 5, 'secondary', ARRAY['CC','CX','AG','CU']::text[], '2026-11-01'::date),
-    ('马克笔涂鸦品牌工作室', true, false, ARRAY['网页','图像']::text[], ARRAY['设计师','创始人']::text[], ARRAY['品牌建立与视觉规范']::text[], 186, 7, 4, 'accent', ARRAY['CC','CX','AG','CU']::text[], '2026-10-28'::date),
-    ('轨道协作落地站', true, false, ARRAY['网页']::text[], ARRAY['创始人','营销人员']::text[], ARRAY['内容与编辑发布']::text[], 203, 2, 4, 'info', ARRAY['CC','CX','AG','CU']::text[], '2026-10-25'::date),
-    ('黑白设计师作品集', true, false, ARRAY['网页']::text[], ARRAY['设计师']::text[], ARRAY['品牌建立与视觉规范']::text[], 184, 4, 5, 'primary', ARRAY['CC','CX','AG','CU']::text[], '2026-10-21'::date),
-    ('青柠边框设计师作品集', true, false, ARRAY['网页']::text[], ARRAY['设计师','研究人员']::text[], ARRAY['品牌建立与视觉规范']::text[], 178, 6, 4, 'secondary', ARRAY['CC','CX','AG','CU']::text[], '2026-10-18'::date),
-    ('方格纸饮品品牌网站', true, false, ARRAY['网页']::text[], ARRAY['创始人','营销人员']::text[], ARRAY['社交内容与营销活动']::text[], 177, 4, 4, 'warning', ARRAY['CC','CX','AG','CU']::text[], '2026-10-15'::date),
-    ('宝蓝宠物用品商店', true, false, ARRAY['网页','图像']::text[], ARRAY['电商卖家']::text[], ARRAY['社交内容与营销活动','内容与编辑发布']::text[], 176, 4, 5, 'primary', ARRAY['CC','CX','AG','CU']::text[], '2026-10-12'::date),
-    ('融资路演幻灯片生成', false, true, ARRAY['幻灯片']::text[], ARRAY['创始人','顾问']::text[], ARRAY['知识解释与教学','内容与编辑发布']::text[], 452, 31, 5, 'info', ARRAY['CC','CX']::text[], '2026-11-11'::date),
-    ('短视频产品口播脚本', false, true, ARRAY['视频']::text[], ARRAY['营销人员','内容创作者']::text[], ARRAY['社交内容与营销活动','内容与编辑发布']::text[], 388, 22, 4, 'secondary', ARRAY['CC','AG']::text[], '2026-11-09'::date),
-    ('品牌插画批量生成', true, false, ARRAY['图像']::text[], ARRAY['设计师','内容创作者']::text[], ARRAY['品牌建立与视觉规范']::text[], 301, 15, 4, 'accent', ARRAY['CC','CX','CU']::text[], '2026-11-03'::date),
-    ('课堂教学课件助手', true, false, ARRAY['幻灯片']::text[], ARRAY['教师','研究人员']::text[], ARRAY['知识解释与教学']::text[], 156, 9, 5, 'success', ARRAY['CC']::text[], '2026-10-30'::date);
+    ('薄荷暗夜软件产品官网', true, false, ARRAY['网页']::text[], ARRAY['创始人','设计师']::text[], ARRAY['品牌识别']::text[], 340, 6, 5, 'primary', ARRAY['CC','CX','GH','GC','AG','CU']::text[], '2026-11-10'::date),
+    ('橙焙电单车商店', true, false, ARRAY['网页','图像']::text[], ARRAY['电商卖家']::text[], ARRAY['社交媒体','内容发布']::text[], 241, 8, 5, 'warning', ARRAY['CC','CX','OC','OB','AG','CU']::text[], '2026-11-08'::date),
+    ('清新绿药房商店', true, false, ARRAY['网页']::text[], ARRAY['电商卖家']::text[], ARRAY['社交媒体']::text[], 209, 7, 4, 'success', ARRAY['CC','CX','HA','AG','CU']::text[], '2026-11-05'::date),
+    ('贴纸闪赠礼应用网站', true, false, ARRAY['网页','图像']::text[], ARRAY['设计师','内容创作者']::text[], ARRAY['品牌识别','社交媒体']::text[], 207, 5, 5, 'secondary', ARRAY['CC','CX','KI','AG','CU']::text[], '2026-11-01'::date),
+    ('马克笔涂鸦品牌工作室', true, false, ARRAY['网页','图像']::text[], ARRAY['设计师','创始人']::text[], ARRAY['品牌识别']::text[], 186, 7, 4, 'accent', ARRAY['CC','CX','AG','CU']::text[], '2026-10-28'::date),
+    ('轨道协作落地站', true, false, ARRAY['网页']::text[], ARRAY['创始人','营销人员']::text[], ARRAY['内容发布']::text[], 203, 2, 4, 'info', ARRAY['CC','CX','AG','CU']::text[], '2026-10-25'::date),
+    ('黑白设计师作品集', true, false, ARRAY['网页']::text[], ARRAY['设计师']::text[], ARRAY['品牌识别']::text[], 184, 4, 5, 'primary', ARRAY['CC','CX','AG','CU']::text[], '2026-10-21'::date),
+    ('青柠边框设计师作品集', true, false, ARRAY['网页']::text[], ARRAY['设计师','研究人员']::text[], ARRAY['品牌识别']::text[], 178, 6, 4, 'secondary', ARRAY['CC','CX','AG','CU']::text[], '2026-10-18'::date),
+    ('方格纸饮品品牌网站', true, false, ARRAY['网页']::text[], ARRAY['创始人','营销人员']::text[], ARRAY['社交媒体']::text[], 177, 4, 4, 'warning', ARRAY['CC','CX','AG','CU']::text[], '2026-10-15'::date),
+    ('宝蓝宠物用品商店', true, false, ARRAY['网页','图像']::text[], ARRAY['电商卖家']::text[], ARRAY['社交媒体','内容发布']::text[], 176, 4, 5, 'primary', ARRAY['CC','CX','AG','CU']::text[], '2026-10-12'::date),
+    ('融资路演幻灯片生成', false, true, ARRAY['幻灯片']::text[], ARRAY['创始人','顾问']::text[], ARRAY['教学讲解','内容发布']::text[], 452, 31, 5, 'info', ARRAY['CC','CX','GH','OC']::text[], '2026-11-11'::date),
+    ('短视频产品口播脚本', false, true, ARRAY['视频']::text[], ARRAY['营销人员','内容创作者']::text[], ARRAY['社交媒体','内容发布']::text[], 388, 22, 4, 'secondary', ARRAY['CC','AG','GC','KI']::text[], '2026-11-09'::date),
+    ('品牌插画批量生成', true, false, ARRAY['图像']::text[], ARRAY['设计师','内容创作者']::text[], ARRAY['品牌识别']::text[], 301, 15, 4, 'accent', ARRAY['CC','CX','CU']::text[], '2026-11-03'::date),
+    ('课堂教学课件助手', true, false, ARRAY['幻灯片']::text[], ARRAY['教师','研究人员']::text[], ARRAY['教学讲解']::text[], 156, 9, 5, 'success', ARRAY['CC']::text[], '2026-10-30'::date);
 end $$;

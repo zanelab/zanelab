@@ -282,7 +282,7 @@ export function SkillFormModal({
                 onChange={(e) => setI18n({ notFor: e.target.value })}
               />
             </Field>
-            <Field label={t('skills.form.tags')}>
+            <Field label={t('skills.form.tagsLabel')}>
               <TagInput
                 value={active.tags}
                 onChange={(tags) => setI18n({ tags })}

@@ -277,6 +277,7 @@ export function MarketplacePage() {
             onClose={() => setDrawerOpen(false)}
             onCollapse={() => setFiltersCollapsed(true)}
             totalCount={total}
+            skills={skills}
           />
         </div>
       </div>

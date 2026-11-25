@@ -22,7 +22,7 @@ const SKILLS_FIXTURE: SkillItem[] = [
     featured: false,
     outputTypes: ['网页'],
     roles: ['创始人', '设计师'],
-    scenes: ['品牌建立与视觉规范'],
+    scenes: ['品牌识别'],
     downloads: 340,
     bookmarks: 6,
     rating: 5,
@@ -37,7 +37,7 @@ const SKILLS_FIXTURE: SkillItem[] = [
     featured: false,
     outputTypes: ['网页', '图像'],
     roles: ['电商卖家'],
-    scenes: ['社交内容与营销活动', '内容与编辑发布'],
+    scenes: ['社交媒体', '内容发布'],
     downloads: 241,
     bookmarks: 8,
     rating: 5,
@@ -52,7 +52,7 @@ const SKILLS_FIXTURE: SkillItem[] = [
     featured: true,
     outputTypes: ['幻灯片'],
     roles: ['创始人', '顾问'],
-    scenes: ['知识解释与教学', '内容与编辑发布'],
+    scenes: ['教学讲解', '内容发布'],
     downloads: 452,
     bookmarks: 31,
     rating: 5,
@@ -67,7 +67,7 @@ const SKILLS_FIXTURE: SkillItem[] = [
     featured: true,
     outputTypes: ['视频'],
     roles: ['营销人员', '内容创作者'],
-    scenes: ['社交内容与营销活动', '内容与编辑发布'],
+    scenes: ['社交媒体', '内容发布'],
     downloads: 388,
     bookmarks: 22,
     rating: 4,
@@ -82,7 +82,7 @@ const SKILLS_FIXTURE: SkillItem[] = [
     featured: false,
     outputTypes: ['幻灯片'],
     roles: ['教师', '研究人员'],
-    scenes: ['知识解释与教学'],
+    scenes: ['教学讲解'],
     downloads: 156,
     bookmarks: 9,
     rating: 5,
@@ -159,9 +159,9 @@ describe('filterSkills', () => {
   });
 
   it('场景组命中 scenes', () => {
-    const result = filterSkills(SKILLS_FIXTURE, { scene: ['知识解释与教学'] });
+    const result = filterSkills(SKILLS_FIXTURE, { scene: ['教学讲解'] });
     expect(result.length).toBeGreaterThan(0);
-    expect(result.every((s) => s.scenes.includes('知识解释与教学'))).toBe(true);
+    expect(result.every((s) => s.scenes.includes('教学讲解'))).toBe(true);
   });
 
   it('边界：值只在所属组的字段匹配，角色值与场景值不交叉命中', () => {
@@ -170,21 +170,21 @@ describe('filterSkills', () => {
     const sceneSkill = skill({
       id: 1,
       roles: [],
-      scenes: ['知识解释与教学'],
+      scenes: ['教学讲解'],
     });
     const roleSkill = skill({
       id: 2,
-      roles: ['知识解释与教学'],
+      roles: ['教学讲解'],
       scenes: [],
     });
     expect(
       filterSkills([sceneSkill, roleSkill], {
-        scene: ['知识解释与教学'],
+        scene: ['教学讲解'],
       }).map((s) => s.id),
     ).toEqual([1]);
     expect(
       filterSkills([sceneSkill, roleSkill], {
-        role: ['知识解释与教学'],
+        role: ['教学讲解'],
       }).map((s) => s.id),
     ).toEqual([2]);
 
@@ -282,9 +282,9 @@ describe('searchSkills', () => {
   });
 
   it('scenes 子串命中', () => {
-    expect(
-      searchSkills(SKILLS_FIXTURE, '知识解释与教学').map((s) => s.id),
-    ).toEqual([11, 14]);
+    expect(searchSkills(SKILLS_FIXTURE, '教学讲解').map((s) => s.id)).toEqual([
+      11, 14,
+    ]);
   });
 
   it('outputTypes 子串命中', () => {
