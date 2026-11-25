@@ -676,3 +676,24 @@ skills-web 权限系统对齐 iam-web：删除订阅式权限内核（utils/perm
 ### Status
 
 [OK] **Completed**
+
+## Session 23: 表单 label 键修复 + 筛选计数实时化 + 枚举对齐 skillry
+<!-- trellis-session: v=2 fp=skills-filter-enum-fix -->
+
+**Date**: 2026-11-26
+**Task**: 表单 label 键修复 + 筛选计数实时化 + 枚举对齐 skillry（11-26-skills-filter-enum-fix）
+**Branch**: `main`
+
+### Summary
+
+四项用户实测反馈：① 表单 tags label 引用了分桶对象键（t() 报 returned an object）改标量键 tagsLabel + 补 tryOnlineUrl/media 两缺失键；② 侧栏筛选计数从硬编码演示值改 computeFilterCounts 按当前技能数据实时统计（FILTER_GROUPS 不再存 count），spec 沉淀「计数口径跟分页形态走」演进契约；③ 场景枚举 4→8 对齐参考站 By use case（旧 4 值迁移 0005 array_replace 幂等折进 + 0002 种子/mock/语言包/测试四处同步）；④ agent 枚举 4→10——用户中途指示改从 skillry agent 目录页取前 10（Claude Code/Codex/Cursor/GitHub Copilot/Gemini CLI/OpenCode/Antigravity/OpenClaw/Hermes Agent/Kiro），33 行完整底稿存任务 research/skillry-agents.md 供后续 agent 目录页复用。spec 沉淀「key 树一致 ≠ 引用键存在」补引用扫描步骤。中途修了自己引入的种子缩进损坏（agents: 顶格破坏 TS 解析导致 2 用例假失败）。验证：skills-web 125/125、portal 191/191、iam 60/60、四包 tsc/build/lint 全绿。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `96a1881` | fix(@zanelab/skills-web): 表单 label 键修复 + 筛选计数实时化 + 枚举对齐 skillry（任务 11-26-skills-filter-enum-fix） |
+
+### Status
+
+[OK] **Completed**

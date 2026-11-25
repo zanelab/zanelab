@@ -182,6 +182,7 @@ menuTitle(menu); // 有 key 命中→翻译；缺条目→回退 name；无 key�
    print('zh:',len(zh),'en:',len(en),'diff:',zh^en)"
    ```
 3. DOM 属性文案（`placeholder`/`title`/`aria-label`）同样入包，不允许硬编码中文属性值。
+4. **key 树一致 ≠ 代码引用的键都存在**（2026-11-26 沉淀，任务 11-26 教训）：树比对查不出「代码 `t('x.y')` 引用了两包都没有的键」或「引用了值为对象/数组的键（t() 渲染报 'returned an object instead of string'）」。收尾时补一道引用扫描：`grep -rhoE "t\('skills\.[a-zA-Z0-9_.]+\)" src` 提取全部字面量键，逐一对照树中存在且为字符串。
 
 ## 刻意保留清单（不算残留）
 

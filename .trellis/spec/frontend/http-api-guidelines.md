@@ -125,6 +125,7 @@ create table public.skills_i18n (
 ```
 
 - **列表接口不 join 副表**（性能契约：N+1 零成本）；**只有详情接口按 `?locale=` join**，命中则覆盖、字段为 null/空则保留基线——回落逻辑在服务端（fn 的 `applyI18n`）与 mock 侧各一份。
+- **筛选计数口径跟着分页形态走**（2026-11-26 沉淀）：list 接口全量返回（无分页/服务端筛选）时，侧栏 facet 计数由前端按已有数据客户端统计（`computeFilterCounts`，零额外请求）；**一旦上分页或服务端筛选，客户端计数失真**——届时加聚合端点（如 `GET /skills/facet-counts`，SQL group by / JSONB 展开）。不要在客户端计数时代提前建聚合端点（过度设计），但要在上分页的同一个任务里补它，不允许过渡期显示错误计数。
 - 写入侧：译文作为**独立载荷**（body.i18n = `{ locale: {字段} }`）随主记录提交，服务端 upsert 副表；主记录写入成功即算成功，副表失败不阻断主流程。
 - **可翻译性差异要在存储层显式**：枚举型标签用 JSONB 分桶（`{scenarios, tasks, highlights, styles}`——前三类存 i18n key 可翻译，`styles` 存原文不译）；自由文本字段存基线 + 副表。
 - **locale 来源不硬编码**：api 层从 i18n 运行时取当前语言（`i18n.language`），详情请求按需带 `?locale=`；缺省不带 = 返回基线。
