@@ -130,6 +130,19 @@ create table public.skills_i18n (
 - **locale 来源不硬编码**：api 层从 i18n 运行时取当前语言（`i18n.language`），详情请求按需带 `?locale=`；缺省不带 = 返回基线。
 - 副表 RLS：读公开（与主表同）；写全部走 edge fn（service role 绕 RLS），与 iam menus 表同款。
 
+### 副表扩列时回落链路的同步点（2026-11-26 沉淀）
+
+**Common Mistake：i18n 副表加列后，详情回落 select 列清单漏新列 → 写入成功但读回落永远不生效**
+
+副表扩列要同步**四处**，漏任何一处都不报错（PostgREST 按需返回、upsert 不存在的列才报 PGRST204，select 少列静默截断）：
+
+1. 写入解析（`parseI18nPayload` 白名单数组）——漏了 = 译文写不进；
+2. upsert 赋值（`upsertI18n` 逐字段）——漏了 = 落库为 default；
+3. **详情回落 select 列清单**（`.select('title,summary,...')` 字符串）——漏了 = `applyI18n` 拿不到值，回落静默失效（tsc 不查字符串列名，最易漏）；
+4. 覆盖逻辑（`applyI18n` 的 textPairs/jsonPairs）。
+
+自查命令：`grep -n "select('.*'" <fn>/index.ts`，副表 select 的列清单必须 ⊇ parseI18nPayload 白名单。类型校验能抓住 1/2，抓不住 3/4——回落链路要有「en 命中覆盖」的集成用例（mock 侧同款回落逻辑 + 断言）兜底。
+
 ## 迁移：加列 + 旧数据折进新结构的幂等写法（2026-11-24 沉淀）
 
 - 加列一律 `add column if not exists`；建表 `create table if not exists`——迁移可重复执行。

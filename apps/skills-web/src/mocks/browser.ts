@@ -1,5 +1,6 @@
 import { setupWorker } from 'msw/browser';
 import { skillHandlers } from './skill-handlers';
+import { uploadHandlers } from './upload-handlers';
 
 /*
  * skills-web MSW worker（skills 自身接口的 mock 承担者，两种形态都拦）：
@@ -15,4 +16,4 @@ import { skillHandlers } from './skill-handlers';
  * handler 是 skills 自身的 mock 契约（./skill-handlers），不放 packages——
  * portal 不再消费它（宿主不持有子应用 mock，apps 间不共享代码）。
  */
-export const worker = setupWorker(...skillHandlers);
+export const worker = setupWorker(...skillHandlers, ...uploadHandlers);

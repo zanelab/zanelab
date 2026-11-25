@@ -207,15 +207,25 @@ interface SkillInput {
   generatesWith?: string[];
   usesTools?: string[];
   tryOnlineUrl?: string;
+  /** 技能包单文件 URL（skills-upload 上传产物；任务 11-25） */
+  packageUrl?: string;
 }
 
-/** i18n 译文载荷（locale → 四个可译字段；字段 null = 回落基线）。 */
+/** i18n 译文载荷（locale → 可译字段；字段 null = 回落基线）。
+ *
+ * 0004 扩展（任务 11-25）：deliverables/good_fit/not_for（jsonb 数组）+
+ * tags（jsonb 桶，按语言分桶——该语言的标签集）。taskExpression 保留
+ * （0003 数据兼容）但表单不再录入。 */
 interface SkillI18nInput {
   [locale: string]: {
     title?: string | null;
     summary?: string | null;
     description?: string | null;
     taskExpression?: string | null;
+    deliverables?: string[] | null;
+    goodFit?: string[] | null;
+    notFor?: string[] | null;
+    tags?: Record<string, unknown> | null;
   };
 }
 
@@ -223,7 +233,7 @@ const SKILL_COLUMNS =
   'id,title,free,featured,output_types,roles,scenes,downloads,bookmarks,rating,tone,agents,created_at,updated_at,' +
   'version,task_expression,summary,description,price_kind,price_amount,price_note,requires_api_key,' +
   'likes,score,reviews_count,media,demo_examples,deliverables,good_fit,not_for,requirements,tags,' +
-  'generates_with,uses_tools,try_online_url';
+  'generates_with,uses_tools,try_online_url,package_url';
 
 /** 值域（0001 注释：服务端只做类型校验，不做白名单——值域由前端约定承载）。 */
 const TONES = ['primary', 'secondary', 'accent', 'info', 'success', 'warning'];
@@ -273,6 +283,7 @@ function parseSkillInput(
     'description',
     'priceNote',
     'tryOnlineUrl',
+    'packageUrl',
   ] as const) {
     if (body[key] !== undefined) input[key] = String(body[key]);
   }
@@ -374,10 +385,12 @@ function toRowValues(input: SkillInput): Record<string, unknown> {
   if (usesTools !== undefined) out.uses_tools = usesTools;
   if (tryOnlineUrl !== undefined) out.try_online_url = tryOnlineUrl;
   if (reviewsCount !== undefined) out.reviews_count = reviewsCount;
+  if (input.packageUrl !== undefined) out.package_url = input.packageUrl;
   return out;
 }
 
-/** body.i18n → 副表 upsert 载荷（locale → 四字段）；非法形态忽略。 */
+/** body.i18n → 副表 upsert 载荷（locale → 可译字段）；非法形态忽略。
+ *  0004 扩展：四文本字段 + 三数组字段 + tags 桶（11-25）。 */
 function parseI18nPayload(
   body: Record<string, unknown>,
 ): SkillI18nInput | null {
@@ -400,12 +413,32 @@ function parseI18nPayload(
         entry[key] = src[key] === null ? null : String(src[key]);
       }
     }
+    for (const key of ['deliverables', 'goodFit', 'notFor'] as const) {
+      if (src[key] !== undefined) {
+        if (src[key] === null) {
+          entry[key] = null;
+        } else if (Array.isArray(src[key])) {
+          entry[key] = (src[key] as unknown[]).map((v) => String(v));
+        } else {
+          continue; // 非法形态：跳过该字段（不整体拒绝——其余字段仍写入）
+        }
+      }
+    }
+    if (src.tags !== undefined) {
+      if (
+        src.tags === null ||
+        (typeof src.tags === 'object' && !Array.isArray(src.tags))
+      ) {
+        entry.tags = src.tags as Record<string, unknown> | null;
+      }
+    }
     out[locale] = entry;
   }
   return Object.keys(out).length ? out : null;
 }
 
-/** 副表 upsert：逐 locale 写（缺该 locale 的字段写 null = 回落基线）。 */
+/** 副表 upsert：逐 locale 写（缺该 locale 的字段写 null = 回落基线）。
+ *  0004 列扩展：deliverables/good_fit/not_for/tags（camel→snake 在此处收敛）。 */
 async function upsertI18n(
   ctx: { supabaseAdmin: SupabaseClient },
   skillId: number,
@@ -421,6 +454,10 @@ async function upsertI18n(
         summary: fields.summary ?? null,
         description: fields.description ?? null,
         task_expression: fields.taskExpression ?? null,
+        deliverables: fields.deliverables ?? null,
+        good_fit: fields.goodFit ?? null,
+        not_for: fields.notFor ?? null,
+        tags: fields.tags ?? null,
       },
       { onConflict: 'skill_id,locale' },
     );
@@ -430,22 +467,38 @@ async function upsertI18n(
   }
 }
 
-/** 详情读回落：副表译文覆盖主表基线（字段为 null/缺失 → 保留基线）。 */
+/** 详情读回落：副表译文覆盖主表基线（字段为 null/缺失 → 保留基线）。
+ *  0004 扩展：三数组字段 + tags（null/缺失回落；非 null 即整体覆盖）。 */
 function applyI18n(
   row: Record<string, unknown>,
   i18nRow: Record<string, unknown> | null,
 ): Record<string, unknown> {
   if (!i18nRow) return row;
   const out = { ...row };
-  const pairs: [string, string][] = [
+  const textPairs: [string, string][] = [
     ['title', 'title'],
     ['summary', 'summary'],
     ['description', 'description'],
     ['task_expression', 'task_expression'],
   ];
-  for (const [col, i18nCol] of pairs) {
+  for (const [col, i18nCol] of textPairs) {
     const v = i18nRow[i18nCol];
     if (v !== null && v !== undefined && v !== '') out[col] = v;
+  }
+  const jsonPairs: [string, string][] = [
+    ['deliverables', 'deliverables'],
+    ['good_fit', 'good_fit'],
+    ['not_for', 'not_for'],
+    ['tags', 'tags'],
+  ];
+  for (const [col, i18nCol] of jsonPairs) {
+    const v = i18nRow[i18nCol];
+    // 数组：非 null 且非空数组才覆盖（空数组视为「未译」——否则清基线）
+    if (Array.isArray(v)) {
+      if (v.length > 0) out[col] = v;
+    } else if (v !== null && v !== undefined) {
+      out[col] = v; // tags 对象等
+    }
   }
   return out;
 }
@@ -494,7 +547,9 @@ async function skillsGet(
 
   const { data: i18nRow, error: i18nErr } = await ctx.supabaseAdmin
     .from('skills_i18n')
-    .select('title,summary,description,task_expression')
+    .select(
+      'title,summary,description,task_expression,deliverables,good_fit,not_for,tags',
+    )
     .eq('skill_id', id)
     .eq('locale', locale)
     .maybeSingle();

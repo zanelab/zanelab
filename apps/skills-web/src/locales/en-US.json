@@ -102,21 +102,9 @@
       "deleteFailed": "Delete failed. Please retry.",
       "section": {
         "basic": "Basics",
-        "output": "Output types",
-        "web": "Web specific",
-        "slides": "Slides specific",
-        "video": "Video specific",
-        "image": "Image specific",
-        "content": "Content lists",
-        "requirements": "Before you start",
-        "tags": "Tags",
-        "compat": "Compatibility",
-        "media": "Media & demos",
-        "pricing": "Pricing & status",
-        "i18n": "Translations"
+        "config": "Configuration",
+        "showcase": "Showcase"
       },
-      "taskExpression": "One-line purpose",
-      "taskExpressionPlaceholder": "Use this Skill to build landing page.",
       "summary": "Summary",
       "description": "Description",
       "version": "Version",
@@ -126,12 +114,6 @@
       "goodFitPlaceholder": "One per line",
       "notFor": "Not for",
       "notForPlaceholder": "One per line",
-      "req": {
-        "bring": "You bring",
-        "dependencies": "Dependencies",
-        "outsideCosts": "Outside costs",
-        "lastTested": "Last tested"
-      },
       "tags": {
         "scenarios": "Use cases",
         "tasks": "Tasks",
@@ -139,74 +121,29 @@
         "styles": "Style tags",
         "stylesPlaceholder": "Bento Grid, Soft Glow"
       },
-      "tagCandidates": {
-        "scenarios": [
-          "web-design",
-          "product-launch",
-          "brand-identity",
-          "client-reporting",
-          "social-media",
-          "content-publishing"
-        ],
-        "tasks": [
-          "build-landing-page",
-          "build-product-site",
-          "create-presentation",
-          "create-explainer-video",
-          "create-character-art",
-          "make-report"
-        ],
-        "highlights": [
-          "style-locked",
-          "editable-output",
-          "conversion-focused",
-          "series-consistent",
-          "source-faithful",
-          "visually-polished"
-        ]
-      },
-      "generatesWith": "Generates with",
-      "usesTools": "Uses tools",
-      "media": "Media gallery",
-      "mediaPlaceholder": "One per line: image|https://… or video|https://…",
-      "demoExamples": "Demo examples",
-      "demoExamplesPlaceholder": "One per line: prompt|https://…",
       "price": {
         "kind": "Pricing",
         "free": "Free",
         "paid": "Paid",
-        "requiresKey": "Requires API key",
-        "amount": "Price",
-        "note": "Note",
-        "apiKeys": "Required API keys"
+        "amount": "Price"
       },
-      "web": {
-        "tryOnlineUrl": "Try it online",
-        "techStack": "Tech stack"
+      "markdownHint": "Markdown supported",
+      "perLineHint": "One per line",
+      "tagsPlaceholder": "Type a tag, press Enter; search existing tags",
+      "tag": {
+        "remove": "Remove tag"
       },
-      "slides": {
-        "exportFormat": "Export format",
-        "slideCount": "Slide count",
-        "speakerNotes": "Includes speaker notes"
+      "localeSwitch": "Form language",
+      "locale": {
+        "zh": "中文",
+        "en": "English"
       },
-      "video": {
-        "duration": "Duration",
-        "resolution": "Resolution",
-        "voiceLanguages": "Voice languages",
-        "apiKeys": "Required API keys"
-      },
-      "image": {
-        "sampleImages": "Sample images",
-        "sampleImagesPlaceholder": "https://…",
-        "dimensions": "Dimensions"
-      },
-      "i18n": {
-        "locale": "Target locale",
-        "title": "Title translation",
-        "taskExpression": "One-line purpose translation",
-        "summary": "Summary translation",
-        "description": "Description translation",
-        "hint": "Empty fields fall back to the base-language content."
+      "package": "Skill package",
+      "upload": {
+        "drop": "Drop files here, or click to choose",
+        "packageHint": ".zip up to 50MB",
+        "mediaHint": "Images / videos, multiple, up to 50MB",
+        "failed": "Upload failed, retry"
       }
     },
     "tone": {

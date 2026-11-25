@@ -1,19 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import {
-  activeSections,
+  formFromSkill,
+  i18nEqualsBaseline,
   INITIAL_SKILL_FORM,
-  parseDemoInput,
-  parseMediaInput,
+  splitLines,
   splitList,
   toSkillInput,
   type SkillFormState,
 } from './form-state';
+import type { SkillRecord } from '../../../api/skills';
 
 /**
- * 表单状态层单测（任务 11-24-skills-detail-schema）。
+ * 表单状态层单测（任务 11-25-skills-form-upload：三区块 + 语言切换模型）。
  *
- * 覆盖：输出类型 → 专属分节映射、分节切换（值保留 + 提交裁剪）、清单文本
- * 解析、i18n 载荷产出规则。
+ * 覆盖：文本解析、编辑回填（en 回落基线）、语言切换语义（切换不清值）、
+ * 提交裁剪（en 与基线全同不提交）、价格派生、package_url 落点。
  */
 
 const base = (patch: Partial<SkillFormState> = {}): SkillFormState => ({
@@ -21,130 +22,176 @@ const base = (patch: Partial<SkillFormState> = {}): SkillFormState => ({
   ...patch,
 });
 
-describe('activeSections（输出类型 → 专属分节）', () => {
-  it('未选类型 → 无专属分节', () => {
-    expect(activeSections([])).toEqual([]);
-  });
-
-  it('单选 → 对应分节', () => {
-    expect(activeSections(['网页'])).toEqual(['网页']);
-    expect(activeSections(['视频'])).toEqual(['视频']);
-  });
-
-  it('多选 → 并集（顺序按选中类型序）', () => {
-    expect(activeSections(['网页', '视频'])).toEqual(['网页', '视频']);
-  });
+const zhPatch = (fields: Partial<SkillFormState['i18n']['zh-CN']>) => ({
+  i18n: {
+    ...INITIAL_SKILL_FORM.i18n,
+    'zh-CN': { ...INITIAL_SKILL_FORM.i18n['zh-CN'], ...fields },
+  },
 });
 
-describe('toSkillInput（载荷装配 + 分节裁剪）', () => {
-  it('标题必填语义由上层校验；载荷含基础字段', () => {
-    const input = toSkillInput(base({ title: '  技能名  ' }));
-    expect(input.title).toBe('技能名');
-    expect(input.version).toBe('1.0.0');
-  });
-
-  it('未激活类型：专属字段不落库（切类型残留不污染）', () => {
-    const input = toSkillInput(
-      base({
-        title: '技能',
-        outputTypes: ['网页'],
-        web: { tryOnlineUrl: 'https://demo', techStack: 'React' },
-        // 视频分节的残留值（用户先选视频又取消）
-        video: {
-          duration: '40s',
-          resolution: '4k',
-          voiceLanguages: 'EN',
-          apiKeys: 'K',
-        },
-      }),
-    );
-    expect(input.tryOnlineUrl).toBe('https://demo');
-    expect(input.media).toBeUndefined();
-    expect(input.demoExamples).toBeUndefined();
-  });
-
-  it('激活视频类型：演示示例落库', () => {
-    const input = toSkillInput(
-      base({
-        title: '技能',
-        outputTypes: ['视频'],
-        demoExamples: '生成一段产品视频|https://x/v.webp',
-      }),
-    );
-    expect(input.demoExamples).toEqual([
-      { prompt: '生成一段产品视频', mediaUrl: 'https://x/v.webp' },
-    ]);
-  });
-
-  it('价格三态：free / paid(amount) / requires_key(note+keys)', () => {
-    const free = toSkillInput(base({ title: 'x', priceKind: 'free' }));
-    expect(free.free).toBe(true);
-    expect(free.priceAmount).toBeNull();
-
-    const paid = toSkillInput(
-      base({ title: 'x', priceKind: 'paid', priceAmount: '4.99' }),
-    );
-    expect(paid.free).toBe(false);
-    expect(paid.priceAmount).toBe(4.99);
-
-    const keyed = toSkillInput(
-      base({
-        title: 'x',
-        priceKind: 'requires_key',
-        priceNote: 'Needs FAL_KEY',
-        requiresApiKey: 'FAL_KEY, ELEVENLABS_API_KEY',
-      }),
-    );
-    expect(keyed.priceKind).toBe('requires_key');
-    expect(keyed.priceNote).toBe('Needs FAL_KEY');
-    expect(keyed.requiresApiKey).toEqual(['FAL_KEY', 'ELEVENLABS_API_KEY']);
-  });
-
-  it('清单字段：每行一条 → 字符串数组', () => {
-    const input = toSkillInput(
-      base({
-        title: 'x',
-        deliverables: '交付一\n交付二',
-        goodFit: '适合团队, 适合个人',
-      }),
-    );
-    expect(input.deliverables).toEqual(['交付一', '交付二']);
-    expect(input.goodFit).toEqual(['适合团队', '适合个人']);
-  });
-
-  it('i18n：全空 → 不产出载荷；有值 → 按 locale 产出（空字段 null = 回落基线）', () => {
-    const none = toSkillInput(base({ title: 'x' }));
-    expect(none.i18n).toBeUndefined();
-
-    const withI18n = toSkillInput(
-      base({ title: 'x', i18nLocale: 'en-US', i18nTitle: 'EN title' }),
-    );
-    expect(withI18n.i18n?.['en-US']).toEqual({
-      title: 'EN title',
-      summary: null,
-      description: null,
-      taskExpression: null,
-    });
-  });
-});
-
-describe('文本解析工具', () => {
+describe('文本解析', () => {
   it('splitList：逗号/中文逗号/换行分隔，去空去重', () => {
     expect(splitList('a，b,c\na')).toEqual(['a', 'b', 'c']);
   });
 
-  it('parseMediaInput：裸 URL → image；kind|url → 对应 kind', () => {
-    expect(parseMediaInput('https://x/a.png')).toEqual([
-      { kind: 'image', url: 'https://x/a.png' },
-    ]);
-    expect(parseMediaInput('video|https://x/a.webp')).toEqual([
-      { kind: 'video', url: 'https://x/a.webp' },
-    ]);
+  it('splitLines：仅换行分隔（条目可含逗号），去空去重', () => {
+    expect(splitLines('交付一\n交付二\n交付一')).toEqual(['交付一', '交付二']);
+    expect(splitLines('每行一条, 逗号保留')).toEqual(['每行一条, 逗号保留']);
+  });
+});
+
+describe('formFromSkill（编辑回填）', () => {
+  const baseRow = {
+    id: 1,
+    title: '薄荷暗夜',
+    summary: '基线摘要',
+    description: '基线描述',
+    deliverables: ['交付一', '交付二'],
+    goodFit: ['适合一'],
+    notFor: ['不适合一'],
+    tags: { scenarios: [], tasks: [], highlights: [], styles: ['标签A'] },
+    version: '1.0.1',
+    outputTypes: ['网页'],
+    roles: ['设计师'],
+    scenes: ['品牌'],
+    agents: ['CC'],
+    priceKind: 'free',
+    priceAmount: null,
+    free: true,
+    featured: false,
+    packageUrl: 'https://x/skill-assets/20261125/abcd1234-mypack.zip',
+    tryOnlineUrl: 'https://demo',
+    media: [
+      {
+        kind: 'image',
+        url: 'https://x/skill-assets/20261125/abcd1234-shot.png',
+        alt: '',
+        order: 0,
+      },
+    ],
+  } as unknown as SkillRecord;
+
+  const enRow = {
+    title: 'Mint Noir',
+    summary: 'EN summary',
+    description: '',
+    deliverables: ['Deliverable one'],
+    goodFit: [],
+    notFor: [],
+    tags: { scenarios: [], tasks: [], highlights: [], styles: ['Tag A'] },
+  } as unknown as SkillRecord;
+
+  it('基线落 zh；en 缺失字段回落基线展示', () => {
+    const form = formFromSkill(baseRow, enRow);
+    expect(form.i18n['zh-CN'].title).toBe('薄荷暗夜');
+    expect(form.i18n['en-US'].title).toBe('Mint Noir');
+    // en description 空 → 回落基线
+    expect(form.i18n['en-US'].description).toBe('基线描述');
+    // en goodFit 空数组 → 回落基线
+    expect(form.i18n['en-US'].goodFit).toBe('适合一');
+    expect(form.i18n['en-US'].deliverables).toBe('Deliverable one');
+    expect(form.i18n['en-US'].tags).toEqual(['Tag A']);
   });
 
-  it('parseDemoInput：prompt|mediaUrl', () => {
-    expect(parseDemoInput('做一个官网|https://x/a.png')).toEqual([
-      { prompt: '做一个官网', mediaUrl: 'https://x/a.png' },
-    ]);
+  it('base 落区块二/三：版本/枚举/定价/上传文件（name 从 URL 还原）', () => {
+    const form = formFromSkill(baseRow, null);
+    expect(form.version).toBe('1.0.1');
+    expect(form.outputTypes).toEqual(['网页']);
+    expect(form.priceKind).toBe('free');
+    expect(form.packageFile).toHaveLength(1);
+    expect(form.packageFile[0].url).toContain('mypack.zip');
+    expect(form.packageFile[0].name).toBe('mypack.zip');
+    expect(form.mediaFiles).toHaveLength(1);
+    expect(form.mediaFiles[0].kind).toBe('image');
+    expect(form.tryOnlineUrl).toBe('https://demo');
+  });
+
+  it('无译文（translated=null）→ en 整体回落 zh', () => {
+    const form = formFromSkill(baseRow, null);
+    expect(form.i18n['en-US'].title).toBe('薄荷暗夜');
+    expect(form.i18n['en-US'].tags).toEqual(['标签A']);
+  });
+});
+
+describe('toSkillInput（提交裁剪）', () => {
+  it('主表 ← zh 基线（清单按行拆分；tags.styles）', () => {
+    const input = toSkillInput(
+      base({
+        ...zhPatch({
+          title: ' 技能 ',
+          deliverables: '交付一\n交付二',
+          tags: ['标签A', '标签B'],
+        }),
+        version: '2.0.0',
+        priceKind: 'paid',
+        priceAmount: '4.99',
+        packageFile: [
+          { name: 'p.zip', size: 1, url: 'https://x/p.zip', kind: 'file' },
+        ],
+      }),
+    );
+    expect(input.title).toBe('技能');
+    expect(input.deliverables).toEqual(['交付一', '交付二']);
+    expect(input.tags?.styles).toEqual(['标签A', '标签B']);
+    expect(input.version).toBe('2.0.0');
+    expect(input.priceKind).toBe('paid');
+    expect(input.priceAmount).toBe(4.99);
+    expect(input.free).toBe(false); // 派生列与 priceKind 一致
+    expect(input.packageUrl).toBe('https://x/p.zip');
+    expect(input.media).toBeUndefined(); // 无效果展示 → media 缺省（不传空数组——部分更新语义）
+  });
+
+  it('en 与基线全同 → 不提交 i18n（无意义译文行）', () => {
+    const form = base(
+      zhPatch({ title: '技能', summary: '摘要', deliverables: '交付一' }),
+    );
+    // en 回落 = 与 zh 相同（未编辑过）
+    expect(i18nEqualsBaseline(form.i18n['zh-CN'], form.i18n['en-US'])).toBe(
+      true,
+    );
+    expect(toSkillInput(form).i18n).toBeUndefined();
+  });
+
+  it('en 有差异 → 提交 i18n en-US（七字段 + tags 桶）', () => {
+    const form: SkillFormState = {
+      ...base(
+        zhPatch({ title: '技能', deliverables: '交付一', tags: ['标签A'] }),
+      ),
+      i18n: {
+        'zh-CN': {
+          ...INITIAL_SKILL_FORM.i18n['zh-CN'],
+          title: '技能',
+          deliverables: '交付一',
+          tags: ['标签A'],
+        },
+        'en-US': {
+          ...INITIAL_SKILL_FORM.i18n['en-US'],
+          title: 'Skill EN',
+          deliverables: 'Deliverable one',
+          tags: ['Tag A'],
+        },
+      },
+    };
+    const input = toSkillInput(form);
+    expect(input.i18n?.['en-US']).toEqual({
+      title: 'Skill EN',
+      summary: null,
+      description: null,
+      deliverables: ['Deliverable one'],
+      goodFit: [],
+      notFor: [],
+      tags: { styles: ['Tag A'] },
+    });
+  });
+
+  it('切换语言不清值：zh/en 各自草稿独立保留', () => {
+    const form = base({
+      ...zhPatch({ title: '技能' }),
+      activeLocale: 'en-US',
+    });
+    form.i18n['en-US'] = { ...form.i18n['en-US'], title: 'EN' };
+    // zh 值不因 en 编辑丢失
+    expect(form.i18n['zh-CN'].title).toBe('技能');
+    expect(form.i18n['en-US'].title).toBe('EN');
   });
 });

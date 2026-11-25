@@ -80,6 +80,8 @@ export interface SkillRecord {
   usesTools?: string[];
   /** 在线试用地址（web 类） */
   tryOnlineUrl?: string;
+  /** 技能包单文件 URL（skills-upload 上传产物；任务 11-25） */
+  packageUrl?: string;
 }
 
 /** 媒体项（画廊/演示示例共用）。 */
@@ -117,13 +119,19 @@ export interface SkillTags {
   styles?: string[];
 }
 
-/** i18n 译文载荷（locale → 四字段；字段缺省/null = 回落基线）。 */
+/** i18n 译文载荷（locale → 可译字段；字段缺省/null = 回落基线）。
+ *  0004 扩展（任务 11-25）：三数组字段 + tags（按语言分桶——该语言的标签集）。
+ *  taskExpression 保留（0003 数据兼容）但表单不再录入。 */
 export interface SkillI18nInput {
   [locale: string]: {
     title?: string | null;
     summary?: string | null;
     description?: string | null;
     taskExpression?: string | null;
+    deliverables?: string[] | null;
+    goodFit?: string[] | null;
+    notFor?: string[] | null;
+    tags?: SkillTags | null;
   };
 }
 
@@ -162,6 +170,8 @@ export interface SkillInput {
   generatesWith?: string[];
   usesTools?: string[];
   tryOnlineUrl?: string;
+  /** 技能包单文件 URL（skills-upload 上传产物；任务 11-25） */
+  packageUrl?: string;
   /** 译文载荷（locale → 字段；不传 = 不动副表） */
   i18n?: SkillI18nInput;
 }
@@ -183,6 +193,7 @@ type RawSkillRow = Omit<
   | 'generatesWith'
   | 'usesTools'
   | 'tryOnlineUrl'
+  | 'packageUrl'
 > & {
   output_types?: string[];
   created_at?: string;
@@ -198,6 +209,7 @@ type RawSkillRow = Omit<
   generates_with?: string[];
   uses_tools?: string[];
   try_online_url?: string;
+  package_url?: string;
 };
 
 function mapRow(rows: RawSkillRow[]): SkillRecord[] {
@@ -217,6 +229,7 @@ function mapRow(rows: RawSkillRow[]): SkillRecord[] {
       generates_with,
       uses_tools,
       try_online_url,
+      package_url,
       ...rest
     }) =>
       ({
@@ -235,12 +248,13 @@ function mapRow(rows: RawSkillRow[]): SkillRecord[] {
         generatesWith: generates_with ?? [],
         usesTools: uses_tools ?? [],
         tryOnlineUrl: try_online_url ?? '',
+        packageUrl: package_url ?? '',
       }) as SkillRecord,
   );
 }
 
 /** 失败统一上抛：Error(msg)；msg 取不到 → 无 message 的 Error（页面落 i18n 兜底）。 */
-function toError(error: unknown): Error {
+export function toError(error: unknown): Error {
   const e = error as
     | {
         response?: { data?: { msg?: string } };

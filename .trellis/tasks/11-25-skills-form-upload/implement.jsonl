@@ -1,0 +1,5 @@
+{"file": ".trellis/spec/frontend/http-api-guidelines.md", "reason": "fn 写映射四处同步契约（packageUrl 新列）+ mock snake 列名断言用例 + Supabase 网关鉴权（apikey 头）"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "Modal 包契约（弹窗内表单）+ 长表单动态分节三条约定（state 归主组件/切换不清值/结构与装配分层）+ daisyUI 类名规范"}
+{"file": ".trellis/spec/frontend/i18n-guidelines.md", "reason": "两包 key 树一致约束 + locale 来源（SUPPORTED/props.preferences.locale）"}
+{"file": ".trellis/spec/frontend/directory-structure.md", "reason": "packages/ui 零耦合叶子组件归属（UploadDropzone upload prop 注入）+ src/api/mocks 目录约定"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "测试策略与断言不弱化红线（表单重排的字段定位适配）"}

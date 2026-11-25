@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/frontend/http-api-guidelines.md", "reason": "检查 packageUrl 四处映射同步、snake 列名断言用例扩展、迁移幂等"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "检查三区块表单遵循动态分节三条约定、UploadDropzone 零耦合、圆角联动"}
+{"file": ".trellis/spec/frontend/i18n-guidelines.md", "reason": "检查语言包两包 key 树一致（含旧键清理）"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "检查测试覆盖（回落/裁剪/上传契约/标签搜索）与四包验证矩阵"}

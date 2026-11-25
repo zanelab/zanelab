@@ -921,8 +921,8 @@ describe('MarketplacePage —— 技能 CRUD（表单弹窗 + 删除确认）', 
     const title = within(dialog).getByRole('textbox', {
       name: /名称/,
     }) as HTMLInputElement;
-    // 回填：初值 = 行 title
-    expect(title.value).toBe('薄荷暗夜软件产品官网');
+    // 回填：初值 = 行 title（异步双请求——基线 + en 译文；waitFor 初值填充）
+    await waitFor(() => expect(title.value).toBe('薄荷暗夜软件产品官网'));
 
     await user.clear(title);
     await user.type(title, '薄荷暗夜官网（改）');

@@ -42,9 +42,10 @@ interface RawSkillRow {
   generates_with: string[];
   uses_tools: string[];
   try_online_url: string;
+  package_url: string;
 }
 
-/** i18n 副表行（mock 内存态；结构镜像 skills_i18n 表）。 */
+/** i18n 副表行（mock 内存态；结构镜像 skills_i18n 表——0004 扩展七字段+tags）。 */
 interface RawSkillI18nRow {
   skill_id: number;
   locale: string;
@@ -52,6 +53,10 @@ interface RawSkillI18nRow {
   summary: string | null;
   description: string | null;
   task_expression: string | null;
+  deliverables: string[] | null;
+  good_fit: string[] | null;
+  not_for: string[] | null;
+  tags: Record<string, unknown> | null;
 }
 import { can, resolvePermissions } from './auth';
 
@@ -111,6 +116,7 @@ function withDetailDefaults(
     | 'generates_with'
     | 'uses_tools'
     | 'try_online_url'
+    | 'package_url'
   >,
 ): RawSkillRow {
   return {
@@ -142,6 +148,7 @@ function withDetailDefaults(
     generates_with: [],
     uses_tools: [],
     try_online_url: '',
+    package_url: '',
   };
 }
 
@@ -483,6 +490,25 @@ let skillI18n: RawSkillI18nRow[] = [
     description:
       'You get five connected pages — Product, Pricing, Resources, Events and Changelog — each with working toggles, filters, search, countdowns and forms.',
     task_expression: 'Use this Skill to build landing page.',
+    deliverables: [
+      'A complete interactive example site with five connected pages.',
+      'A reusable template and style guide.',
+      'A page library, icon rules and a local validator.',
+    ],
+    good_fit: [
+      'Software and AI teams launching or relaunching a product site.',
+      'Founders who want pricing, help and release notes in one place.',
+    ],
+    not_for: [
+      'Teams that need a multilingual site.',
+      'Single static poster use cases.',
+    ],
+    tags: {
+      scenarios: ['web-design', 'product-launch'],
+      tasks: ['build-landing-page'],
+      highlights: ['style-locked', 'editable-output'],
+      styles: ['Bento Grid', 'Soft Glow', 'Dark Mode', 'Mint Accent'],
+    },
   },
 ];
 
@@ -510,6 +536,25 @@ export function resetSkillMock(): void {
       description:
         'You get five connected pages — Product, Pricing, Resources, Events and Changelog — each with working toggles, filters, search, countdowns and forms.',
       task_expression: 'Use this Skill to build landing page.',
+      deliverables: [
+        'A complete interactive example site with five connected pages.',
+        'A reusable template and style guide.',
+        'A page library, icon rules and a local validator.',
+      ],
+      good_fit: [
+        'Software and AI teams launching or relaunching a product site.',
+        'Founders who want pricing, help and release notes in one place.',
+      ],
+      not_for: [
+        'Teams that need a multilingual site.',
+        'Single static poster use cases.',
+      ],
+      tags: {
+        scenarios: ['web-design', 'product-launch'],
+        tasks: ['build-landing-page'],
+        highlights: ['style-locked', 'editable-output'],
+        styles: ['Bento Grid', 'Soft Glow', 'Dark Mode', 'Mint Accent'],
+      },
     },
   ];
   nextId = 1000;
@@ -613,6 +658,7 @@ function pickInput(body: Record<string, unknown>): Partial<RawSkillRow> {
     ['taskExpression', 'task_expression'],
     ['priceNote', 'price_note'],
     ['tryOnlineUrl', 'try_online_url'],
+    ['packageUrl', 'package_url'],
   ] as const) {
     if (body[camel] !== undefined) out[snake] = String(body[camel]);
   }
@@ -645,7 +691,7 @@ function pickInput(body: Record<string, unknown>): Partial<RawSkillRow> {
   return out as Partial<RawSkillRow>;
 }
 
-/** body.i18n → 副表 upsert（镜像 Edge Fn parseI18nPayload）。 */
+/** body.i18n → 副表 upsert（镜像 Edge Fn parseI18nPayload；0004 七字段+tags）。 */
 function pickI18n(body: Record<string, unknown>): RawSkillI18nRow[] | null {
   const raw = body.i18n;
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
@@ -655,31 +701,37 @@ function pickI18n(body: Record<string, unknown>): RawSkillI18nRow[] | null {
   )) {
     if (!value || typeof value !== 'object' || Array.isArray(value)) continue;
     const src = value as Record<string, unknown>;
+    const str = (v: unknown): string | null =>
+      v === undefined || v === null ? null : String(v);
+    const arr = (v: unknown): string[] | null => {
+      if (v === undefined || v === null) return null;
+      return Array.isArray(v) ? v.map((x) => String(x)) : null;
+    };
+    const tags =
+      src.tags === undefined
+        ? null
+        : src.tags === null
+          ? null
+          : typeof src.tags === 'object' && !Array.isArray(src.tags)
+            ? (src.tags as Record<string, unknown>)
+            : null;
     out.push({
       skill_id: 0, // 调用方填
       locale,
-      title:
-        src.title === undefined || src.title === null
-          ? null
-          : String(src.title),
-      summary:
-        src.summary === undefined || src.summary === null
-          ? null
-          : String(src.summary),
-      description:
-        src.description === undefined || src.description === null
-          ? null
-          : String(src.description),
-      task_expression:
-        src.taskExpression === undefined || src.taskExpression === null
-          ? null
-          : String(src.taskExpression),
+      title: str(src.title),
+      summary: str(src.summary),
+      description: str(src.description),
+      task_expression: str(src.taskExpression),
+      deliverables: arr(src.deliverables),
+      good_fit: arr(src.goodFit),
+      not_for: arr(src.notFor),
+      tags,
     });
   }
   return out.length ? out : null;
 }
 
-/** 详情回落：副表译文覆盖基线（字段 null/空 → 保留基线）。 */
+/** 详情回落：副表译文覆盖基线（字段 null/空 → 保留基线；0004 七字段+tags）。 */
 function applyI18n(
   row: RawSkillRow,
   i18nRow: RawSkillI18nRow | undefined,
@@ -690,6 +742,13 @@ function applyI18n(
   if (i18nRow.summary) out.summary = i18nRow.summary;
   if (i18nRow.description) out.description = i18nRow.description;
   if (i18nRow.task_expression) out.task_expression = i18nRow.task_expression;
+  // 数组字段：非 null 且非空数组才覆盖（空数组 = 未译，回落基线）
+  if (i18nRow.deliverables?.length) out.deliverables = i18nRow.deliverables;
+  if (i18nRow.good_fit?.length) out.good_fit = i18nRow.good_fit;
+  if (i18nRow.not_for?.length) out.not_for = i18nRow.not_for;
+  if (i18nRow.tags && Object.keys(i18nRow.tags).length > 0) {
+    out.tags = i18nRow.tags;
+  }
   return out;
 }
 
