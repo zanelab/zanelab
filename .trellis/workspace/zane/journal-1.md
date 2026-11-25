@@ -655,3 +655,24 @@ skills-web 权限系统对齐 iam-web：删除订阅式权限内核（utils/perm
 ### Status
 
 [OK] **Completed**
+
+## Session 22: skill-form-modal 三区块重构 + 上传组件 + Supabase Storage
+<!-- trellis-session: v=2 fp=skills-form-upload -->
+
+**Date**: 2026-11-25~26
+**Task**: skill-form-modal 三区块重构 + 上传组件 + Supabase Storage（11-25-skills-form-upload）
+**Branch**: `main`
+
+### Summary
+
+表单三区块重排（基本信息/详细配置/展示与演示）+ 顶部语言切换胶囊（控制基础信息区，读写 skills_i18n）：迁移 0004（i18n 副表扩 deliverables/good_fit/not_for/tags 四 JSONB 列 + 主表 package_url + Storage bucket skill-assets，幂等）；新增 skills-upload edge fn（multipart→Storage→URL，类型/大小校验，create|update 任一权限）；skills fn parseI18nPayload/applyI18n/upsertI18n 扩四字段 + package_url 读写映射；api SkillRecord/SkillInput 扩展 + upload.ts；mock upload-handlers 双路径登记；@zanelab/ui 新增 UploadDropzone（upload prop 注入零耦合、单/多文件、进度/失败/重试）+ upload 字形；TagInput 模糊搜索 + 自由新建；编辑回填双请求（基线 + en 并行）；en 与基线全同不提交 i18n；--radius-selector 联动 --page-radius。check 发现并修 3 处：skills-upload fn `!req.method === 'POST'` 布尔比较错误、upload-handlers 无用 spread、**skills fn 详情回落 select 列清单漏 0004 新列**（写入成功但回落静默失效——字符串列名 tsc 查不出，沉淀为「副表扩列四处同步点」到 http-api-guidelines）。语言包两包 key 树 diff 空、旧分节键清理。验证：skills-web 125/125、portal 191/191、iam 60/60、四包 tsc/build/lint 全绿。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `61b8911` | feat(@zanelab/skills-web): 表单三区块重构 + 上传组件 + Supabase Storage（任务 11-25-skills-form-upload） |
+
+### Status
+
+[OK] **Completed**
