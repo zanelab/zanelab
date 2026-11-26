@@ -1,0 +1,3 @@
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "版式 token 与组件结构约定（标题层级/间距/ARIA 语义）"}
+{"file": ".trellis/spec/frontend/i18n-guidelines.md", "reason": "文案两包同步 + 引用键存在性"}
+{"file": ".trellis/tasks/archive/2026-11/11-26-skills-agent-page/design.md", "reason": "agent 页既有结构与数据模型（data.ts 字段扩展）"}

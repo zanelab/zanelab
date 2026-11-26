@@ -199,3 +199,63 @@ describe('Agent 目录页 —— marketplace 入口', () => {
 });
 
 // MSW server 与 i18n 由 src/test/setup.ts 全局挂载（与 marketplace.test.tsx 同款）。
+
+describe('Agent 目录页 —— 版式对齐参考站（11-26-skills-agent-page-visual）', () => {
+  it('33 条记录都有 icon 字段且文件存在（public/images/agents/）', () => {
+    for (const a of AGENT_CATALOG) {
+      expect(a.icon, a.name).toBeTruthy();
+      expect(a.icon).toMatch(/\.(svg|png)$/);
+    }
+  });
+
+  it('横条渲染真实品牌图标（img src 指向 /images/agents/）', () => {
+    renderPage();
+    const nav = screen.getByRole('navigation', { name: 'Agent 快捷导航' });
+    // 图标是装饰性（alt=""）→ 不用 role=img 查询，按 src 选择器取
+    const imgs = [...nav.querySelectorAll('img')];
+    expect(imgs.length).toBe(17);
+    expect(imgs[0]).toHaveAttribute('src', '/images/agents/grok.svg');
+  });
+
+  it('表格 Agent 列渲染图标', () => {
+    renderPage();
+    const ccRow = document.getElementById('agent-CC')!;
+    const img = ccRow.querySelector('img');
+    expect(img).toBeTruthy();
+    expect(img).toHaveAttribute('src', '/images/agents/claudecode.svg');
+  });
+
+  it('表格用 ARIA table 语义（grid div 不丢表头关联）', () => {
+    renderPage();
+    const table = screen.getByRole('table');
+    expect(within(table).getAllByRole('columnheader')).toHaveLength(5);
+    expect(within(table).getAllByRole('cell').length).toBeGreaterThan(100);
+  });
+
+  it('H1 为 72px 紧排居中；区块 h2 为 40px 居中（参考站版式规格）', () => {
+    renderPage();
+    const h1 = screen.getByRole('heading', { level: 1 });
+    expect(h1.className).toContain('text-[72px]');
+    expect(h1.className).toContain('tracking-[-0.05em]');
+
+    const h2s = screen.getAllByRole('heading', { level: 2 });
+    expect(h2s.length).toBe(4);
+    for (const h2 of h2s) {
+      expect(h2.className).toContain('md:text-[40px]');
+      expect(h2.className).toContain('tracking-[-0.04em]');
+      // 居中：h2 自身或居中容器（参考站四个区块标题均居中）
+      const centered =
+        h2.className.includes('text-center') ||
+        h2.parentElement?.className.includes('text-center') ||
+        h2.closest('[class*="items-center"]') !== null;
+      expect(centered).toBe(true);
+    }
+  });
+
+  it('容器 max-w-1440px + 页面级 scoped 字体', () => {
+    renderPage();
+    const main = document.querySelector('main')!;
+    expect(main.className).toContain('max-w-[1440px]');
+    expect(main.style.fontFamily).toContain('Bricolage Grotesque');
+  });
+});

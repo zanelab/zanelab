@@ -34,6 +34,8 @@ export interface AgentCatalogEntry {
   installHint?: string;
   /** 出现在顶部 agent logo 横条 */
   featured: boolean;
+  /** 图标文件名（public/images/agents/ 下；无图标时省略 → 回退首字母方块） */
+  icon?: string;
 }
 
 /** 全部 agent（33 条，顺序 = 参考站表格顺序：Grok Bot 另列，其余按类型分组）。 */
@@ -41,6 +43,7 @@ export const AGENT_CATALOG: AgentCatalogEntry[] = [
   {
     code: 'XG',
     name: 'Grok Bot',
+    icon: 'grok.svg',
     vendor: 'xAI',
     type: 'office',
     globalPath: '',
@@ -52,6 +55,7 @@ export const AGENT_CATALOG: AgentCatalogEntry[] = [
   {
     code: 'CC',
     name: 'Claude Code',
+    icon: 'claudecode.svg',
     vendor: 'Anthropic',
     type: 'programming',
     globalPath: '~/.claude/skills/',
@@ -62,6 +66,7 @@ export const AGENT_CATALOG: AgentCatalogEntry[] = [
   {
     code: 'CX',
     name: 'Codex',
+    icon: 'codex.svg',
     vendor: 'OpenAI',
     type: 'programming',
     globalPath: '~/.agents/skills/',
@@ -72,6 +77,7 @@ export const AGENT_CATALOG: AgentCatalogEntry[] = [
   {
     code: 'CU',
     name: 'Cursor',
+    icon: 'cursor.svg',
     vendor: 'Anysphere',
     type: 'programming',
     globalPath: '~/.agents/skills/',
@@ -82,6 +88,7 @@ export const AGENT_CATALOG: AgentCatalogEntry[] = [
   {
     code: 'GH',
     name: 'GitHub Copilot',
+    icon: 'githubcopilot.svg',
     vendor: 'GitHub',
     type: 'programming',
     globalPath: '~/.copilot/skills/ or ~/.agents/skills/',
@@ -92,6 +99,7 @@ export const AGENT_CATALOG: AgentCatalogEntry[] = [
   {
     code: 'GC',
     name: 'Gemini CLI',
+    icon: 'geminicli.svg',
     vendor: 'Google',
     type: 'programming',
     globalPath: '~/.agents/skills/',
@@ -102,6 +110,7 @@ export const AGENT_CATALOG: AgentCatalogEntry[] = [
   {
     code: 'OC',
     name: 'OpenCode',
+    icon: 'opencode.svg',
     vendor: 'Open source',
     type: 'programming',
     globalPath: '~/.agents/skills/',
@@ -112,6 +121,7 @@ export const AGENT_CATALOG: AgentCatalogEntry[] = [
   {
     code: 'AG',
     name: 'Antigravity',
+    icon: 'antigravity.svg',
     vendor: 'Google',
     type: 'programming',
     globalPath: '~/.gemini/config/skills/',
@@ -122,6 +132,7 @@ export const AGENT_CATALOG: AgentCatalogEntry[] = [
   {
     code: 'OB',
     name: 'OpenClaw',
+    icon: 'openclaw.svg',
     vendor: 'Open source',
     type: 'programming',
     globalPath: '~/.openclaw/skills/ or ~/.agents/skills/',
@@ -132,6 +143,7 @@ export const AGENT_CATALOG: AgentCatalogEntry[] = [
   {
     code: 'HA',
     name: 'Hermes Agent',
+    icon: 'hermesagent.svg',
     vendor: 'Nous Research',
     type: 'programming',
     globalPath: '~/.hermes/skills/',
@@ -142,6 +154,7 @@ export const AGENT_CATALOG: AgentCatalogEntry[] = [
   {
     code: 'KI',
     name: 'Kiro',
+    icon: 'kiro.svg',
     vendor: 'AWS',
     type: 'programming',
     globalPath: '~/.kiro/skills/',
@@ -152,6 +165,7 @@ export const AGENT_CATALOG: AgentCatalogEntry[] = [
   {
     code: 'WS',
     name: 'Windsurf',
+    icon: 'windsurf.svg',
     vendor: 'Cognition',
     type: 'programming',
     globalPath: '~/.agents/skills/ or ~/.config/devin/skills/',
@@ -162,6 +176,7 @@ export const AGENT_CATALOG: AgentCatalogEntry[] = [
   {
     code: 'CL',
     name: 'Cline',
+    icon: 'cline.svg',
     vendor: 'Cline',
     type: 'programming',
     globalPath: '~/.cline/skills/',
@@ -172,6 +187,7 @@ export const AGENT_CATALOG: AgentCatalogEntry[] = [
   {
     code: 'ZD',
     name: 'Zed',
+    icon: 'zai.svg',
     vendor: 'Zed Industries',
     type: 'programming',
     globalPath: '~/.agents/skills/',
@@ -182,6 +198,7 @@ export const AGENT_CATALOG: AgentCatalogEntry[] = [
   {
     code: 'AM',
     name: 'Amp',
+    icon: 'amp.svg',
     vendor: 'Amp',
     type: 'programming',
     globalPath: '~/.config/agents/skills/ or ~/.agents/skills/',
@@ -192,6 +209,7 @@ export const AGENT_CATALOG: AgentCatalogEntry[] = [
   {
     code: 'KL',
     name: 'Kilo Code',
+    icon: 'kilocode.svg',
     vendor: 'Kilo Code',
     type: 'programming',
     globalPath: '~/.kilo/skills/ or ~/.agents/skills/',
@@ -202,6 +220,7 @@ export const AGENT_CATALOG: AgentCatalogEntry[] = [
   {
     code: 'GS',
     name: 'Goose',
+    icon: 'goose.svg',
     vendor: 'Agentic AI Foundation',
     type: 'programming',
     globalPath: '~/.agents/skills/',
@@ -212,6 +231,7 @@ export const AGENT_CATALOG: AgentCatalogEntry[] = [
   {
     code: 'JN',
     name: 'Junie',
+    icon: 'junie.svg',
     vendor: 'JetBrains',
     type: 'programming',
     globalPath: '~/.junie/skills/ or ~/.agents/skills/',
@@ -222,6 +242,7 @@ export const AGENT_CATALOG: AgentCatalogEntry[] = [
   {
     code: 'OH',
     name: 'OpenHands',
+    icon: 'openhands.svg',
     vendor: 'All Hands AI',
     type: 'programming',
     globalPath: '~/.agents/skills/',
@@ -232,6 +253,7 @@ export const AGENT_CATALOG: AgentCatalogEntry[] = [
   {
     code: 'GB',
     name: 'Grok Build',
+    icon: 'grok.svg',
     vendor: 'xAI',
     type: 'programming',
     globalPath: '~/.grok/skills/ or ~/.agents/skills/',
@@ -242,6 +264,7 @@ export const AGENT_CATALOG: AgentCatalogEntry[] = [
   {
     code: 'MV',
     name: 'Mistral Vibe',
+    icon: 'mistral.svg',
     vendor: 'Mistral AI',
     type: 'programming',
     globalPath: '~/.vibe/skills/ or ~/.agents/skills/',
@@ -252,6 +275,7 @@ export const AGENT_CATALOG: AgentCatalogEntry[] = [
   {
     code: 'KM',
     name: 'Kimi Code',
+    icon: 'kimi.svg',
     vendor: 'Moonshot AI',
     type: 'programming',
     globalPath: '~/.agents/skills/',
@@ -262,6 +286,7 @@ export const AGENT_CATALOG: AgentCatalogEntry[] = [
   {
     code: 'TR',
     name: 'Trae',
+    icon: 'trae.svg',
     vendor: 'ByteDance',
     type: 'programming',
     globalPath: '~/.trae/skills/',
@@ -272,6 +297,7 @@ export const AGENT_CATALOG: AgentCatalogEntry[] = [
   {
     code: 'QD',
     name: 'Qoder',
+    icon: 'qoder.svg',
     vendor: 'Alibaba',
     type: 'programming',
     globalPath: '~/.qoder/skills/',
@@ -282,6 +308,7 @@ export const AGENT_CATALOG: AgentCatalogEntry[] = [
   {
     code: 'CB',
     name: 'CodeBuddy',
+    icon: 'codebuddy.svg',
     vendor: 'Tencent',
     type: 'programming',
     globalPath: '~/.codebuddy/skills/',
@@ -292,6 +319,7 @@ export const AGENT_CATALOG: AgentCatalogEntry[] = [
   {
     code: 'ZC',
     name: 'ZCode',
+    icon: 'zai.svg',
     vendor: 'Z.ai',
     type: 'programming',
     globalPath: '~/.zcode/skills/ or ~/.agents/skills/',
@@ -302,6 +330,7 @@ export const AGENT_CATALOG: AgentCatalogEntry[] = [
   {
     code: 'QW',
     name: 'Qwen Code',
+    icon: 'qwen.svg',
     vendor: 'Alibaba · Qwen',
     type: 'programming',
     globalPath: '~/.qwen/skills/',
@@ -312,6 +341,7 @@ export const AGENT_CATALOG: AgentCatalogEntry[] = [
   {
     code: 'MM',
     name: 'MiniMax Code',
+    icon: 'minimax.svg',
     vendor: 'MiniMax',
     type: 'programming',
     globalPath: '~/.minimax/skills/ or ~/.agents/skills/',
@@ -322,6 +352,7 @@ export const AGENT_CATALOG: AgentCatalogEntry[] = [
   {
     code: 'CW',
     name: 'Claude Cowork',
+    icon: 'claude.svg',
     vendor: 'Anthropic',
     type: 'office',
     globalPath: '',
@@ -332,6 +363,7 @@ export const AGENT_CATALOG: AgentCatalogEntry[] = [
   {
     code: 'MN',
     name: 'Manus',
+    icon: 'manus.svg',
     vendor: 'Manus',
     type: 'office',
     globalPath: '',
@@ -342,6 +374,7 @@ export const AGENT_CATALOG: AgentCatalogEntry[] = [
   {
     code: 'PX',
     name: 'Perplexity Computer',
+    icon: 'perplexity.svg',
     vendor: 'Perplexity',
     type: 'office',
     globalPath: '',
@@ -352,6 +385,7 @@ export const AGENT_CATALOG: AgentCatalogEntry[] = [
   {
     code: 'WB',
     name: 'WorkBuddy',
+    icon: 'workbuddy.png',
     vendor: 'Tencent',
     type: 'office',
     globalPath: '',
@@ -362,6 +396,7 @@ export const AGENT_CATALOG: AgentCatalogEntry[] = [
   {
     code: 'CZ',
     name: 'Coze',
+    icon: 'coze.svg',
     vendor: 'ByteDance',
     type: 'office',
     globalPath: '',

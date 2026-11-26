@@ -15,9 +15,11 @@ export function AgentFaq() {
   ] as const;
 
   return (
-    <section className="flex flex-col gap-4">
-      <h2 className="text-xl font-semibold">{t('skills.agent.faq.title')}</h2>
-      <div className="flex flex-col gap-3">
+    <section className="flex flex-col items-center gap-6">
+      <h2 className="text-[28px] leading-[1.1] font-semibold tracking-[-0.04em] text-balance md:text-[40px]">
+        {t('skills.agent.faq.title')}
+      </h2>
+      <div className="flex w-full max-w-[900px] flex-col gap-3">
         {items.map((key) => (
           <details
             key={key}

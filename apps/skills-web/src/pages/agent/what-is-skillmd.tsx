@@ -19,17 +19,17 @@ const POINTS = ['openFormat', 'writeOnce', 'loadOnDemand'] as const;
 export function WhatIsSkillMd() {
   const { t } = useTranslation();
   return (
-    <section className="flex flex-col gap-4">
-      <div>
-        <h2 className="text-xl font-semibold">
+    <section className="flex flex-col items-center gap-6">
+      <div className="flex flex-col items-center gap-3 text-center">
+        <h2 className="text-[28px] leading-[1.1] font-semibold tracking-[-0.04em] text-balance md:text-[40px]">
           {t('skills.agent.what.title')}
         </h2>
-        <p className="text-base-content/60 mt-1 text-sm">
+        <p className="text-base-content/60 max-w-[760px] text-[15px] leading-relaxed">
           {t('skills.agent.what.intro')}
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <div className="grid w-full max-w-[1200px] grid-cols-1 gap-4 md:grid-cols-3">
         {POINTS.map((key) => (
           <div key={key} className="border-base-300 rounded-xl border p-4">
             <h3 className="text-sm font-semibold">
@@ -43,7 +43,7 @@ export function WhatIsSkillMd() {
       </div>
 
       {/* SKILL.md frontmatter 示例（代码示例常量，不入语言包） */}
-      <pre className="border-base-300 bg-base-200 overflow-x-auto rounded-xl border p-4 text-[12px] leading-relaxed">
+      <pre className="border-base-300 bg-base-200 w-full max-w-[900px] overflow-x-auto rounded-[14px] border p-5 text-[13px] leading-relaxed">
         <code>{YAML_SAMPLE}</code>
       </pre>
     </section>

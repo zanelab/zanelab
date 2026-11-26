@@ -56,26 +56,24 @@ export function FeaturedSkills() {
             .slice(0, CARD_LIMIT);
 
   return (
-    <section className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-end justify-between gap-2">
-        <div>
-          <h2 className="text-xl font-semibold">
-            {t('skills.agent.featured.title')}
-          </h2>
-          <p className="text-base-content/60 mt-1 text-sm">
-            {t('skills.agent.featured.intro')}
-          </p>
-        </div>
+    <section className="flex flex-col items-center gap-6">
+      <div className="flex flex-col items-center gap-3 text-center">
+        <h2 className="text-[28px] leading-[1.1] font-semibold tracking-[-0.04em] text-balance md:text-[40px]">
+          {t('skills.agent.featured.title')}
+        </h2>
+        <p className="text-base-content/60 max-w-[760px] text-[15px] leading-relaxed">
+          {t('skills.agent.featured.intro')}
+        </p>
         <a
           href="/"
-          className="link link-hover text-primary text-sm font-medium whitespace-nowrap"
+          className="link link-hover text-primary text-[15px] font-medium whitespace-nowrap"
         >
           {t('skills.agent.featured.browseAll')}
         </a>
       </div>
 
       {/* 输出类型 pills */}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap justify-center gap-2">
         {PILLS.map((key) => (
           <button
             key={key}
