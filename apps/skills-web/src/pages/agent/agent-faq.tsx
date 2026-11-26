@@ -16,7 +16,7 @@ export function AgentFaq() {
 
   return (
     <section className="flex flex-col items-center gap-6">
-      <h2 className="text-[28px] leading-[1.1] font-semibold tracking-[-0.04em] text-balance md:text-[40px]">
+      <h2 className="text-center text-[28px] leading-[1.1] font-semibold tracking-[-0.04em] text-balance md:text-[40px]">
         {t('skills.agent.faq.title')}
       </h2>
       <div className="flex w-full max-w-[900px] flex-col gap-3">

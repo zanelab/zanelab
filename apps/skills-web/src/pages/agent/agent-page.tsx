@@ -29,10 +29,10 @@ export function AgentPage() {
 
   return (
     <main
-      className="mx-auto w-full max-w-[1440px] px-8 py-12"
+      className="mx-auto w-full max-w-[1440px] px-4 py-10 sm:px-6 lg:px-8 lg:py-16"
       style={{ fontFamily: PAGE_FONT } as CSSProperties}
     >
-      <div className="flex flex-col gap-20">
+      <div className="flex flex-col gap-7 lg:gap-16">
         {/* ① 标语区（居中大标题版式） */}
         <header className="flex flex-col items-center gap-5 text-center">
           <p className="text-base-content/60 text-[13px] font-semibold tracking-wide uppercase">
