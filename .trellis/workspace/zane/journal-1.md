@@ -739,3 +739,24 @@ skills-web 权限系统对齐 iam-web：删除订阅式权限内核（utils/perm
 ### Status
 
 [OK] **Completed**
+
+## Session 26: agent 页通栏版式 + 亮色背景 + 顺序对齐
+<!-- trellis-session: v=2 fp=skills-agent-page-layout -->
+
+**Date**: 2026-11-26
+**Task**: agent 页区块通栏+亮色背景+图标样式+顺序对齐（11-26-skills-agent-page-layout）
+**Branch**: `main`
+
+### Summary
+
+上一任务对齐后用户再提三点版式差异：参考站 section 背景是**通栏**的（延伸整屏，只有内容定宽），部分区块有**交替亮色底**，logo chip 是方圆角白底而非圆形。做法：`main` 去掉 `max-w-[1440px]`（不再限宽），每个区块内部自带 `mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8`，区块背景随之横贯整屏；精选卡片区与「什么是 SKILL.md」段加 `bg-base-200` 亮色底（本站主题替代参考站 `bg-white/60`）；logo chip 从圆形边框改为白底 14px 圆角、图标 22px→14px；「什么是 SKILL.md Skill?」段移到 FAQ 之前（参考站 section 顺序）。测试同步更新：main 不含 max-w 断言、亮色底 section 数量、chip 样式、标题顺序。验证：agent 页 22/22 测试通过、oxlint/tsc/prettier 全绿。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `79520c4` | fix(@zanelab/skills-web): agent 页区块通栏+亮色背景+图标样式+顺序对齐 |
+
+### Status
+
+[OK] **Completed**
