@@ -1,0 +1,3 @@
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "六区块结构与样式 token 一致性"}
+{"file": ".trellis/spec/frontend/i18n-guidelines.md", "reason": "两包 key 树一致 + 引用键存在 + 品牌名不入包"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "数据完整性单测 + 路由命中 + tabs/FAQ 行为测试 + 验证矩阵"}

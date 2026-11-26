@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "页面区块组件拆分与容器/间距 token 沿用现有约定"}
+{"file": ".trellis/spec/frontend/i18n-guidelines.md", "reason": "语言包两包同步 + 引用键存在性扫描 + 刻意保留清单（品牌名/路径不入包）"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "测试覆盖与四包验证矩阵"}
+{"file": ".trellis/tasks/archive/2026-11/11-26-skills-filter-enum-fix/research/skillry-agents.md", "reason": "33 行 agent 数据底稿（厂商/双路径/接入方式）"}

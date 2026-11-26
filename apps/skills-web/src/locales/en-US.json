@@ -13,7 +13,8 @@
       "srTitle": "Agent Skills Marketplace",
       "loading": "Loading…",
       "retry": "Retry",
-      "loadError": "Failed to load Skills. Please retry."
+      "loadError": "Failed to load Skills. Please retry.",
+      "agentDir": "Agent directory"
     },
     "toolbar": {
       "category": "Categories",
@@ -237,6 +238,83 @@
           "contribute": {
             "question": "How do I add a new Skill to the marketplace?",
             "answer": "Submit your Skill through the \"Upload skills\" entry at the top of the page. Once approved, it will be listed for your colleagues."
+          }
+        }
+      }
+    },
+    "agent": {
+      "subtitle": "Agent Skills directory · {{count}} agents",
+      "heading": "Agent Skills for every AI agent",
+      "intro": "SKILL.md is an open format: one Skill works across programming and office agents. Find your agent, see where it keeps Skills, and install any Skillry Skill in one step.",
+      "chips": {
+        "aria": "Agent quick navigation"
+      },
+      "featured": {
+        "title": "Skills every agent can use",
+        "intro": "Slides, websites, videos and images. Every Skill is a plain SKILL.md folder that any agent below can install.",
+        "browseAll": "Browse all Skills",
+        "all": "All"
+      },
+      "table": {
+        "title": "Which AI agents support SKILL.md?",
+        "intro": "Every agent below reads the same Skill folder — only the lookup path and install method differ.",
+        "tab": {
+          "aria": "Agent group filter",
+          "all": "All",
+          "programming": "Coding agents",
+          "office": "Office agents",
+          "prompt": "Prompt install"
+        },
+        "col": {
+          "agent": "Agent",
+          "type": "Type",
+          "globalPath": "Global Skills directory",
+          "projectPath": "Project directory",
+          "install": "Install method"
+        },
+        "settingPath": "Skills settings: {{path}}"
+      },
+      "type": {
+        "programming": "Coding",
+        "office": "Office"
+      },
+      "install": {
+        "prompt": "Install prompt",
+        "upload": "Upload ZIP",
+        "connect": "Connect command"
+      },
+      "faq": {
+        "title": "Agent Skills FAQ",
+        "q": {
+          "support": "Which AI agents support Agent Skills?",
+          "different": "Does each agent need its own Skill?",
+          "sharedDir": "What is ~/.agents/skills/?",
+          "vsMcp": "How do Skills, MCP and AGENTS.md differ?",
+          "noTerminal": "How do I install a Skill without a terminal?"
+        },
+        "a": {
+          "support": "All {{count}} agents on this page read the SKILL.md format — from Claude Code, Codex, Cursor, GitHub Copilot and Gemini CLI to Kimi Code, Trae, Qoder and CodeBuddy. Office agents such as Claude Cowork, Manus and Perplexity Computer support uploading Skills instead.",
+          "different": "No. A Skill is a folder with a SKILL.md file. Every agent here reads the same format — what changes is the directory it goes into, or which upload button you use.",
+          "sharedDir": "It is a shared Skills directory read by many agents, including Codex, Cursor, GitHub Copilot, OpenCode, Zed, Goose and OpenHands. The install prompt defaults to this path, so one install works everywhere.",
+          "vsMcp": "AGENTS.md (or CLAUDE.md, GEMINI.md) holds rules the agent reads every session; MCP connects the agent to external tools and data; a Skill teaches one repeatable task and loads only when needed.",
+          "noTerminal": "On a Skill page click “Copy install prompt” and paste it to your coding agent — it installs the Skill itself. For office agents like Claude Cowork or Manus, download the Skill ZIP and upload it in their skill settings."
+        }
+      },
+      "what": {
+        "title": "What is a SKILL.md Skill?",
+        "intro": "A Skill is a folder an agent can read: the instructions, scripts and examples for one task.",
+        "point": {
+          "openFormat": {
+            "title": "An open format",
+            "body": "SKILL.md starts with a name and description, followed by the scripts, templates and reference files the task needs."
+          },
+          "writeOnce": {
+            "title": "Write once, use anywhere",
+            "body": "The same folder works in Claude Code, Codex, Kimi Code, Trae, WorkBuddy and every agent on this page — only the directory differs."
+          },
+          "loadOnDemand": {
+            "title": "Loaded only when needed",
+            "body": "Until a request matches, the agent reads only a one-line description, so a hundred Skills barely touch the context window."
           }
         }
       }

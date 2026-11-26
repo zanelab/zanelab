@@ -207,6 +207,20 @@ export function MarketplacePage() {
                   <div className="min-w-0 flex-1 sm:flex-none">
                     <SortTabs value={sort} onChange={setSort} />
                   </div>
+                  {/* Agent 目录入口（任务 11-26-skills-agent-page）：相对路径
+                      （basename 由 BrowserRouter 处理；写绝对 /skills/agent 会在
+                      独立态 :8084 失效）。页脚「按 Coding Agent」卡保持纯展示
+                      （决策 B3 无链接契约），入口收敛在工具栏。 */}
+                  <a
+                    href="agent"
+                    aria-label={t('skills.market.agentDir')}
+                    className="border-base-300 bg-base-100 hover:bg-base-content/5 inline-flex h-[42px] shrink-0 items-center gap-1.5 rounded-full border px-4 text-[13px] font-semibold transition-colors"
+                  >
+                    <AppIcon name="components" className="size-3.5" />
+                    <span className="max-sm:hidden">
+                      {t('skills.market.agentDir')}
+                    </span>
+                  </a>
                   {/* 上传入口：无权限（宿主注入且不含码）即整块不渲染 */}
                   <Permission code="skills:skill:create">
                     <UploadButton onCreate={openCreate} />

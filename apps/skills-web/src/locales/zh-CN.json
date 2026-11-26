@@ -13,7 +13,8 @@
       "srTitle": "Agent Skills 市场",
       "loading": "加载中…",
       "retry": "重试",
-      "loadError": "加载失败，请重试"
+      "loadError": "加载失败，请重试",
+      "agentDir": "Agent 目录"
     },
     "toolbar": {
       "category": "分类",
@@ -237,6 +238,83 @@
           "contribute": {
             "question": "如何为市场补充新的 Skill？",
             "answer": "通过页面上方的「上传 skills」入口提交你的 Skill，审核通过后即可上架展示给其他同事使用。"
+          }
+        }
+      }
+    },
+    "agent": {
+      "subtitle": "Agent Skills 目录 · {{count}} 个 agent",
+      "heading": "每个 AI agent 都能用的 Agent Skills",
+      "intro": "SKILL.md 是开放格式，一个 Skill 能在各种编程和办公 agent 里通用。找到你用的 agent，看它的 Skills 放在哪，一步装好任意 Skillry Skill。",
+      "chips": {
+        "aria": "Agent 快捷导航"
+      },
+      "featured": {
+        "title": "每个 agent 都能用的 Skills",
+        "intro": "PPT、网站、发布视频和图片。每个 Skill 都是普通的 SKILL.md 文件夹，下面任何一个 agent 都能装。",
+        "browseAll": "浏览全部 Skills",
+        "all": "全部"
+      },
+      "table": {
+        "title": "哪些 AI agent 支持 SKILL.md？",
+        "intro": "下面每个 agent 读的都是同样的 Skill 文件夹，区别只在于它去哪里找、你怎么安装。",
+        "tab": {
+          "aria": "Agent 分组筛选",
+          "all": "全部",
+          "programming": "编程 Agent",
+          "office": "办公 Agent",
+          "prompt": "支持提示词安装"
+        },
+        "col": {
+          "agent": "Agent",
+          "type": "类型",
+          "globalPath": "全局 Skills 目录",
+          "projectPath": "项目目录",
+          "install": "安装方式"
+        },
+        "settingPath": "Skills 设置：{{path}}"
+      },
+      "type": {
+        "programming": "编程",
+        "office": "办公"
+      },
+      "install": {
+        "prompt": "安装提示词",
+        "upload": "上传 ZIP",
+        "connect": "连接指令"
+      },
+      "faq": {
+        "title": "Agent Skills 常见问题",
+        "q": {
+          "support": "哪些 AI agent 支持 Agent Skills？",
+          "different": "每个 agent 需要不同的 Skill 吗？",
+          "sharedDir": "~/.agents/skills/ 是什么？",
+          "vsMcp": "Skills、MCP 和 AGENTS.md 有什么区别？",
+          "noTerminal": "不开终端怎么安装 Skill？"
+        },
+        "a": {
+          "support": "本页列出的 {{count}} 个 agent 都读 SKILL.md 格式，从 Claude Code、Codex、Cursor、GitHub Copilot、Gemini CLI，到 Kimi Code、Trae、Qoder、CodeBuddy。Claude Cowork、Manus、Perplexity Computer 等办公 agent 则支持上传 Skills。",
+          "different": "不需要。Skill 是一个带 SKILL.md 的文件夹，这里的每个 agent 读的都是同一种格式，变的只是放进哪个目录，或者用哪个上传按钮。",
+          "sharedDir": "这是很多 agent 共同读取的 Skills 目录，包括 Codex、Cursor、GitHub Copilot、OpenCode、Zed、Goose 和 OpenHands。粘贴安装提示词默认就装到这里，装一次就都能用。",
+          "vsMcp": "AGENTS.md（或 CLAUDE.md、GEMINI.md）放 agent 每次会话都要读的规则；MCP 把 agent 连到外部工具和数据；Skill 教一件可重复的事，只在需要时加载。",
+          "noTerminal": "在 Skill 页面点「复制安装提示词」，粘贴给你的编程 agent，它会自己装好。Claude Cowork、Manus 这类办公 agent，下载 Skill 的 ZIP，在它们的技能设置里上传。"
+        }
+      },
+      "what": {
+        "title": "什么是 SKILL.md Skill？",
+        "intro": "Skill 是 agent 能读懂的一个文件夹：一件事的说明、脚本和示例。",
+        "point": {
+          "openFormat": {
+            "title": "一种开放格式",
+            "body": "SKILL.md 开头写名称和描述，再配上这件事需要的脚本、模板和参考文件。"
+          },
+          "writeOnce": {
+            "title": "写一次，到处用",
+            "body": "同一个文件夹，在 Claude Code、Codex、Kimi Code、Trae、WorkBuddy 和本页所有 agent 里都能用，变的只是目录。"
+          },
+          "loadOnDemand": {
+            "title": "只在需要时加载",
+            "body": "需求对上之前，agent 只读一行描述，装一百个 Skills 也几乎不占上下文。"
           }
         }
       }
