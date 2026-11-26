@@ -55,122 +55,131 @@ export function AgentTable() {
   ];
 
   return (
-    <section className="flex flex-col items-center gap-6">
-      <div className="flex max-w-[860px] flex-col items-center gap-3 text-center">
-        <h2 className="text-[28px] leading-[1.1] font-semibold tracking-[-0.04em] text-balance md:text-[40px]">
-          {t('skills.agent.table.title')}
-        </h2>
-        <p className="text-base-content/60 max-w-[760px] text-[15px] leading-relaxed">
-          {t('skills.agent.table.intro')}
-        </p>
-      </div>
+    // 通栏（页面底色；参考站 section[8] py-16 sm:py-24）
+    <section className="py-16 sm:py-24">
+      <div className="mx-auto flex w-full max-w-[1440px] flex-col items-center gap-6 px-4 sm:px-6 lg:px-8">
+        <div className="flex max-w-[860px] flex-col items-center gap-3 text-center">
+          <h2 className="text-[28px] leading-[1.1] font-semibold tracking-[-0.04em] text-balance md:text-[40px]">
+            {t('skills.agent.table.title')}
+          </h2>
+          <p className="text-base-content/60 max-w-[760px] text-[15px] leading-relaxed">
+            {t('skills.agent.table.intro')}
+          </p>
+        </div>
 
-      {/* 分组 tabs（参考站胶囊态） */}
-      <div
-        role="tablist"
-        aria-label={t('skills.agent.table.tab.aria')}
-        className="flex flex-wrap justify-center gap-2"
-      >
-        {tabs.map((item) => (
-          <button
-            key={item.key}
-            type="button"
-            role="tab"
-            aria-selected={tab === item.key}
-            onClick={() => setTab(item.key)}
-            className={`rounded-full px-4 py-1.5 text-[13px] font-medium transition-colors ${
-              tab === item.key
-                ? 'bg-neutral text-neutral-content'
-                : 'border-base-300 text-base-content/60 hover:text-base-content border'
-            }`}
-          >
-            {item.label}
-          </button>
-        ))}
-      </div>
+        {/* 分组 tabs（参考站胶囊态） */}
+        <div
+          role="tablist"
+          aria-label={t('skills.agent.table.tab.aria')}
+          className="flex flex-wrap justify-center gap-2"
+        >
+          {tabs.map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              role="tab"
+              aria-selected={tab === item.key}
+              onClick={() => setTab(item.key)}
+              className={`rounded-full px-4 py-1.5 text-[13px] font-medium transition-colors ${
+                tab === item.key
+                  ? 'bg-neutral text-neutral-content'
+                  : 'border-base-300 text-base-content/60 hover:text-base-content border'
+              }`}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
 
-      {/* 对比表：grid div 行（视觉）+ ARIA table 语义 */}
-      <div className="border-base-300 w-full overflow-x-auto rounded-[14px] border">
-        <div role="table" className={TABLE_MIN_W}>
-          {/* 表头行 */}
-          <div
-            role="row"
-            className={`border-base-300 text-base-content/60 grid ${COLS} border-b text-[13px] font-medium`}
-          >
-            {(
-              ['agent', 'type', 'globalPath', 'projectPath', 'install'] as const
-            ).map((col) => (
+        {/* 对比表：grid div 行（视觉）+ ARIA table 语义 */}
+        <div className="border-base-300 w-full overflow-x-auto rounded-[14px] border">
+          <div role="table" className={TABLE_MIN_W}>
+            {/* 表头行 */}
+            <div
+              role="row"
+              className={`border-base-300 text-base-content/60 grid ${COLS} border-b text-[13px] font-medium`}
+            >
+              {(
+                [
+                  'agent',
+                  'type',
+                  'globalPath',
+                  'projectPath',
+                  'install',
+                ] as const
+              ).map((col) => (
+                <div
+                  key={col}
+                  role="columnheader"
+                  className="px-6 py-4 text-left font-medium"
+                >
+                  {t(`skills.agent.table.col.${col}`)}
+                </div>
+              ))}
+            </div>
+
+            {/* 数据行 */}
+            {rows.map((agent) => (
               <div
-                key={col}
-                role="columnheader"
-                className="px-6 py-4 text-left font-medium"
+                key={agent.code}
+                id={`agent-${agent.code}`}
+                role="row"
+                className={`border-base-content/10 grid ${COLS} scroll-mt-20 border-b last:border-b-0`}
               >
-                {t(`skills.agent.table.col.${col}`)}
+                {/* Agent 列：图标 + 名称 + 厂商 */}
+                <div role="cell" className="flex items-center gap-3 px-6 py-4">
+                  <AgentIcon agent={agent} size={28} />
+                  <div className="min-w-0">
+                    <div className="truncate text-[16px] font-medium">
+                      {agent.name}
+                    </div>
+                    <div className="text-base-content/50 truncate text-[12px]">
+                      {agent.vendor}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 类型列 */}
+                <div role="cell" className="px-6 py-4 text-[16px]">
+                  <span className="badge badge-ghost badge-sm whitespace-nowrap">
+                    {t(`skills.agent.type.${agent.type}`)}
+                  </span>
+                </div>
+
+                {agent.type === 'programming' ? (
+                  <>
+                    {/* 全局 Skills 目录 */}
+                    <div role="cell" className="px-6 py-4 text-[14px]">
+                      <Path value={agent.globalPath} />
+                    </div>
+                    {/* 项目目录 */}
+                    <div role="cell" className="px-6 py-4 text-[14px]">
+                      <Path value={agent.projectPath} />
+                    </div>
+                  </>
+                ) : (
+                  /* 办公类：两列合并显示设置路径/连接说明（参考站同形——
+                   办同行没有目录概念，只有上传入口或连接指令） */
+                  <div
+                    role="cell"
+                    className="text-base-content/70 col-span-2 px-6 py-4 text-[14px]"
+                  >
+                    {agent.installHint ||
+                      t('skills.agent.table.settingPath', {
+                        path: agent.projectPath,
+                      })}
+                  </div>
+                )}
+
+                {/* 安装方式列 */}
+                <div role="cell" className="px-6 py-4">
+                  <span className="text-primary text-[16px] font-medium whitespace-nowrap">
+                    {t(`skills.agent.install.${agent.installMethod}`)}
+                  </span>
+                </div>
               </div>
             ))}
           </div>
-
-          {/* 数据行 */}
-          {rows.map((agent) => (
-            <div
-              key={agent.code}
-              id={`agent-${agent.code}`}
-              role="row"
-              className={`border-base-content/10 grid ${COLS} scroll-mt-20 border-b last:border-b-0`}
-            >
-              {/* Agent 列：图标 + 名称 + 厂商 */}
-              <div role="cell" className="flex items-center gap-3 px-6 py-4">
-                <AgentIcon agent={agent} size={28} />
-                <div className="min-w-0">
-                  <div className="truncate text-[16px] font-medium">
-                    {agent.name}
-                  </div>
-                  <div className="text-base-content/50 truncate text-[12px]">
-                    {agent.vendor}
-                  </div>
-                </div>
-              </div>
-
-              {/* 类型列 */}
-              <div role="cell" className="px-6 py-4 text-[16px]">
-                <span className="badge badge-ghost badge-sm whitespace-nowrap">
-                  {t(`skills.agent.type.${agent.type}`)}
-                </span>
-              </div>
-
-              {agent.type === 'programming' ? (
-                <>
-                  {/* 全局 Skills 目录 */}
-                  <div role="cell" className="px-6 py-4 text-[14px]">
-                    <Path value={agent.globalPath} />
-                  </div>
-                  {/* 项目目录 */}
-                  <div role="cell" className="px-6 py-4 text-[14px]">
-                    <Path value={agent.projectPath} />
-                  </div>
-                </>
-              ) : (
-                /* 办公类：两列合并显示设置路径/连接说明（参考站同形——
-                   办同行没有目录概念，只有上传入口或连接指令） */
-                <div
-                  role="cell"
-                  className="text-base-content/70 col-span-2 px-6 py-4 text-[14px]"
-                >
-                  {agent.installHint ||
-                    t('skills.agent.table.settingPath', {
-                      path: agent.projectPath,
-                    })}
-                </div>
-              )}
-
-              {/* 安装方式列 */}
-              <div role="cell" className="px-6 py-4">
-                <span className="text-primary text-[16px] font-medium whitespace-nowrap">
-                  {t(`skills.agent.install.${agent.installMethod}`)}
-                </span>
-              </div>
-            </div>
-          ))}
         </div>
       </div>
     </section>

@@ -252,10 +252,43 @@ describe('Agent 目录页 —— 版式对齐参考站（11-26-skills-agent-page
     }
   });
 
-  it('容器 max-w-1440px + 页面级 scoped 字体', () => {
+  it('main 通栏（不设 max-width）+ 页面级 scoped 字体', () => {
     renderPage();
     const main = document.querySelector('main')!;
-    expect(main.className).toContain('max-w-[1440px]');
+    // 通栏：main 自身不限宽（背景延伸整屏），宽度由内层区块承担
+    expect(main.className).not.toContain('max-w-[1440px]');
     expect(main.style.fontFamily).toContain('Bricolage Grotesque');
+    // 内层区块各自定宽
+    const inner = main.querySelector('.max-w-\\[1440px\\]');
+    expect(inner).toBeTruthy();
+  });
+});
+
+describe('Agent 目录页 —— 通栏与区块背景（11-26-skills-agent-page-layout）', () => {
+  it('「什么是 SKILL.md Skill?」在「Agent Skills 常见问题」之前（参考站顺序）', () => {
+    renderPage();
+    const h2s = screen.getAllByRole('heading', { level: 2 });
+    const texts = h2s.map((h) => h.textContent);
+    const whatIdx = texts.findIndex((t) => t.includes('什么是 SKILL.md'));
+    const faqIdx = texts.findIndex((t) => t.includes('常见问题'));
+    expect(whatIdx).toBeGreaterThanOrEqual(0);
+    expect(faqIdx).toBeGreaterThanOrEqual(0);
+    expect(whatIdx).toBeLessThan(faqIdx);
+  });
+
+  it('卡片区与「什么是 SKILL.md」段有亮色底（bg-base-200 通栏）', () => {
+    renderPage();
+    const lit = [...document.querySelectorAll('section.bg-base-200')];
+    expect(lit.length).toBe(2);
+    // 亮色段里的内容容器仍定宽
+    expect(lit[0].querySelector('.max-w-\\[1440px\\]')).toBeTruthy();
+  });
+
+  it('logo chip 白底 + 14px 圆角', () => {
+    renderPage();
+    const nav = screen.getByRole('navigation', { name: 'Agent 快捷导航' });
+    const chip = nav.querySelector('a')!;
+    expect(chip.className).toContain('bg-white');
+    expect(chip.className).toContain('rounded-[14px]');
   });
 });

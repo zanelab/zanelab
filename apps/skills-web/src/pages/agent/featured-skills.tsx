@@ -56,59 +56,62 @@ export function FeaturedSkills() {
             .slice(0, CARD_LIMIT);
 
   return (
-    <section className="flex flex-col items-center gap-6">
-      <div className="flex max-w-[860px] flex-col items-center gap-3 text-center">
-        <h2 className="text-[28px] leading-[1.1] font-semibold tracking-[-0.04em] text-balance md:text-[40px]">
-          {t('skills.agent.featured.title')}
-        </h2>
-        <p className="text-base-content/60 max-w-[760px] text-[15px] leading-relaxed">
-          {t('skills.agent.featured.intro')}
-        </p>
-        <a
-          href="/"
-          className="link link-hover text-primary text-[15px] font-medium whitespace-nowrap"
-        >
-          {t('skills.agent.featured.browseAll')}
-        </a>
-      </div>
-
-      {/* 输出类型 pills */}
-      <div className="flex flex-wrap justify-center gap-2">
-        {PILLS.map((key) => (
-          <button
-            key={key}
-            type="button"
-            aria-pressed={pill === key}
-            onClick={() => setPill(key)}
-            className={`rounded-full px-4 py-1.5 text-[13px] font-medium transition-colors ${
-              pill === key
-                ? 'bg-neutral text-neutral-content'
-                : 'border-base-300 text-base-content/60 hover:text-base-content border'
-            }`}
+    // 通栏亮色底（参考站 section[7]: bg-white/60 + scroll-mt-20 + pb-20 pt-14）
+    <section className="bg-base-200 scroll-mt-20 py-14 sm:py-24">
+      <div className="mx-auto flex w-full max-w-[1440px] flex-col items-center gap-6 px-4 sm:px-6 lg:px-8">
+        <div className="flex max-w-[860px] flex-col items-center gap-3 text-center">
+          <h2 className="text-[28px] leading-[1.1] font-semibold tracking-[-0.04em] text-balance md:text-[40px]">
+            {t('skills.agent.featured.title')}
+          </h2>
+          <p className="text-base-content/60 max-w-[760px] text-[15px] leading-relaxed">
+            {t('skills.agent.featured.intro')}
+          </p>
+          <a
+            href="/"
+            className="link link-hover text-primary text-[15px] font-medium whitespace-nowrap"
           >
-            {key === 'all'
-              ? t('skills.agent.featured.all')
-              : t(`skills.option.output.${key}`)}
-          </button>
-        ))}
-      </div>
-
-      {/* 卡片网格（复用 marketplace 卡片；目录页不提供编辑/删除入口） */}
-      {filtered === null ? (
-        <div className="flex justify-center py-12">
-          <span className="loading loading-spinner loading-md" />
+            {t('skills.agent.featured.browseAll')}
+          </a>
         </div>
-      ) : filtered.length > 0 ? (
-        <div className="grid grid-cols-1 items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filtered.map((skill) => (
-            <SkillCard key={skill.id} skill={skill} />
+
+        {/* 输出类型 pills */}
+        <div className="flex flex-wrap justify-center gap-2">
+          {PILLS.map((key) => (
+            <button
+              key={key}
+              type="button"
+              aria-pressed={pill === key}
+              onClick={() => setPill(key)}
+              className={`rounded-full px-4 py-1.5 text-[13px] font-medium transition-colors ${
+                pill === key
+                  ? 'bg-neutral text-neutral-content'
+                  : 'border-base-300 text-base-content/60 hover:text-base-content border'
+              }`}
+            >
+              {key === 'all'
+                ? t('skills.agent.featured.all')
+                : t(`skills.option.output.${key}`)}
+            </button>
           ))}
         </div>
-      ) : (
-        <div className="border-base-300 text-base-content/50 rounded-(--page-radius) border border-dashed py-12 text-center text-sm">
-          {t('skills.market.empty')}
-        </div>
-      )}
+
+        {/* 卡片网格（复用 marketplace 卡片；目录页不提供编辑/删除入口） */}
+        {filtered === null ? (
+          <div className="flex justify-center py-12">
+            <span className="loading loading-spinner loading-md" />
+          </div>
+        ) : filtered.length > 0 ? (
+          <div className="grid grid-cols-1 items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {filtered.map((skill) => (
+              <SkillCard key={skill.id} skill={skill} />
+            ))}
+          </div>
+        ) : (
+          <div className="border-base-300 text-base-content/50 rounded-(--page-radius) border border-dashed py-12 text-center text-sm">
+            {t('skills.market.empty')}
+          </div>
+        )}
+      </div>
     </section>
   );
 }
