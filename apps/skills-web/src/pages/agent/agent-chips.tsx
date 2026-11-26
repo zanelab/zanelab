@@ -25,7 +25,7 @@ export function AgentChips() {
           aria-label={agent.name}
           className="flex items-center justify-center rounded-[14px] border border-black/[0.08] bg-white p-2 transition-colors hover:bg-white/70 dark:bg-white dark:hover:bg-white/80"
         >
-          <AgentIcon agent={agent} size={14} />
+          <AgentIcon agent={agent} size={28} />
         </a>
       ))}
     </nav>

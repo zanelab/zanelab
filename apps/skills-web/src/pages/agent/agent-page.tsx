@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getProps } from '../../props';
 import { AgentChips } from './agent-chips';
 import { AgentTable } from './agent-table';
 import { AgentFaq } from './agent-faq';
@@ -24,6 +25,10 @@ import { AGENT_CATALOG } from './data';
  * - 区块标题 h2：40px 字距 -0.04em 居中（参考站四个区块均居中）
  * - 字体 Bricolage Grotesque **页面级 scoped**（根容器设 font-family，
  *   不改 body —— 避免影响 marketplace 等既有页面的排版）
+ * - **主题圆角联动**：与 marketplace 页同款契约——宿主
+ *   props.preferences.radius（rem 字符串）→ 页面根内联 `--page-radius`，
+ *   SkillCard 的 `rounded-(--page-radius)` 才有值（否则圆角被丢弃）。
+ *   独立态无 props → 中性缺省 '0.5rem'。
  */
 
 /** 参考站字体（页面级 scoped；仅本页根容器生效）。 */
@@ -32,8 +37,18 @@ const PAGE_FONT = "'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif";
 export function AgentPage() {
   const { t } = useTranslation();
 
+  // 主题圆角联动（与 marketplace 页同款模式）：radius → --page-radius。
+  const prefs = {
+    radius: '0.5',
+    ...(getProps().preferences as Record<string, unknown> | undefined),
+  } as { radius?: string };
+  const pageStyle = {
+    fontFamily: PAGE_FONT,
+    '--page-radius': `${prefs.radius}rem`,
+  } as CSSProperties;
+
   return (
-    <main style={{ fontFamily: PAGE_FONT } as CSSProperties}>
+    <main style={pageStyle}>
       {/* ① 标语区（居中大标题版式） */}
       <header className="mx-auto flex w-full max-w-[1440px] flex-col items-center gap-5 px-4 py-10 text-center sm:px-6 lg:px-8 lg:py-16">
         <p className="text-base-content/60 text-[13px] font-semibold tracking-wide uppercase">

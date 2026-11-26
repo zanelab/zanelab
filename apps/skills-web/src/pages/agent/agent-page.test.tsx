@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 import i18n from '../../locales/i18n';
 import { App } from '../../App';
+import { setProps } from '../../props';
 import { AGENT_CATALOG, FEATURED_AGENTS } from './data';
 import { AGENT_LABEL } from '../marketplace/data';
 
@@ -290,5 +291,37 @@ describe('Agent 目录页 —— 通栏与区块背景（11-26-skills-agent-page
     const chip = nav.querySelector('a')!;
     expect(chip.className).toContain('bg-white');
     expect(chip.className).toContain('rounded-[14px]');
+  });
+});
+
+// 主题圆角联动（marketplace 页 --page-radius 同款契约）：agent 页复用的
+// SkillCard 用 `rounded-(--page-radius)`，变量缺失 → 圆角被丢弃、卡片成方角。
+// jsdom 无布局引擎，锁「变量注入 + 值来源」两个契约点。
+describe('Agent 目录页 —— radius 主题联动', () => {
+  it('独立态（无 props）：--page-radius 用中性缺省 0.5rem', () => {
+    renderPage();
+    const main = document.querySelector('main')!;
+    expect(main.style.getPropertyValue('--page-radius')).toBe('0.5rem');
+  });
+
+  it('集成态：--page-radius 跟随 props.preferences.radius（宿主 rem 字符串）', () => {
+    setProps({
+      preferences: {
+        mode: 'light',
+        colorPrimary: '',
+        colorDestructive: '',
+        colorSuccess: '',
+        colorWarning: '',
+        radius: '1.25',
+        fontSize: 14,
+        colorGrayMode: false,
+        colorWeakMode: false,
+        locale: 'zh-CN',
+      },
+    });
+    renderPage();
+    const main = document.querySelector('main')!;
+    expect(main.style.getPropertyValue('--page-radius')).toBe('1.25rem');
+    setProps({}); // 复位，防污染后续用例（getter 语义读 savedProps）
   });
 });

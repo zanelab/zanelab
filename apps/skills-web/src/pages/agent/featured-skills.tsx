@@ -84,8 +84,8 @@ export function FeaturedSkills() {
               onClick={() => setPill(key)}
               className={`rounded-full px-4 py-1.5 text-[13px] font-medium transition-colors ${
                 pill === key
-                  ? 'bg-neutral text-neutral-content'
-                  : 'border-base-300 text-base-content/60 hover:text-base-content border'
+                  ? 'bg-primary text-primary-content'
+                  : 'border-base-300 bg-base-100 text-base-content/60 hover:text-base-content dark:bg-base-300 border'
               }`}
             >
               {key === 'all'

@@ -36,7 +36,7 @@ function filterRows(tab: TabKey): AgentCatalogEntry[] {
 /** 行内路径/code 文本（等宽字体）。 */
 function Path({ value }: { value: string }) {
   return (
-    <code className="bg-base-200 rounded-[9px] px-1.5 py-0.5 text-[13px]">
+    <code className="bg-base-200 dark:bg-base-300 rounded-[9px] px-1.5 py-0.5 text-[13px]">
       {value}
     </code>
   );
@@ -82,8 +82,8 @@ export function AgentTable() {
               onClick={() => setTab(item.key)}
               className={`rounded-full px-4 py-1.5 text-[13px] font-medium transition-colors ${
                 tab === item.key
-                  ? 'bg-neutral text-neutral-content'
-                  : 'border-base-300 text-base-content/60 hover:text-base-content border'
+                  ? 'bg-primary text-primary-content'
+                  : 'border-base-300 bg-base-100 text-base-content/60 hover:text-base-content dark:bg-base-300 border'
               }`}
             >
               {item.label}
@@ -92,7 +92,7 @@ export function AgentTable() {
         </div>
 
         {/* 对比表：grid div 行（视觉）+ ARIA table 语义 */}
-        <div className="border-base-300 w-full overflow-x-auto rounded-[14px] border">
+        <div className="border-base-300 dark:bg-base-200 w-full overflow-x-auto rounded-[14px] border bg-white">
           <div role="table" className={TABLE_MIN_W}>
             {/* 表头行 */}
             <div
