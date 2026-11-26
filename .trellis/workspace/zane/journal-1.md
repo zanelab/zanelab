@@ -697,3 +697,24 @@ skills-web 权限系统对齐 iam-web：删除订阅式权限内核（utils/perm
 ### Status
 
 [OK] **Completed**
+
+## Session 24: skills-web agent 目录页(/skills/agent)
+<!-- trellis-session: v=2 fp=skills-agent-page -->
+
+**Date**: 2026-11-26
+**Task**: skills-web agent 目录页(/skills/agent)（11-26-skills-agent-page）
+**Branch**: `main`
+
+### Summary
+
+参考 skillry.dev/zh/skills/agent 在 skills-web 实现 agent 目录页，1:1 还原六区块（标语区 / logo 横条 17 chip / 精选 skills 卡片区 / SKILL.md 支持对比表 5 列 4 tabs / FAQ 5 问 / SKILL.md 介绍段含 YAML 示例）。数据走**前端静态常量** AGENT_CATALOG（33 条：编程 27 + 办公 5 + Grok Bot），从参考站原始 HTML 实测抓取——**修正了 11-26 底稿里的路径错误**（Cursor/Gemini CLI/OpenCode 全局路径实为组合形式如 `.agents/skills/ or .cursor/skills/`，底稿误写 `~/.agents/skills/`）；FAQ 5 问完整答案与 SKILL.md 介绍段原文也从原始 HTML 抓到（非补写）。路由 App.tsx 加 `path="agent"`（排在 `*` 兜底前），basename 使集成态 `/skills/agent` 与独立态 `:8084/agent` 均命中，portal 零改动。marketplace 入口放**工具栏**（页脚有「B3 纯展示无链接」既定契约，加 `<a>` 会破坏）。AGENT_LABEL 与 AGENT_CATALOG 不合并——前者是筛选值域契约，后者是展示数据，合并会让值域随目录页漂移；一致性由测试守住（交集项 name 逐条相等）。验证：skills-web 138/138、portal 191/191、tsc/build/lint 全绿、key 树与引用键扫描通过；浏览器实测六区块渲染正确（33 行 / 17 chip / 5 FAQ）。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `e8de64c` | feat(@zanelab/skills-web): agent 目录页(/skills/agent)——1:1 还原参考站六区块（任务 11-26-skills-agent-page） |
+
+### Status
+
+[OK] **Completed**
