@@ -718,3 +718,24 @@ skills-web 权限系统对齐 iam-web：删除订阅式权限内核（utils/perm
 ### Status
 
 [OK] **Completed**
+
+## Session 25: agent 页版式对齐参考站 + 品牌图标
+<!-- trellis-session: v=2 fp=skills-agent-page-visual -->
+
+**Date**: 2026-11-26
+**Task**: agent 页版式对齐参考站（11-26-skills-agent-page-visual）
+**Branch**: `main`
+
+### Summary
+
+用户截图对比后指出「设计完全不一样，需要设计也一样」，并明确**不参考颜色**（沿用本站 daisyUI 主题），范围只限 agent 页 + 引入参考站字体。做法：从参考站原始 HTML/CSS 实测提取版式规格（容器 max-w-1440px/px-8、H1 72px 字距 -3.6px、h2 40px 字距 -1.6px 居中、hero 段落 19px max-w-760px、表格 grid div 行 5 列固定列宽 315/150/339/266/180px、行 padding 16px 24px、行分隔线、主体 16px/路径 13-14px），按规格重写页面版式。字体 Bricolage Grotesque 经 Google Fonts 引入，**页面级 scoped**（agent 页根容器设 font-family，不改 body——避免影响 marketplace 排版）。表格从 `<table>` 改为 grid div 行（参考站同款；`<table>` 列宽由内容自动分配无法对齐固定比例），补 ARIA role（table/row/columnheader/cell）保住表头关联语义。图标：33 个 agent 品牌图标落 `public/images/agents/`（文件名去 hash，如 claudecode.svg），data.ts 加 icon 字段，横条 chip 与表格 Agent 列均用真图标，缺图回退首字母方块。**踩坑**：集成态（qiankun）下写死 `/images/agents/x.svg` 命中宿主 origin → 全部 404；解法 asset-url.ts 经 qiankun 注入的 `__INJECTED_PUBLIC_PATH_BY_QIANKUN__` 解析（dev 模式该前缀指向 :8084）。验证：skills-web 144/144、portal 191/191、tsc/build/lint 全绿；浏览器实测 H1 72px/-3.6px、h2 40px 居中、50 张图标 0 破损。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `6d487b0` | feat(@zanelab/skills-web): agent 页版式对齐参考站 + 33 个品牌图标（任务 11-26-skills-agent-page-visual） |
+
+### Status
+
+[OK] **Completed**
