@@ -1022,3 +1022,38 @@ describe('MarketplacePage —— 多语言', () => {
     unmount();
   });
 });
+
+// 卡片右侧头像组：渲染真实 agent 品牌图标（不再用字母圆片）。
+// 图标文件名派生自 agent 目录数据（AGENT_ICON_BY_CODE），卡片侧按缩写码反查。
+// 定位用 data-testid（参考站同款），不依赖类名——类名随版式调整易漂移。
+describe('MarketplacePage —— 卡片 agent 头像组', () => {
+  it('头像渲染 <img> 品牌图标，src 指向构建产物 URL', async () => {
+    await renderPage();
+    const avatars = document.querySelectorAll(
+      '[data-testid="skill-card-tool-logo"] img',
+    );
+    expect(avatars.length).toBeGreaterThan(0);
+    const src = avatars[0].getAttribute('src') ?? '';
+    expect(src).toBeTruthy();
+    // Vite 对小 SVG 内联为 data URI（测试态），生产构建输出文件 URL——两者皆可
+    expect(src).toMatch(/^data:image\/svg\+xml|assets|agents/);
+  });
+
+  it('头像保留品牌全称 title（可访问名）', async () => {
+    await renderPage();
+    const avatar = document.querySelector(
+      '[data-testid="skill-card-tool-logo"]',
+    )!;
+    expect(avatar.getAttribute('title')).toBeTruthy();
+  });
+
+  it('头像圆片 16px、图标 10px（参考站规格）', async () => {
+    await renderPage();
+    const avatar = document.querySelector(
+      '[data-testid="skill-card-tool-logo"]',
+    )!;
+    expect(avatar.className).toContain('size-4');
+    const img = avatar.querySelector('img')!;
+    expect(img.getAttribute('width')).toBe('10');
+  });
+});

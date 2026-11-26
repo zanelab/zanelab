@@ -408,3 +408,14 @@ export const AGENT_CATALOG: AgentCatalogEntry[] = [
 
 /** 顶部 logo 横条的 agent（参考站 17 个 chip，顺序同参考站）。 */
 export const FEATURED_AGENTS = AGENT_CATALOG.filter((a) => a.featured);
+
+/**
+ * agent 缩写码 → 图标文件名（派生自 AGENT_CATALOG，单一事实源）。
+ *
+ * 供 marketplace 页的 SkillCard 头像组用：卡片上的 agent 值是缩写码
+ * （'CC'/'CX'/…），要渲染真实品牌图标得从目录数据反查图标名——不在
+ * marketplace 侧另存一份映射，避免两处漂移。
+ */
+export const AGENT_ICON_BY_CODE: Record<string, string> = Object.fromEntries(
+  AGENT_CATALOG.filter((a) => a.icon).map((a) => [a.code, a.icon as string]),
+);

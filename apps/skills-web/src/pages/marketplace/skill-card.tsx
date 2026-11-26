@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { AppIcon } from '@zanelab/ui';
 import { useTranslation } from 'react-i18next';
 import { AGENT_LABEL, type OutputType, type SkillItem } from './data';
+import { AgentAvatarIcon } from '../agent/agent-icon';
 import { Permission } from '../../components/permission';
 
 /**
@@ -155,27 +156,28 @@ export function SkillCard({ skill, onEdit, onDelete }: SkillCardProps) {
         <h3 className="text-base-content/70 min-w-0 truncate text-[13px] font-medium tracking-[-0.01em]">
           {skill.title}
         </h3>
-        <div className="avatar-group ml-auto shrink-0 -space-x-2">
-          {shownAgents.map((agent) => (
-            <div
-              key={agent}
-              title={AGENT_LABEL[agent] ?? agent}
-              className="avatar avatar-placeholder"
-            >
-              {/* 4px 圆环由 avatar-group 提供（daisyUI 给 .avatar 加 base-100 描边）；
-                  内部 16px 圆片自带细描边，否则白底上与页面底色糊在一起 */}
-              <div className="border-base-300 bg-base-100 text-base-content/70 w-4 rounded-full border">
-                <span className="text-[8px] font-semibold">{agent}</span>
-              </div>
-            </div>
-          ))}
-          {restAgents > 0 ? (
-            // ml-1 抵消 -space-x-2 给末位头像的负右边距（净重叠 4px）
-            <span className="text-base-content/45 ml-1 self-center text-[8px] font-semibold tabular-nums">
-              +{restAgents}
-            </span>
-          ) : null}
-        </div>
+        {/* Agent 头像组（参考站同款）：16px 圆片 + 1px 描边 + 4px 重叠。
+            **不用 daisyUI avatar-group**——它给每个 .avatar 加 4px base-100
+            粗白环，内层圆片再带描边 → 双层描边、圆片显得拥挤。 */}
+        <span className="ms-auto flex shrink-0 items-center">
+          <span className="flex shrink-0 items-center gap-1">
+            {shownAgents.map((agent) => (
+              <span
+                key={agent}
+                title={AGENT_LABEL[agent] ?? agent}
+                data-testid="skill-card-tool-logo"
+                className="border-base-content/15 bg-base-100 dark:bg-base-300 -ml-1 grid size-4 shrink-0 place-items-center rounded-full border first:ml-0 dark:border-white/15"
+              >
+                <AgentAvatarIcon code={agent} size={10} />
+              </span>
+            ))}
+            {restAgents > 0 ? (
+              <span className="border-base-content/15 bg-base-100 text-base-content/45 dark:bg-base-300 -ml-1 grid size-4 shrink-0 place-items-center rounded-full border text-[8px] font-semibold tabular-nums dark:border-white/15 dark:text-white/50">
+                +{restAgents}
+              </span>
+            ) : null}
+          </span>
+        </span>
       </div>
     </article>
   );

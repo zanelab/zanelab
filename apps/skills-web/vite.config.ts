@@ -32,6 +32,14 @@ function inlineModuleScriptsToDynamicImport(): Plugin {
 // 与 home-web/iam-web 同款脚手架：qiankun('skills', useDevMode) + 独立态
 // tailwind 编译（src/index.css，集成态样式由宿主注入）。
 export default defineConfig({
+  // **相对 base**：qiankun 集成态下子应用 HTML 由宿主 import-html-entry 拉取，
+  // 绝对路径（默认 '/'）会命中宿主 origin → 子应用自己的 assets 404。
+  //
+  // 资源 URL 经 `new URL(asset, import.meta.url)` 生成（src/assets/ 下的
+  // import 资源，Vite 默认产物形态）——相对 base 让它相对**当前 JS 模块**
+  // 解析：集成态 JS 由 qiankun 从子应用服务器加载 → import.meta.url 指向
+  // 子应用 origin → 图标落在子应用自己的 assets/，不误命中宿主。
+  base: './',
   plugins: [
     react(),
     tailwindcss(),

@@ -4,8 +4,13 @@ import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 import i18n from '../../locales/i18n';
 import { App } from '../../App';
+import {
+  MONOCHROME_AGENT_ICONS,
+  agentIconUrl,
+  isMonochromeAgentIcon,
+} from './agent-icons';
 import { setProps } from '../../props';
-import { AGENT_CATALOG, FEATURED_AGENTS } from './data';
+import { AGENT_CATALOG, AGENT_ICON_BY_CODE, FEATURED_AGENTS } from './data';
 import { AGENT_LABEL } from '../marketplace/data';
 
 /** 挂载 AgentPage（路由路径 /agent——App 层路由命中也是测试点）。 */
@@ -202,20 +207,20 @@ describe('Agent 目录页 —— marketplace 入口', () => {
 // MSW server 与 i18n 由 src/test/setup.ts 全局挂载（与 marketplace.test.tsx 同款）。
 
 describe('Agent 目录页 —— 版式对齐参考站（11-26-skills-agent-page-visual）', () => {
-  it('33 条记录都有 icon 字段且文件存在（public/images/agents/）', () => {
+  it('33 条记录都有 icon 字段且文件存在（src/assets/agents/）', () => {
     for (const a of AGENT_CATALOG) {
       expect(a.icon, a.name).toBeTruthy();
       expect(a.icon).toMatch(/\.(svg|png)$/);
     }
   });
 
-  it('横条渲染真实品牌图标（img src 指向 /images/agents/）', () => {
+  it('横条渲染真实品牌图标（img src 指向构建产物 URL）', () => {
     renderPage();
     const nav = screen.getByRole('navigation', { name: 'Agent 快捷导航' });
     // 图标是装饰性（alt=""）→ 不用 role=img 查询，按 src 选择器取
     const imgs = [...nav.querySelectorAll('img')];
     expect(imgs.length).toBe(17);
-    expect(imgs[0]).toHaveAttribute('src', '/images/agents/grok.svg');
+    expect(imgs[0]).toHaveAttribute('src', agentIconUrl('grok.svg'));
   });
 
   it('表格 Agent 列渲染图标', () => {
@@ -223,7 +228,7 @@ describe('Agent 目录页 —— 版式对齐参考站（11-26-skills-agent-page
     const ccRow = document.getElementById('agent-CC')!;
     const img = ccRow.querySelector('img');
     expect(img).toBeTruthy();
-    expect(img).toHaveAttribute('src', '/images/agents/claudecode.svg');
+    expect(img).toHaveAttribute('src', agentIconUrl('claudecode.svg'));
   });
 
   it('表格用 ARIA table 语义（grid div 不丢表头关联）', () => {
@@ -323,5 +328,42 @@ describe('Agent 目录页 —— radius 主题联动', () => {
     const main = document.querySelector('main')!;
     expect(main.style.getPropertyValue('--page-radius')).toBe('1.25rem');
     setProps({}); // 复位，防污染后续用例（getter 语义读 savedProps）
+  });
+});
+
+// 图标资源契约：图标在 src/assets/agents/（经 Vite 处理），单色判定由
+// `?raw` 导入的 SVG 源码**自动派生**——不手写清单（手写会随图标增删漂移）。
+// 漏判的后果：单色图（fill="currentColor"，经 <img> 加载即黑）在暗色主题
+// 的深色圆底上不可见。
+describe('Agent 图标 —— 资源与单色判定', () => {
+  it('每个 code 的图标文件都存在（构建产物 URL 可解析）', () => {
+    for (const [code, file] of Object.entries(AGENT_ICON_BY_CODE)) {
+      expect(agentIconUrl(file), `${code} → ${file}`).toBeTruthy();
+    }
+  });
+
+  it('单色判定覆盖已知单色图标（currentColor）', () => {
+    // 抽样：这几个是 fill="currentColor" 的单色图，暗色主题需反色
+    for (const file of [
+      'cursor.svg',
+      'githubcopilot.svg',
+      'opencode.svg',
+      'hermesagent.svg',
+    ]) {
+      expect(isMonochromeAgentIcon(file), file).toBe(true);
+    }
+  });
+
+  it('自带配色的图标不被判为单色（反色会破坏品牌色）', () => {
+    for (const file of ['claudecode.svg', 'codex.svg', 'antigravity.svg']) {
+      expect(isMonochromeAgentIcon(file), file).toBe(false);
+    }
+  });
+
+  it('单色集合非空且都是已登记的文件名', () => {
+    expect(MONOCHROME_AGENT_ICONS.size).toBeGreaterThan(0);
+    for (const file of MONOCHROME_AGENT_ICONS) {
+      expect(agentIconUrl(file), file).toBeTruthy();
+    }
   });
 });
