@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { AppIcon } from '@zanelab/ui';
+import { Link } from 'react-router-dom';
 import { skillsApi } from '../../api/skills';
 import { SkillCard } from '../marketplace/skill-card';
 import { toSkillItem } from '../marketplace/record';
@@ -66,12 +68,23 @@ export function FeaturedSkills() {
           <p className="text-base-content/60 max-w-[760px] text-[15px] leading-relaxed">
             {t('skills.agent.featured.intro')}
           </p>
-          <a
-            href="/"
-            className="link link-hover text-primary text-[15px] font-medium whitespace-nowrap"
+          {/* 「浏览全部 Skills」入口（参考站同款胶囊 + 右箭头）。
+              **用 <Link to="/"> 而非原生 <a>**：应用内路由目标 = 应用根
+              （marketplace 首页），而应用根路径由宿主注入的 basename 决定
+              （集成态 /skills、独立态 /）。<Link> 由 BrowserRouter 自动补
+              basename——原生 <a href="/"> 会跳到宿主根（脱离 basename），
+              <a href="."> 则依赖当前 URL 的段数（尾斜杠时会解析错）。
+              宿主 props 的 basename 见 main.tsx 的 BrowserRouter 配置。 */}
+          <Link
+            to="/"
+            className="border-base-content/10 bg-base-100 text-base-content hover:bg-base-100/70 inline-flex h-11 w-fit shrink-0 items-center gap-2 rounded-full border px-5 text-[14px] font-semibold transition-colors dark:border-white/15 dark:bg-white/[0.04]"
           >
             {t('skills.agent.featured.browseAll')}
-          </a>
+            <AppIcon
+              name="svg:M5 12l14 0|M13 18l6 -6|M13 6l6 6"
+              className="size-4 shrink-0"
+            />
+          </Link>
         </div>
 
         {/* 输出类型 pills */}

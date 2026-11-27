@@ -388,3 +388,32 @@ describe('Agent 目录页 —— Hero 小标题胶囊', () => {
     expect(chip.className).toContain('dark:border-white/10');
   });
 });
+
+// 「浏览全部 Skills」入口的路由契约：应用内目标 = 应用根（marketplace 首页），
+// 而应用根路径由宿主注入的 basename 决定（集成态 /skills、独立态 /）。
+// 用 <Link to="/"> 而非原生 <a>：<Link> 由 BrowserRouter 自动补 basename——
+// 原生 <a href="/"> 会跳到宿主根（脱离 basename）。
+describe('Agent 目录页 —— 浏览全部入口的 basename 契约', () => {
+  function renderWithBasename(basename: string) {
+    return render(
+      <MemoryRouter
+        basename={basename}
+        initialEntries={[basename === '/' ? '/agent' : `${basename}/agent`]}
+      >
+        <App />
+      </MemoryRouter>,
+    );
+  }
+
+  it('独立态（basename="/"）：入口 href="/"', () => {
+    renderWithBasename('/');
+    const link = document.querySelector('section.bg-base-200 a[href]')!;
+    expect(link.getAttribute('href')).toBe('/');
+  });
+
+  it('集成态（basename="/skills"）：入口 href="/skills"（自动补 basename）', () => {
+    renderWithBasename('/skills');
+    const link = document.querySelector('section.bg-base-200 a[href]')!;
+    expect(link.getAttribute('href')).toBe('/skills');
+  });
+});
