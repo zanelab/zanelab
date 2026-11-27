@@ -78,7 +78,7 @@
       "free": "免费",
       "paid": "付费",
       "installCount": "安装数",
-      "likeCount": "点赞数",
+      "likeCount": "收藏数",
       "like": "喜欢 {{title}}",
       "bookmark": "收藏 {{title}}",
       "edit": "编辑 {{title}}",

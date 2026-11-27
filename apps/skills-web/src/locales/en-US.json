@@ -78,7 +78,7 @@
       "free": "Free",
       "paid": "Paid",
       "installCount": "Installs",
-      "likeCount": "Likes",
+      "likeCount": "Bookmarks",
       "like": "Like {{title}}",
       "bookmark": "Bookmark {{title}}",
       "edit": "Edit {{title}}",

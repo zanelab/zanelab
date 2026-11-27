@@ -59,30 +59,35 @@ export function SkillCard({ skill, onEdit, onDelete }: SkillCardProps) {
     // position:relative + z-index:auto（同样不建立上下文），小屏打开的 .drawer-side
     // （fixed, z-index:10）就会被卡片浮层（15/20/30）盖住，表现为内容穿透筛选面板。
     <article className="group relative isolate flex h-full min-w-0 flex-col transition-transform duration-300 focus-within:-translate-y-1 hover:-translate-y-1">
-      {/* 缩略图：16:9 满铺（自身即卡片外形） */}
-      <div className="border-base-300 relative overflow-hidden rounded-(--page-radius) border">
+      {/* 缩略图：16:9 满铺（自身即卡片外形）。圆角与描边对齐参考站：
+          rounded-2xl + black/10（暗色 white/12）——不用 --page-radius 主题
+          圆角（参考站卡片是固定 16px 大圆角，与主题控件圆角无关）。 */}
+      <div className="border-base-content/10 relative overflow-hidden rounded-2xl border dark:border-white/10">
         <div
           className={`aspect-video w-full bg-gradient-to-br ${TONE_CLASS[skill.tone]}`}
         />
 
-        {/* 左上 免费/付费 徽章 */}
+        {/* 左上 免费/付费 徽章（参考站无此徽章——本站定价维度保留） */}
         <span
           className={`badge ${skill.free ? 'badge-primary' : 'badge-neutral'} badge-sm absolute top-2.5 left-2.5 z-20 font-semibold`}
         >
           {skill.free ? t('skills.card.free') : t('skills.card.paid')}
         </span>
 
-        {/* 右上 媒体类型圆标 */}
+        {/* 右上 媒体类型圆标（参考站同款：毛玻璃白底 + hover 隐去——
+            hover 时被操作层替代）。 */}
         {output ? (
-          <span className="bg-base-100/60 text-base-content/60 absolute top-2.5 right-2.5 z-10 grid size-6 place-items-center rounded-full backdrop-blur-md">
+          <span className="text-base-content/60 dark:text-base-content/80 absolute top-2.5 right-2.5 z-10 grid size-6 place-items-center rounded-full bg-white/50 shadow-[0_3px_10px_rgba(17,18,18,0.10)] backdrop-blur-md transition-opacity duration-200 group-focus-within:opacity-0 group-hover:opacity-0 dark:bg-black/45 dark:shadow-[0_3px_10px_rgba(0,0,0,0.30)] [@media(hover:none)]:opacity-0">
             <AppIcon name={OUTPUT_ICON[output]} className="size-3.5" />
             <span className="sr-only">{t(`skills.outputType.${output}`)}</span>
           </span>
         ) : null}
 
-        {/* 底部深色压边 + 右对齐统计（显式豁免：固定中性黑 + 白字，理由见 design.md） */}
+        {/* 底部深色压边 + 右对齐统计（显式豁免：固定中性黑 + 白字，理由见 design.md）。
+            数字对接接口真实数据（skillsApi.list() 的 downloads/bookmarks，
+            经 toSkillItem 传入；mock 态走 MSW 种子）。参考站同款 text-shadow。 */}
         <span className="absolute inset-x-0 bottom-0 z-[15] h-16 bg-[linear-gradient(to_top,oklch(0%_0_0/0.72),oklch(0%_0_0/0.6)_32%,transparent)]" />
-        <span className="absolute right-3 bottom-2.5 z-20 inline-flex items-center gap-2.5 text-[10px] font-semibold text-white tabular-nums">
+        <span className="absolute right-3 bottom-2.5 z-20 inline-flex items-center gap-2.5 text-[10px] font-semibold text-white tabular-nums [text-shadow:0_1px_2px_rgba(0,0,0,0.5)]">
           <span className="inline-flex items-center gap-1">
             <AppIcon name="download" className="size-3" />
             <span className="sr-only">{t('skills.card.installCount')}</span>
@@ -156,23 +161,26 @@ export function SkillCard({ skill, onEdit, onDelete }: SkillCardProps) {
         <h3 className="text-base-content/70 min-w-0 truncate text-[13px] font-medium tracking-[-0.01em]">
           {skill.title}
         </h3>
-        {/* Agent 头像组（参考站同款）：16px 圆片 + 1px 描边 + 4px 重叠。
+        {/* Agent 头像组（参考站同款）：16px 圆片 + 1px 描边 + **-ml-1 重叠**。
+            内层容器不能加 gap——参考站内层 <span class="flex items-center">
+            无 gap，重叠全靠项上的 -ml-1（first:ms-0 首项归位）；加了 gap
+            会与 -ml-1 正负抵消 → 圆片完全分开、无叠加。
             **不用 daisyUI avatar-group**——它给每个 .avatar 加 4px base-100
             粗白环，内层圆片再带描边 → 双层描边、圆片显得拥挤。 */}
         <span className="ms-auto flex shrink-0 items-center">
-          <span className="flex shrink-0 items-center gap-1">
+          <span className="flex shrink-0 items-center">
             {shownAgents.map((agent) => (
               <span
                 key={agent}
                 title={AGENT_LABEL[agent] ?? agent}
                 data-testid="skill-card-tool-logo"
-                className="border-base-content/15 bg-base-100 dark:bg-base-300 -ml-1 grid size-4 shrink-0 place-items-center rounded-full border first:ml-0 dark:border-white/15"
+                className="border-base-content/15 bg-base-100 dark:bg-base-300 -ms-1 grid size-4 shrink-0 place-items-center rounded-full border first:ms-0 dark:border-white/15"
               >
                 <AgentAvatarIcon code={agent} size={10} />
               </span>
             ))}
             {restAgents > 0 ? (
-              <span className="border-base-content/15 bg-base-100 text-base-content/45 dark:bg-base-300 -ml-1 grid size-4 shrink-0 place-items-center rounded-full border text-[8px] font-semibold tabular-nums dark:border-white/15 dark:text-white/50">
+              <span className="border-base-content/15 bg-base-100 text-base-content/45 dark:bg-base-300 -ms-1 grid size-4 shrink-0 place-items-center rounded-full border text-[8px] font-semibold tabular-nums dark:border-white/15 dark:text-white/50">
                 +{restAgents}
               </span>
             ) : null}
