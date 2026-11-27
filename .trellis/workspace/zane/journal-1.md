@@ -760,3 +760,55 @@ skills-web 权限系统对齐 iam-web：删除订阅式权限内核（utils/perm
 ### Status
 
 [OK] **Completed**
+
+
+## Session 27: SkillCard 视觉对齐参考站收尾 + 提交
+<!-- trellis-session: v=2 fp=0edab145fa3d767a -->
+
+**Date**: 2026-11-27
+**Task**: SkillCard 视觉对齐参考站收尾 + 提交
+**Branch**: `main`
+
+### Summary
+
+Session summary was not supplied.
+
+### Main Changes
+
+Session 27: SkillCard 视觉对齐参考站收尾 + 提交
+
+上一轮（无活跃任务的延续工作）的收尾会话。工作区遗留 SkillCard 视觉对齐改动（已完成实施与浏览器截图验证，卡片对比图 card-compare-ours.png / chips-check.png），未提交、未记 journal。本次会话：恢复上下文 → 全量验证 → 分两个提交落库。
+
+### 主要改动
+
+- skill-card.tsx：缩略图圆角从主题 --page-radius 改固定 rounded-2xl + black/10 描边（暗色 white/10，参考站卡片固定 16px 大圆角与主题控件圆角无关）；右上媒体类型圆标改参考站同款毛玻璃白底 + 投影 + hover/focus 隐去（触屏常隐 [@media(hover:none)]）；底部统计接真实数据（downloads/bookmarks 经 toSkillItem 传入，mock 态走 MSW 种子）+ 参考站同款 text-shadow；头像组重叠修正——内层容器去 gap（gap 与 -ms-1 正负抵消导致圆片分开无叠加），物理 ml 改逻辑 ms 保 RTL
+- skills-web 文案：likeCount「点赞数/Likes」→「收藏数/Bookmarks」，与书签图标语义一致
+- portal：语言包补 menus.skills 键（iam menus.i18n_key 渲染期解析点串，消费方 menuTitle() 三态回退；iam 0007 迁移只回填了 home/system 5 节点，skills app 节点此前无键可用）；config.js 运行时关闭偏好面板入口（enablePreferences: false）
+
+### 排查记录
+
+menus.skills 键消费方追查：iam 0004/0007 种子均未给 skills app 节点配 i18n_key——语言包键先备好，后续 admin 配键或迁移回填即可命中，非死代码。
+
+### 验证
+
+- skills-web 166/166、portal 191/191
+- skills-web / portal tsc --noEmit 零错误、oxlint 干净、prettier hook 通过
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| 306864f | feat(@zanelab/skills-web): SkillCard 视觉对齐参考站——固定圆角描边 + 毛玻璃圆标 + 头像组重叠修正 |
+| e8e1f86 | chore(@zanelab/portal-web): skills 菜单 i18n 文案 + 运行时关闭偏好面板入口 |
+
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `306864f` | feat(@zanelab/skills-web): SkillCard 视觉对齐参考站——固定圆角描边 + 毛玻璃圆标 + 头像组重叠修正 |
+| `e8e1f86` | chore(@zanelab/portal-web): skills 菜单 i18n 文案 + 运行时关闭偏好面板入口 |
+
+### Status
+
+[OK] **Completed**
