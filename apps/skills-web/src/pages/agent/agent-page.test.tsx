@@ -367,3 +367,24 @@ describe('Agent 图标 —— 资源与单色判定', () => {
     }
   });
 });
+
+// Hero 小标题胶囊（参考站同款）：grid 图标 + 文案，浅底 + 描边；
+// 暗色主题下 white/4 底 + white/10 描边。
+describe('Agent 目录页 —— Hero 小标题胶囊', () => {
+  it('胶囊含 grid 图标与文案（不再是纯文本 p）', () => {
+    renderPage();
+    const chip = document.querySelector('main header span')!;
+    expect(chip.textContent).toContain('Agent Skills 目录');
+    expect(chip.querySelector('svg')).toBeTruthy();
+    // 胶囊形态：全圆角 + 边框
+    expect(chip.className).toContain('rounded-full');
+    expect(chip.className).toContain('border');
+  });
+
+  it('暗色主题用 white/[0.04] 底 + white/10 描边', () => {
+    renderPage();
+    const chip = document.querySelector('main header span')!;
+    expect(chip.className).toContain('dark:bg-white/[0.04]');
+    expect(chip.className).toContain('dark:border-white/10');
+  });
+});

@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
+import { AppIcon } from '@zanelab/ui';
 import { getProps } from '../../props';
 import { AgentChips } from './agent-chips';
 import { AgentTable } from './agent-table';
@@ -51,9 +52,15 @@ export function AgentPage() {
     <main style={pageStyle}>
       {/* ① 标语区（居中大标题版式） */}
       <header className="mx-auto flex w-full max-w-[1440px] flex-col items-center gap-5 px-4 py-10 text-center sm:px-6 lg:px-8 lg:py-16">
-        <p className="text-base-content/60 text-[13px] font-semibold tracking-wide uppercase">
+        {/* 小标题胶囊（参考站同款）：grid 图标 + 文案，浅米底 + 黑/8 描边，
+            暗色主题下 white/4 底 + white/10 描边。 */}
+        <span className="border-base-content/10 bg-base-100 text-base-content inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[13px] font-semibold dark:border-white/10 dark:bg-white/[0.04]">
+          <AppIcon
+            name="svg:M4 5a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -4|M14 5a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -4|M4 15a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -4|M14 15a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -4"
+            className="size-3.5 shrink-0"
+          />
           {t('skills.agent.subtitle', { count: AGENT_CATALOG.length })}
-        </p>
+        </span>
         <h1 className="text-[40px] leading-[1.05] font-semibold tracking-[-0.05em] text-balance md:text-[72px]">
           {t('skills.agent.heading')}
         </h1>
