@@ -35,7 +35,7 @@ window.__APP_CONFIG__ = {
   preferences: {
     app: {
       locale: 'zh-CN',
-      enablePreferences: true,
+      enablePreferences: false,
     },
     tabbar: {
       enable: false,
